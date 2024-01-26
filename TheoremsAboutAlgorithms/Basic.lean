@@ -38,5 +38,11 @@ theorem pi_subset_recursive (n : ℕ) : partition ∈ Π' n → partition ∈ re
 
 theorem recursive_subset_pi (n : ℕ) : partition ∈ recursivePi n → partition ∈ Π' n := sorry
 
---theorem Pi_is_recursive (n : ℕ) : Π' n = recursivePi n :=
---  Set.ext (λ y => Iff.intro (λ x => pi_subset_recursive n) (λ x => recursive_subset_pi n))
+theorem Pi_is_recursive (n : ℕ) : Π' n = recursivePi n := by
+  apply Set.ext
+  intro partition
+  apply Iff.intro
+  intro partitionIsPi
+  exact pi_subset_recursive n partitionIsPi
+  intro partitionIsRecursive
+  exact recursive_subset_pi n partitionIsRecursive
