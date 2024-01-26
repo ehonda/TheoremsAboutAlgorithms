@@ -1,6 +1,9 @@
+import Init.Core -- Iff
 import Mathlib.Init.Set -- Set
 import Mathlib.Init.Data.Nat.Notation -- ℕ
 import Mathlib.Data.Set.Lattice -- sUnion (⋃₀)
+
+-- TODO: Adhere to naming conventions specified in: https://leanprover-community.github.io/contribute/naming.html
 
 -- TODO: Define type alias for Set (Set α)
 def isPartitionOf (baseSet : Set α) (split : Set (Set α)) : Prop :=
@@ -26,7 +29,14 @@ def transformPartition (split : Set (Set ℕ)) (cell : Set ℕ) (n : ℕ) : Set 
 
 def partitionWithEmptyCell (split : Set (Set ℕ)) : Set (Set ℕ) := {∅} ∪ split
 
-theorem trivial_1 :  1 = 1 := rfl
+def toPartitionsOfNatsUpTo (partition : Set (Set ℕ)) (n : ℕ) : Set (Set (Set ℕ))
+  := ⋃ cell ∈ partition, {transformPartition partition cell n}
 
---theorem Pi_is_recursive (n : ℕ)
---  : Π' n = ⋃ partition ∈ Π' (n - 1), ⋃ cell ∈ partitionWithEmptyCell partition, transformPartition partition cell n := by sorry
+def recursivePi (n : ℕ) : Set (Set (Set ℕ)) := ⋃ partition ∈ Π' (n - 1), toPartitionsOfNatsUpTo partition n
+
+theorem pi_subset_recursive (n : ℕ) : partition ∈ Π' n → partition ∈ recursivePi n := sorry
+
+theorem recursive_subset_pi (n : ℕ) : partition ∈ recursivePi n → partition ∈ Π' n := sorry
+
+--theorem Pi_is_recursive (n : ℕ) : Π' n = recursivePi n :=
+--  Set.ext (λ y => Iff.intro (λ x => pi_subset_recursive n) (λ x => recursive_subset_pi n))
