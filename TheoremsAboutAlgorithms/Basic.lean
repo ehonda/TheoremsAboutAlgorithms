@@ -14,7 +14,7 @@ def isPartitionOf (baseSet : Set α) (split : Set (Set α)) : Prop :=
     unionOfCellsIsBaseSet := ⋃₀ split = baseSet
 
 -- TODO: Should we do {0, ..., n - 1} or {1, ..., n}?
-def isPartitionOfNatsUpTo (n : ℕ) (split : Set (Set ℕ)) : Prop := isPartitionOf {x | x < n } split
+def isPartitionOfNatsUpTo (n : ℕ) (split : Set (Set ℕ)) : Prop := isPartitionOf (Set.Icc 1 n) split
 
 def Pi (n : ℕ) : Set (Set (Set ℕ)) := {split | isPartitionOfNatsUpTo n split}
 
@@ -34,7 +34,28 @@ def toPartitionsOfNatsUpTo (partition : Set (Set ℕ)) (n : ℕ) : Set (Set (Set
 
 def recursivePi (n : ℕ) : Set (Set (Set ℕ)) := ⋃ partition ∈ Π' (n - 1), toPartitionsOfNatsUpTo partition n
 
-theorem pi_subset_recursive (n : ℕ) : partition ∈ Π' n → partition ∈ recursivePi n := sorry
+theorem partition_has_cell_containing_n (partition : Set (Set ℕ)) (n : ℕ)
+  : n ≥ 1 ∧ partition ∈ Π' n → ∃ cell ∈ partition, n ∈ cell := by
+    intro partitionIsPi
+    have union_over_cells_is_base_set : ⋃₀ partition = (Set.Icc 1 n) := by
+      apply partitionIsPi.right.right.right
+    have n_is_in_union : n ∈ ⋃₀ partition := by
+      rw [union_over_cells_is_base_set]
+      apply Set.mem_Icc.mpr
+      simp
+      exact partitionIsPi.left
+    apply Set.mem_sUnion.mp n_is_in_union
+
+theorem pi_subset_recursive (n : ℕ) : partition ∈ Π' n → partition ∈ recursivePi n := by
+  intro partitionIsPi
+  --apply Set.mem_iUnion
+  sorry
+  --apply Set.setOf_exists at partitionIsPi
+  --sorry
+  --use partition
+  --split
+  --exact partitionIsPi
+  --apply Se
 
 theorem recursive_subset_pi (n : ℕ) : partition ∈ recursivePi n → partition ∈ Π' n := sorry
 
