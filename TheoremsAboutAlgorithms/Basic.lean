@@ -46,6 +46,23 @@ theorem partition_has_cell_containing_n (partition : Set (Set ℕ)) (n : ℕ)
       exact partitionIsPi.left
     apply Set.mem_sUnion.mp n_is_in_union
 
+-- TODO: We must not remove the cell containing n but replace it by the 'inverse' of transformCell, i.e. the operation
+--      that removes n from the cell.
+theorem partition_without_cell_containing_n_is_partition (partition : Set (Set ℕ)) (n : ℕ)
+  : n ≥ 2 ∧ partition ∈ Π' n → partition \ {cell | n ∈ cell ∧ cell ∈ partition} ∈ Π' (n - 1) := by
+    intro partitionIsPi
+    have exists_cell_with_n : ∃ cell ∈ partition, n ∈ cell := by
+      apply partition_has_cell_containing_n partition n
+      have : n ≥ 1 := sorry
+      exact ⟨this, partitionIsPi.right⟩
+    have exists_exactly_one_cell_with_n : ∃ cell_n, {cell | n ∈ cell ∧ cell ∈ partition} = {cell_n} := by
+      sorry
+    cases exists_exactly_one_cell_with_n with
+      | intro cell_with_n h_cell_with_n =>
+        rw [h_cell_with_n]
+        sorry
+
+
 theorem pi_subset_recursive (n : ℕ) : partition ∈ Π' n → partition ∈ recursivePi n := by
   intro partitionIsPi
   --apply Set.mem_iUnion
@@ -57,7 +74,14 @@ theorem pi_subset_recursive (n : ℕ) : partition ∈ Π' n → partition ∈ re
   --exact partitionIsPi
   --apply Se
 
-theorem recursive_subset_pi (n : ℕ) : partition ∈ recursivePi n → partition ∈ Π' n := sorry
+theorem recursive_subset_pi (n : ℕ) : partition ∈ recursivePi n → partition ∈ Π' n := by
+  intro partitionIsRecursive
+  have cellsArePairwiseDisjoint : ∀ x ∈ partition, ∀ y ∈ partition, x ≠ y → x ∩ y = ∅ := by
+    apply Set.mem_sUnion.mp at partitionIsRecursive
+    cases partitionIsRecursive with
+      | intro smaller_partition h_smaller_partition =>
+        sorry
+  sorry
 
 theorem Pi_is_recursive (n : ℕ) : Π' n = recursivePi n := by
   apply Set.ext
