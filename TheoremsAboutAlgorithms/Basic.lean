@@ -53,7 +53,8 @@ theorem partition_without_cell_containing_n_is_partition (partition : Set (Set �
     intro partitionIsPi
     have exists_cell_with_n : ∃ cell ∈ partition, n ∈ cell := by
       apply partition_has_cell_containing_n partition n
-      have : n ≥ 1 := sorry
+      have : n ≥ 1 := by cases partitionIsPi with
+        | intro n_geq_2 => (have : 1 ≤ 2 := by decide); exact le_trans this n_geq_2
       exact ⟨this, partitionIsPi.right⟩
     have exists_exactly_one_cell_with_n : ∃ cell_n, {cell | n ∈ cell ∧ cell ∈ partition} = {cell_n} := by
       sorry
