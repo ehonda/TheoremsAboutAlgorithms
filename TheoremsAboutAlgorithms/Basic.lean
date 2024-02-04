@@ -46,6 +46,19 @@ theorem partition_has_cell_containing_n (partition : Set (Set ℕ)) (n : ℕ)
       exact partitionIsPi.left
     apply Set.mem_sUnion.mp n_is_in_union
 
+--theorem exists_cell_with_n (partition : Set (Set ℕ)) (n : ℕ) : n ≥ 1 → ∃ cell ∈ partition, n ∈ cell := by
+--  intro h
+--  apply partition_has_cell_containing_n
+--  constructor
+--  sorry
+
+
+theorem exists_exactly_one_cell_with_n (partition : Set (Set ℕ)) (n : ℕ)
+  : n ≥ 1 ∧ partition ∈ Π' n → ∃ cell_n, {cell | n ∈ cell ∧ cell ∈ partition} = {cell_n} := by
+    intro ⟨n_geq_1, partition_of_n⟩
+    --have partition_has_cell_containing_n : exact partition_has_cell_containing_n partition n n_geq_1 partition_of_n
+
+
 -- TODO: We must not remove the cell containing n but replace it by the 'inverse' of transformCell, i.e. the operation
 --      that removes n from the cell.
 theorem partition_without_cell_containing_n_is_partition (partition : Set (Set ℕ)) (n : ℕ)
@@ -57,12 +70,22 @@ theorem partition_without_cell_containing_n_is_partition (partition : Set (Set �
         | intro n_geq_2 => (have : 1 ≤ 2 := by decide); exact le_trans this n_geq_2
       exact ⟨this, partitionIsPi.right⟩
     have exists_exactly_one_cell_with_n : ∃ cell_n, {cell | n ∈ cell ∧ cell ∈ partition} = {cell_n} := by
-      sorry
+      by_contra h_contra
+      simp at h_contra
+      absurd h_contra
+      simp
+      cases exists_cell_with_n with
+        | intro cell_with_n h_cell_with_n =>
+          use cell_with_n
+          apply Set.ext
+          sorry
+
     cases exists_exactly_one_cell_with_n with
       | intro cell_with_n h_cell_with_n =>
         rw [h_cell_with_n]
         sorry
 
+#print Not
 
 theorem pi_subset_recursive (n : ℕ) : partition ∈ Π' n → partition ∈ recursivePi n := by
   intro partitionIsPi
