@@ -5,6 +5,10 @@ import Mathlib.Data.Set.Lattice -- sUnion (⋃₀)
 
 -- TODO: Adhere to naming conventions specified in: https://leanprover-community.github.io/contribute/naming.html
 
+------------------------------------------------------------------------------------------------------------------------
+--                                                  Definitions                                                       --
+------------------------------------------------------------------------------------------------------------------------
+
 -- TODO: Define type alias for Set (Set α)
 def isPartitionOf (baseSet : Set α) (split : Set (Set α)) : Prop :=
     cellsArePairwiseDisjoint ∧ cellsAreNonEmpty ∧ unionOfCellsIsBaseSet
@@ -33,6 +37,10 @@ def toPartitionsOfNatsUpTo (partition : Set (Set ℕ)) (n : ℕ) : Set (Set (Set
   := ⋃ cell ∈ partition, {transformPartition partition cell n}
 
 def recursivePi (n : ℕ) : Set (Set (Set ℕ)) := ⋃ partition ∈ Π' (n - 1), toPartitionsOfNatsUpTo partition n
+
+------------------------------------------------------------------------------------------------------------------------
+--                                        recursivePi is a subset of Π' n                                             --
+------------------------------------------------------------------------------------------------------------------------
 
 theorem partition_has_cell_containing_n (partition : Set (Set ℕ)) (n : ℕ)
   : n ≥ 1 ∧ partition ∈ Π' n → ∃ cell ∈ partition, n ∈ cell := by
@@ -87,6 +95,19 @@ theorem partition_without_cell_containing_n_is_partition (partition : Set (Set �
 
 #print Not
 
+theorem recursive_subset_pi (n : ℕ) : partition ∈ recursivePi n → partition ∈ Π' n := by
+  intro partitionIsRecursive
+  have cellsArePairwiseDisjoint : ∀ x ∈ partition, ∀ y ∈ partition, x ≠ y → x ∩ y = ∅ := by
+    apply Set.mem_sUnion.mp at partitionIsRecursive
+    cases partitionIsRecursive with
+      | intro smaller_partition h_smaller_partition =>
+        sorry
+  sorry
+
+------------------------------------------------------------------------------------------------------------------------
+--                                        Π' n is a subset of recursivePi                                             --
+------------------------------------------------------------------------------------------------------------------------
+
 theorem pi_subset_recursive (n : ℕ) : partition ∈ Π' n → partition ∈ recursivePi n := by
   intro partitionIsPi
   --apply Set.mem_iUnion
@@ -98,14 +119,9 @@ theorem pi_subset_recursive (n : ℕ) : partition ∈ Π' n → partition ∈ re
   --exact partitionIsPi
   --apply Se
 
-theorem recursive_subset_pi (n : ℕ) : partition ∈ recursivePi n → partition ∈ Π' n := by
-  intro partitionIsRecursive
-  have cellsArePairwiseDisjoint : ∀ x ∈ partition, ∀ y ∈ partition, x ≠ y → x ∩ y = ∅ := by
-    apply Set.mem_sUnion.mp at partitionIsRecursive
-    cases partitionIsRecursive with
-      | intro smaller_partition h_smaller_partition =>
-        sorry
-  sorry
+------------------------------------------------------------------------------------------------------------------------
+--                                                Main Theorem                                                        --
+------------------------------------------------------------------------------------------------------------------------
 
 theorem Pi_is_recursive (n : ℕ) : Π' n = recursivePi n := by
   apply Set.ext
