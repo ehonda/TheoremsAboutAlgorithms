@@ -11,20 +11,22 @@ import Std.Tactic.Basic -- byContra
 --                                                  Definitions                                                       --
 ------------------------------------------------------------------------------------------------------------------------
 
+def cellsArePairwiseDisjoint {α : Type} (split : Set (Set α)) : Prop :=
+  ∀ x ∈ split, ∀ y ∈ split, x ≠ y → x ∩ y = ∅
+
 -- TODO: Define type alias for Set (Set α)
-def IsPartitionOf (baseSet : Set α) (split : Set (Set α)) : Prop :=
-    cells_are_pairwise_disjoint ∧ cells_are_non_empty ∧ union_of_cells_is_base_set
+def isPartitionOf (baseSet : Set α) (split : Set (Set α)) : Prop :=
+    cellsArePairwiseDisjoint split ∧ cellsAreNonEmpty ∧ unionOfCellsIsBaseSet
   where
-    cells_are_pairwise_disjoint := ∀ x ∈ split, ∀ y ∈ split, x ≠ y → x ∩ y = ∅
-    cells_are_non_empty := ∀ x ∈ split, x ≠ ∅
-    union_of_cells_is_base_set := ⋃₀ split = baseSet
+    cellsAreNonEmpty := ∀ x ∈ split, x ≠ ∅
+    unionOfCellsIsBaseSet := ⋃₀ split = baseSet
 
 notation "Cells[ℕ]" => Set (Set ℕ)
 
 -- TODO: Should we do {0, ..., n - 1} or {1, ..., n}?
-def IsPartitionOfNatsUpTo (n : ℕ) (split : Cells[ℕ]) : Prop := IsPartitionOf (Set.Icc 1 n) split
+def isPartitionOfNatsUpTo (n : ℕ) (split : Cells[ℕ]) : Prop := isPartitionOf (Set.Icc 1 n) split
 
-def Pi (n : ℕ) : Set (Cells[ℕ]) := {split | IsPartitionOfNatsUpTo n split}
+def Pi (n : ℕ) : Set (Cells[ℕ]) := {split | isPartitionOfNatsUpTo n split}
 
 -- TODO: Clashes with dependent function type ("pi type")
 notation "ℙ" => Pi
@@ -43,11 +45,89 @@ def toPartitionsOfNatsUpTo (partition : Cells[ℕ]) (n : ℕ) : Set (Cells[ℕ])
 def recursivePi (n : ℕ) : Set (Cells[ℕ]) := ⋃ partition ∈ ℙ (n - 1), toPartitionsOfNatsUpTo partition n
 
 ------------------------------------------------------------------------------------------------------------------------
+--                                        Some basic facts we might need                                              --
+------------------------------------------------------------------------------------------------------------------------
+
+example (s : Set ℕ) : s.Nonempty → s ≠ ∅ := by
+  intro h
+  exact Set.Nonempty.ne_empty h
+
+example (n : ℕ) : Set.Nonempty {n} := by
+  use n
+  simp
+
+lemma transform_partition_disjoint (split : Cells[ℕ]) (cell : Set ℕ) (n : ℕ)
+  : Disjoint {transformCell cell n} (split \ {cell}) := by
+    sorry
+
+
+theorem pairwise_disjoint_after_transformation (split : Cells[ℕ]) (cell : Set ℕ) (n : ℕ)
+  : cellsArePairwiseDisjoint split → cellsArePairwiseDisjoint (transformPartition split cell n) := by
+    intro h_split
+    intros x h_x y h_y h_neq
+    have := eq_or_ne x cell
+    cases this with
+      | inl h_x_eq =>
+        have := eq_or_ne y cell
+        cases this with
+          | inl h_y_eq =>
+            rw [h_x_eq, h_y_eq] at h_neq
+            contradiction
+          | inr h_y_neq =>
+            cases h_x with
+              | inl h_x_in_transform =>
+                rw [h_x_in_transform]
+                cases h_y with
+                  | inl h_y_in_transform =>
+                    rw [transformCell] at h_x_in_transform h_y_in_transform
+                    simp at h_x_in_transform h_y_in_transform
+                    rw [← h_y_in_transform] at h_x_in_transform
+                    contradiction
+                  | inr h_y_in_split_sub =>
+                    --rw [transformCell]
+                    --have h_disjoint : Disjoint
+                    -- TODO: Show {transformCell cell n} and (split \ {cell}) are disjoint
+                    sorry
+              | inr h_x_in_split =>
+                -- TODO: Should be exactly the same as above, with roles of x and y reversed
+                -- TODO: Rewrite by appling tactics to the subgoals in parallel
+                sorry
+      | inr h_x_neq =>
+        -- TODO: Again, this should be the same as the case above, with reversed roles of x and y
+        sorry
+
+#print Set.Nonempty.ne_empty
+
+def splitCellsContainingN (n : ℕ) (split : Cells[ℕ]) : Cells[ℕ] := {cell | n ∈ cell ∧ cell ∈ split}
+
+
+
+lemma split_has_exactly_one_cell_containing_n (n : ℕ) (split : Cells[ℕ])
+  : split ∈ recursivePi n → ∃ cell ∈ split, splitCellsContainingN n split = {cell} := by
+    intro splitIsRecursive
+    sorry
+
+------------------------------------------------------------------------------------------------------------------------
 --                                        recursivePi is a subset of Π' n                                             --
 --                                                                                                                    --
 --  To show this, we take the following steps:                                                                        --
 --    - For p ∈ recursivePi n, we have cellsArePairwiseDisjoint, cellsAreNonEmpty, and unionOfCellsIsBaseSet.         --
 ------------------------------------------------------------------------------------------------------------------------
+
+
+def splitWithoutCellContainingN (n : ℕ) (split : Cells[ℕ]) : Cells[ℕ] := split \ {cell | n ∈ cell ∧ cell ∈ split}
+
+def SplitWithoutCellContainingNIsPartition (n : ℕ) (split : Cells[ℕ]) (partition : Cells[ℕ]) : Prop :=
+  splitWithoutCellContainingN n split = partition
+
+def SplitWithoutCellContainingNIsSubsetOfPartition (n : ℕ) (split : Cells[ℕ]) (partition : Cells[ℕ]) : Prop :=
+  splitWithoutCellContainingN n split ⊆ partition
+
+-- TODO: Fix looooong names and lines
+lemma split_without_cell_containing_n_lemma (n : ℕ) (split : Cells[ℕ])
+  : split ∈ recursivePi n → ∃ partition ∈ ℙ (n - 1), SplitWithoutCellContainingNIsPartition n split partition ∨ SplitWithoutCellContainingNIsSubsetOfPartition n split partition := by
+    intro splitIsRecursive
+    sorry
 
 -- TODO: Fix looooong names and lines
 lemma elements_of_recursivePi_have_cells_eq_to_partition_or_containing_n (n : ℕ) (split : Cells[ℕ])
