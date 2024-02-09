@@ -68,9 +68,9 @@ lemma transform_partition_disjoint (split : Split[ℕ]) (cell : Cell[ℕ]) (n : 
   : Disjoint {transformCell cell n} (split \ {cell}) := by
     sorry
 
-
-theorem pairwise_disjoint_after_transformation (split : Split[ℕ]) (cell : Cell[ℕ]) (n : ℕ)
-  : cellsArePairwiseDisjoint split → cellsArePairwiseDisjoint (transformSplit split cell n) := by
+-- Here we show that the property that a split's cells are pairwise disjoint is preserved under the transformation
+theorem pairwise_disjoint_after_transformation (split : Split[ℕ]) (targetCell : Cell[ℕ]) (n : ℕ)
+  : cellsArePairwiseDisjoint split → cellsArePairwiseDisjoint (transformSplit split targetCell n) := by
     -- Setup the hypotheses
     --     * A split is pairwise disjoint
     --     * We have an arbitrary cell x from the split
@@ -80,34 +80,43 @@ theorem pairwise_disjoint_after_transformation (split : Split[ℕ]) (cell : Cell
     -- We then want to show that x ∩ y = ∅
     intro h_split
     intros x h_x y h_y h_neq
-    -- We know that either x = cell ∨ x ≠ cell and consider both cases
-    have := eq_or_ne x cell
+    -- We know that either x = targetCell ∨ x ≠ targetCell and consider both cases
+    have := eq_or_ne x targetCell
     cases this with
-      -- Case x = cell
+      -- Case x = targetCell
       | inl h_x_eq =>
-        -- We know that either y = cell ∨ y ≠ cell and consider both cases
-        have := eq_or_ne y cell
+        -- We know that either y = targetCell ∨ y ≠ targetCell and consider both cases
+        have := eq_or_ne y targetCell
         cases this with
-          -- Case y = cell
+          -- Case y = targetCell
           | inl h_y_eq =>
-            -- We rewrite our hypothesis x ≠ y to cell ≠ cell and get a contradiction
+            -- We rewrite our hypothesis x ≠ y to targetCell ≠ targetCell and get a contradiction
             rw [h_x_eq, h_y_eq] at h_neq
             contradiction
-          -- Case y ≠ cell
+          -- Case y ≠ targetCell
           | inr h_y_neq =>
+            -- We consider the different cases for the transformed split. If x is part of the transformed split, we
+            -- know that
+            --    * Either x ∈ {transformCell targetCell n}, i.e. a split consisting of the single cell that is the
+            --      result of transforming the target cell with n
+            --    * Or x ∈ split \ {targetCell}, i.e. x is part of the split resulting from removing the target cell
+            --      from the original split
             cases h_x with
+              -- Case x ∈ {transformCell targetCell n}
               | inl h_x_in_transform =>
+                -- We rewrite x ∩ y = ∅ to (transformCell targetCell n) ∩ y = ∅, which we can because x is the only
+                -- cell of it's split and that cell is equal to (transformCell targetCell n)
                 rw [h_x_in_transform]
+                -- We have the same cases for cell y of the transformed split
                 cases h_y with
+                  -- Case y ∈ {transformCell targetCell n}
                   | inl h_y_in_transform =>
-                    rw [transformCell] at h_x_in_transform h_y_in_transform
+                    -- We now know that x = transformCell targetCell n = y but have the hypothesis that x ≠ y, which
+                    -- is a contradiction
                     simp at h_x_in_transform h_y_in_transform
                     rw [← h_y_in_transform] at h_x_in_transform
                     contradiction
                   | inr h_y_in_split_sub =>
-                    --rw [transformCell]
-                    --have h_disjoint : Disjoint
-                    -- TODO: Show {transformCell cell n} and (split \ {cell}) are disjoint
                     sorry
               | inr h_x_in_split =>
                 -- TODO: Should be exactly the same as above, with roles of x and y reversed
