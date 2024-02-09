@@ -11,44 +11,45 @@ import Std.Tactic.Basic -- byContra
 --                                                  Definitions                                                       --
 ------------------------------------------------------------------------------------------------------------------------
 
-def cellsArePairwiseDisjoint {α : Type} (split : Set (Set α)) : Prop :=
+notation "Cell[" α "]" => Set α
+notation "CellCollection[" α "]" => Set (Set α)
+
+def cellsArePairwiseDisjoint {α : Type} (split : CellCollection[α]) : Prop :=
   ∀ x ∈ split, ∀ y ∈ split, x ≠ y → x ∩ y = ∅
 
 -- TODO: Define type alias for Set (Set α)
-def isPartitionOf (baseSet : Set α) (split : Set (Set α)) : Prop :=
-    cellsArePairwiseDisjoint split ∧ cellsAreNonEmpty ∧ unionOfCellsIsBaseSet
+def isPartitionOf (baseSet : Cell[α]) (split : CellCollection[α]) : Prop :=
+    cellsArePairwiseDisjoint split ∧ cellsAreNonEmpty ∧ unionOfCellCollectionIsBaseSet
   where
     cellsAreNonEmpty := ∀ x ∈ split, x ≠ ∅
-    unionOfCellsIsBaseSet := ⋃₀ split = baseSet
-
-notation "Cells[ℕ]" => Set (Set ℕ)
+    unionOfCellCollectionIsBaseSet := ⋃₀ split = baseSet
 
 -- TODO: Should we do {0, ..., n - 1} or {1, ..., n}?
-def isPartitionOfNatsUpTo (n : ℕ) (split : Cells[ℕ]) : Prop := isPartitionOf (Set.Icc 1 n) split
+def isPartitionOfNatsUpTo (n : ℕ) (split : CellCollection[ℕ]) : Prop := isPartitionOf (Set.Icc 1 n) split
 
-def Pi (n : ℕ) : Set (Cells[ℕ]) := {split | isPartitionOfNatsUpTo n split}
+def Pi (n : ℕ) : Set (CellCollection[ℕ]) := {split | isPartitionOfNatsUpTo n split}
 
 -- TODO: Clashes with dependent function type ("pi type")
 notation "ℙ" => Pi
 
 -- TODO: Better names for the transformations
-def transformCell (cell : Set ℕ) (n : ℕ) : Set ℕ := cell ∪ {n}
+def transformCell (cell : Cell[ℕ]) (n : ℕ) : Cell[ℕ] := cell ∪ {n}
 
-def transformPartition (split : Cells[ℕ]) (cell : Set ℕ) (n : ℕ) : Cells[ℕ]
+def transformPartition (split : CellCollection[ℕ]) (cell : Cell[ℕ]) (n : ℕ) : CellCollection[ℕ]
   := {transformCell cell n} ∪ (split \ {cell})
 
-def partitionWithEmptyCell (split : Cells[ℕ]) : Cells[ℕ] := {∅} ∪ split
+def partitionWithEmptyCell (split : CellCollection[ℕ]) : CellCollection[ℕ] := {∅} ∪ split
 
-def toPartitionsOfNatsUpTo (partition : Cells[ℕ]) (n : ℕ) : Set (Cells[ℕ])
+def toPartitionsOfNatsUpTo (partition : CellCollection[ℕ]) (n : ℕ) : Set (CellCollection[ℕ])
   := ⋃ cell ∈ partition, {transformPartition partition cell n}
 
-def recursivePi (n : ℕ) : Set (Cells[ℕ]) := ⋃ partition ∈ ℙ (n - 1), toPartitionsOfNatsUpTo partition n
+def recursivePi (n : ℕ) : Set (CellCollection[ℕ]) := ⋃ partition ∈ ℙ (n - 1), toPartitionsOfNatsUpTo partition n
 
 ------------------------------------------------------------------------------------------------------------------------
 --                                        Some basic facts we might need                                              --
 ------------------------------------------------------------------------------------------------------------------------
 
-example (s : Set ℕ) : s.Nonempty → s ≠ ∅ := by
+example (s : Cell[ℕ]) : s.Nonempty → s ≠ ∅ := by
   intro h
   exact Set.Nonempty.ne_empty h
 
@@ -56,13 +57,20 @@ example (n : ℕ) : Set.Nonempty {n} := by
   use n
   simp
 
-lemma transform_partition_disjoint (split : Cells[ℕ]) (cell : Set ℕ) (n : ℕ)
+lemma transform_partition_disjoint (split : CellCollection[ℕ]) (cell : Cell[ℕ]) (n : ℕ)
   : Disjoint {transformCell cell n} (split \ {cell}) := by
     sorry
 
 
-theorem pairwise_disjoint_after_transformation (split : Cells[ℕ]) (cell : Set ℕ) (n : ℕ)
+theorem pairwise_disjoint_after_transformation (split : CellCollection[ℕ]) (cell : Cell[ℕ]) (n : ℕ)
   : cellsArePairwiseDisjoint split → cellsArePairwiseDisjoint (transformPartition split cell n) := by
+    -- Setup the hypotheses
+    --     * A split is pairwise disjoint
+    --     * We have an arbitrary cell x from the split
+    --     * We have an arbitrary cell y from the split
+    --     * x ≠ y
+    --
+    -- We then want to show that x ∩ y = ∅
     intro h_split
     intros x h_x y h_y h_neq
     have := eq_or_ne x cell
@@ -98,11 +106,11 @@ theorem pairwise_disjoint_after_transformation (split : Cells[ℕ]) (cell : Set 
 
 #print Set.Nonempty.ne_empty
 
-def splitCellsContainingN (n : ℕ) (split : Cells[ℕ]) : Cells[ℕ] := {cell | n ∈ cell ∧ cell ∈ split}
+def splitCellsContainingN (n : ℕ) (split : CellCollection[ℕ]) : CellCollection[ℕ] := {cell | n ∈ cell ∧ cell ∈ split}
 
 
 
-lemma split_has_exactly_one_cell_containing_n (n : ℕ) (split : Cells[ℕ])
+lemma split_has_exactly_one_cell_containing_n (n : ℕ) (split : CellCollection[ℕ])
   : split ∈ recursivePi n → ∃ cell ∈ split, splitCellsContainingN n split = {cell} := by
     intro splitIsRecursive
     sorry
@@ -111,26 +119,26 @@ lemma split_has_exactly_one_cell_containing_n (n : ℕ) (split : Cells[ℕ])
 --                                        recursivePi is a subset of Π' n                                             --
 --                                                                                                                    --
 --  To show this, we take the following steps:                                                                        --
---    - For p ∈ recursivePi n, we have cellsArePairwiseDisjoint, cellsAreNonEmpty, and unionOfCellsIsBaseSet.         --
+--    - For p ∈ recursivePi n, we have cellsArePairwiseDisjoint, cellsAreNonEmpty, and unionOfCellCollectionIsBaseSet.         --
 ------------------------------------------------------------------------------------------------------------------------
 
 
-def splitWithoutCellContainingN (n : ℕ) (split : Cells[ℕ]) : Cells[ℕ] := split \ {cell | n ∈ cell ∧ cell ∈ split}
+def splitWithoutCellContainingN (n : ℕ) (split : CellCollection[ℕ]) : CellCollection[ℕ] := split \ {cell | n ∈ cell ∧ cell ∈ split}
 
-def SplitWithoutCellContainingNIsPartition (n : ℕ) (split : Cells[ℕ]) (partition : Cells[ℕ]) : Prop :=
+def SplitWithoutCellContainingNIsPartition (n : ℕ) (split : CellCollection[ℕ]) (partition : CellCollection[ℕ]) : Prop :=
   splitWithoutCellContainingN n split = partition
 
-def SplitWithoutCellContainingNIsSubsetOfPartition (n : ℕ) (split : Cells[ℕ]) (partition : Cells[ℕ]) : Prop :=
+def SplitWithoutCellContainingNIsSubsetOfPartition (n : ℕ) (split : CellCollection[ℕ]) (partition : CellCollection[ℕ]) : Prop :=
   splitWithoutCellContainingN n split ⊆ partition
 
 -- TODO: Fix looooong names and lines
-lemma split_without_cell_containing_n_lemma (n : ℕ) (split : Cells[ℕ])
+lemma split_without_cell_containing_n_lemma (n : ℕ) (split : CellCollection[ℕ])
   : split ∈ recursivePi n → ∃ partition ∈ ℙ (n - 1), SplitWithoutCellContainingNIsPartition n split partition ∨ SplitWithoutCellContainingNIsSubsetOfPartition n split partition := by
     intro splitIsRecursive
     sorry
 
 -- TODO: Fix looooong names and lines
-lemma elements_of_recursivePi_have_cells_eq_to_partition_or_containing_n (n : ℕ) (split : Cells[ℕ])
+lemma elements_of_recursivePi_have_cells_eq_to_partition_or_containing_n (n : ℕ) (split : CellCollection[ℕ])
   : split ∈ recursivePi n → ∀ cell ∈ split, ∃ partition ∈ ℙ (n - 1), ((n ∉ cell ∧ cell ∈ partition) ∨ (n ∈ cell ∧ cell \ {n} ∈ partition)) := by
     intro splitIsRecursive
     intro cell cell_in_split
@@ -145,7 +153,7 @@ lemma elements_of_recursivePi_have_cells_eq_to_partition_or_containing_n (n : �
 #print Exists.intro
 
 -- TODO: Argue by contradiction
-lemma elements_of_recursivePi_have_cellsArePairwiseDisjoint (n : ℕ) (split : Cells[ℕ])
+lemma elements_of_recursivePi_have_cellsArePairwiseDisjoint (n : ℕ) (split : CellCollection[ℕ])
   : split ∈ recursivePi n → ∀ x ∈ split, ∀ y ∈ split, x ≠ y → x ∩ y = ∅ := by
     intro splitIsRecursive
     intro x h_x y h_y x_neq_y
@@ -169,7 +177,7 @@ theorem recursive_subset_pi (n : ℕ) : partition ∈ recursivePi n → partitio
 --                                        ℙ n is a subset of recursivePi                                             --
 ------------------------------------------------------------------------------------------------------------------------
 
-theorem partition_has_cell_containing_n (partition : Cells[ℕ]) (n : ℕ)
+theorem partition_has_cell_containing_n (partition : CellCollection[ℕ]) (n : ℕ)
   : n ≥ 1 ∧ partition ∈ ℙ n → ∃ cell ∈ partition, n ∈ cell := by
     intro partitionIsPi
     have union_over_cells_is_base_set : ⋃₀ partition = (Set.Icc 1 n) := by
@@ -181,14 +189,14 @@ theorem partition_has_cell_containing_n (partition : Cells[ℕ]) (n : ℕ)
       exact partitionIsPi.left
     apply Set.mem_sUnion.mp n_is_in_union
 
---theorem exists_cell_with_n (partition : Cells[ℕ]) (n : ℕ) : n ≥ 1 → ∃ cell ∈ partition, n ∈ cell := by
+--theorem exists_cell_with_n (partition : CellCollection[ℕ]) (n : ℕ) : n ≥ 1 → ∃ cell ∈ partition, n ∈ cell := by
 --  intro h
 --  apply partition_has_cell_containing_n
 --  constructor
 --  sorry
 
 
-theorem exists_exactly_one_cell_with_n (partition : Cells[ℕ]) (n : ℕ)
+theorem exists_exactly_one_cell_with_n (partition : CellCollection[ℕ]) (n : ℕ)
   : n ≥ 1 ∧ partition ∈ ℙ n → ∃ cell_n, {cell | n ∈ cell ∧ cell ∈ partition} = {cell_n} := by
     intro ⟨n_geq_1, partition_of_n⟩
     --have partition_has_cell_containing_n : exact partition_has_cell_containing_n partition n n_geq_1 partition_of_n
@@ -196,7 +204,7 @@ theorem exists_exactly_one_cell_with_n (partition : Cells[ℕ]) (n : ℕ)
 
 -- TODO: We must not remove the cell containing n but replace it by the 'inverse' of transformCell, i.e. the operation
 --      that removes n from the cell.
-theorem partition_without_cell_containing_n_is_partition (partition : Cells[ℕ]) (n : ℕ)
+theorem partition_without_cell_containing_n_is_partition (partition : CellCollection[ℕ]) (n : ℕ)
   : n ≥ 2 ∧ partition ∈ ℙ n → partition \ {cell | n ∈ cell ∧ cell ∈ partition} ∈ ℙ (n - 1) := by
     intro partitionIsPi
     have exists_cell_with_n : ∃ cell ∈ partition, n ∈ cell := by
