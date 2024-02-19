@@ -4,6 +4,8 @@ import Mathlib.Init.Data.Nat.Notation -- ℕ
 import Mathlib.Data.Set.Lattice -- sUnion (⋃₀)
 import Mathlib.Data.Set.Basic -- inter etc
 import Std.Tactic.Basic -- byContra
+import Mathlib.Tactic.WLOG
+import Std.Logic
 
 -- TODO: Adhere to naming conventions specified in: https://leanprover-community.github.io/contribute/naming.html
 
@@ -149,6 +151,46 @@ theorem pairwise_disjoint_after_transformation (split : Split[ℕ]) (targetCell 
         | inr h_x_neq =>
           -- TODO: Again, this should be the same as the case above, with reversed roles of x and y
           sorry
+
+theorem pairwise_disjoint_after_transformation2
+    {split : Split[ℕ]}
+    {targetCell : Cell[ℕ]}
+    {n : ℕ}
+    -- TODO: Use ∉
+    (h_cells_inter_singleton_n : ∀ cell ∈ split, cell ∩ {n} = ∅)
+    (h_targetCell_in_split : targetCell ∈ split)
+    (h_split_pairwise_disjoint : cellsArePairwiseDisjoint split)
+  : cellsArePairwiseDisjoint (transformSplit split targetCell n) := by
+    intros x h_x y h_y h_neq
+    have := eq_or_ne (x, y) (targetCell, targetCell)
+    -- (x, y) = (targetCell, targetCell) ∨ (x, y) ≠ (targetCell, targetCell)
+    cases this with
+      -- (x, y) = (targetCell, targetCell)
+      | inl h_xy_eq_targetCell =>
+        simp at h_xy_eq_targetCell
+        rw [h_xy_eq_targetCell.left, h_xy_eq_targetCell.right] at h_neq
+        contradiction
+      -- (x, y) ≠ (targetCell, targetCell)
+      | inr h_xy_neq_targetCell =>
+        simp at h_xy_neq_targetCell
+        have := eq_or_ne y targetCell
+        -- y = targetCell ∨ y ≠ targetCell
+        cases this with
+          -- y = targetCell
+          | inl h_y_eq_targetCell =>
+            have h_y_eq_targetCell_not_not : ¬(¬y = targetCell) := by
+              exact not_not_intro (h_y_eq_targetCell)
+            --have h_x_neq_targetCell := (imp_iff_not (not_not_intro h_y_eq_targetCell)).mp
+            --have h_x_neq_targetCell : x = targetCell := imp_iff_not (b := ¬y = targetCell) h_y_eq_targetCell_not_not
+            sorry
+          -- y ≠ targetCell
+          | inr h_y_neq_targetCell =>
+            sorry
+        --wlog h_x_eq_targetCell : x = targetCell generalizing x y with h_wlog
+        --· rename' h_x_eq_targetCell => h_x_neq_targetCell
+        --  have h_y_eq_targetCell := Not.imp_symm h_xy_neq_targetCell
+        --  sorry
+        --· sorry
 
 #print Set.Nonempty.ne_empty
 
