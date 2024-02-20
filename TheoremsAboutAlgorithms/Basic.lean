@@ -178,8 +178,11 @@ theorem pairwise_disjoint_after_transformation2
         cases this with
           -- y = targetCell
           | inl h_y_eq_targetCell =>
-            have h_y_eq_targetCell_not_not : ¬(¬y = targetCell) := by
-              exact not_not_intro (h_y_eq_targetCell)
+            rw [propext imp_not_comm] at h_xy_neq_targetCell
+            have h_x_neq_targetCell := h_xy_neq_targetCell h_y_eq_targetCell
+            
+            --have h_y_eq_targetCell_not_not : ¬(¬y = targetCell) := by
+            --  exact not_not_intro (h_y_eq_targetCell)
             --have h_x_neq_targetCell := (imp_iff_not (not_not_intro h_y_eq_targetCell)).mp
             --have h_x_neq_targetCell : x = targetCell := imp_iff_not (b := ¬y = targetCell) h_y_eq_targetCell_not_not
             sorry
