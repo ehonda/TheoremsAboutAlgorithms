@@ -23,12 +23,12 @@ notation "Cell[" α "]" => Set α
 --       Cell[Cell[ℕ]]?
 notation:max "Split[" α "]" => Set (Set α)
 
-def cellsArePairwiseDisjoint {α : Type} (split : Split[α]) : Prop :=
+def CellsArePairwiseDisjoint {α : Type} (split : Split[α]) : Prop :=
   ∀ x ∈ split, ∀ y ∈ split, x ≠ y → x ∩ y = ∅
 
 -- TODO: Define type alias for Set (Set α)
 def isPartitionOf (baseSet : Cell[α]) (split : Split[α]) : Prop :=
-    cellsArePairwiseDisjoint split ∧ cellsAreNonEmpty ∧ unionOfSplitIsBaseSet
+    CellsArePairwiseDisjoint split ∧ cellsAreNonEmpty ∧ unionOfSplitIsBaseSet
   where
     cellsAreNonEmpty := ∀ x ∈ split, x ≠ ∅
     unionOfSplitIsBaseSet := ⋃₀ split = baseSet
@@ -58,13 +58,7 @@ def recursivePi (n : ℕ) : Set (Split[ℕ]) := ⋃ partition ∈ ℙ (n - 1), t
 --                                        Some basic facts we might need                                              --
 ------------------------------------------------------------------------------------------------------------------------
 
-example (s : Cell[ℕ]) : s.Nonempty → s ≠ ∅ := by
-  intro h
-  exact Set.Nonempty.ne_empty h
 
-example (n : ℕ) : Set.Nonempty {n} := by
-  use n
-  simp
 
 lemma transform_partition_disjoint (split : Split[ℕ]) (cell : Cell[ℕ]) (n : ℕ)
   : Disjoint {transformCell cell n} (split \ {cell}) := by
@@ -74,8 +68,8 @@ lemma transform_partition_disjoint (split : Split[ℕ]) (cell : Cell[ℕ]) (n : 
 theorem pairwise_disjoint_after_transformation (split : Split[ℕ]) (targetCell : Cell[ℕ]) (n : ℕ)
   : (∀ cell ∈ split, cell ∩ {n} = ∅)
       ∧ (targetCell ∈ split)
-      ∧ cellsArePairwiseDisjoint split
-    → cellsArePairwiseDisjoint (transformSplit split targetCell n) := by
+      ∧ CellsArePairwiseDisjoint split
+    → CellsArePairwiseDisjoint (transformSplit split targetCell n) := by
       -- Setup the hypotheses
       --     * A split is pairwise disjoint and none of it's cells contain n
       --     * We have an arbitrary cell x from the transformed split
@@ -159,8 +153,8 @@ theorem pairwise_disjoint_after_transformation2
     -- TODO: Use ∉
     (h_cells_inter_singleton_n : ∀ cell ∈ split, cell ∩ {n} = ∅)
     (h_targetCell_in_split : targetCell ∈ split)
-    (h_split_pairwise_disjoint : cellsArePairwiseDisjoint split)
-  : cellsArePairwiseDisjoint (transformSplit split targetCell n) := by
+    (h_split_pairwise_disjoint : CellsArePairwiseDisjoint split)
+  : CellsArePairwiseDisjoint (transformSplit split targetCell n) := by
     intros x h_x y h_y h_neq
     have := eq_or_ne (x, y) (targetCell, targetCell)
     -- (x, y) = (targetCell, targetCell) ∨ (x, y) ≠ (targetCell, targetCell)
@@ -180,7 +174,12 @@ theorem pairwise_disjoint_after_transformation2
           | inl h_y_eq_targetCell =>
             rw [propext imp_not_comm] at h_xy_neq_targetCell
             have h_x_neq_targetCell := h_xy_neq_targetCell h_y_eq_targetCell
-            
+            have h_y_not_in_split_sub_targetCell : y ∉ (split \ {targetCell}) := by
+              simp
+              intro
+              exact h_y_eq_targetCell
+            have h_x_in_transform : x ∈ transformSplit split targetCell n := by
+              sorry
             --have h_y_eq_targetCell_not_not : ¬(¬y = targetCell) := by
             --  exact not_not_intro (h_y_eq_targetCell)
             --have h_x_neq_targetCell := (imp_iff_not (not_not_intro h_y_eq_targetCell)).mp
