@@ -1,5 +1,6 @@
 import Mathlib.Init.Set
 import Mathlib.Data.Set.Lattice
+import Mathlib.Data.Set.Pairwise.Basic
 
 -- TODO: Adhere to naming conventions specified in: https://leanprover-community.github.io/contribute/naming.html
 
