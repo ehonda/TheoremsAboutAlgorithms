@@ -22,10 +22,40 @@ notation:max "Split[" α "]" => Set (Cell[α])
 def IsPartitionOfNatsUpToN {n : ℕ} (split : Split[Fin n]) : Prop
   := Setoid.IsPartition split
 
-def transformCell {n : ℕ} (cell : Cell[Fin n]) : Cell[Fin (n + 1)]
-  := Fin.succ '' cell ∪ {Fin.ofNat n}
+-- TODO: There must be an existing definition for this in the libraries. Find it and use it.
+def embedFinIntoFinSucc {n : ℕ} (i : Fin n) : Fin (n + 1) := ⟨i.val, (Nat.lt.step i.is_lt)⟩
 
---def f := Fin.succ (Fin 5)
+-- This is essentialy cell ↦ cell ∪ {n}
+def transformCell {n : ℕ} (cell : Cell[Fin n]) : Cell[Fin (n + 1)]
+  := insert (Fin.ofNat n) (embedFinIntoFinSucc '' cell)
+
+-- TODO: Look for a nicer proof of this.
+theorem transformCell_is_disjoint_union {n : ℕ} (cell : Cell[Fin n])
+  : Disjoint (embedFinIntoFinSucc '' cell) {Fin.ofNat n} := by
+    apply disjoint_iff.mpr
+    simp
+    intro k _
+    rw [embedFinIntoFinSucc, Fin.ofNat]
+    simp
+    apply lt_or_lt_iff_ne.mp
+    have : k.val < n := by simp
+    exact Or.inl this
+
+--def f := Fin.succ (4 : Fin 5)
+--
+--#check f
+--
+--example : f.val = 5 := by
+--  simp [f]
+--  rfl
+--
+--def g := embedFinIntoFinSucc (4 : Fin 5)
+--
+--#check g
+--
+--example : g.val = 4 := by
+--  simp [g]
+--  rfl
 
 --def g (i : Fin n) : Fin (n + 1) := match i with
 --  | ⟨i, hi⟩ => ⟨i, (Nat.lt.step hi)⟩
@@ -36,24 +66,13 @@ def transformCell {n : ℕ} (cell : Cell[Fin n]) : Cell[Fin (n + 1)]
 
 --#print f
 
-theorem transformCell_of_partition_is_disjoint_union
-    {n : ℕ}
-    {cell : Cell[Fin n]}
-    (split : Split[Fin n])
-    (h_cell : cell ∈ split)
-    (h_partition : IsPartitionOfNatsUpToN split)
-  : Disjoint (Fin.succ '' cell) {Fin.ofNat n} := by
-    apply disjoint_iff.mpr
-    sorry
+--#print Fin.ofNat
+--
+--def b : ℤ :=
+--  let a := (Fin.ofNat 4 : Fin 5)
+--  ↑a
 
---theorem transformCell_of_partition_is_disjoint_union
---    {split : Split[ℕ]}
---    {n : ℕ}
---    (cell : Cell[ℕ])
---    (h_cell : cell ∈ split)
---    (h_partition : split.IsPartitionOfNatsUpTo n)
---  : cell ∩ {n} = ∅ := by
---    have h_union : ⋃₀ split = Set.Ico 0 n := h_partition.2.2
---    have cell_subset : cell ⊆ Set.Ico 0 n := by
---      sorry
---    sorry
+-- TODO: How do we allow empty set for the target cell here (which is also why we don't require targetCell ∈ split)
+def transformSplit {n : ℕ} (split : Split[Fin n]) (targetCell : Cell[Fin n]) : Split[Fin (n + 1)]
+  -- TODO: Find a cleaner way to write this
+  := insert (transformCell targetCell) ((λ cell ↦ embedFinIntoFinSucc '' cell) '' (split \ {targetCell}))
