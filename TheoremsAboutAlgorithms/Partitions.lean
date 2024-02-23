@@ -3,10 +3,6 @@ import Init.Data.Fin.Basic
 
 -- TODO: Adhere to naming conventions specified in: https://leanprover-community.github.io/contribute/naming.html
 
-------------------------------------------------------------------------------------------------------------------------
---                                                  Definitions                                                       --
-------------------------------------------------------------------------------------------------------------------------
-
 -- TODO: Is notation really the right way to go here? It has the following disadvantages:
 --          * In lean infoview, terms of type Split[ℕ] are displayed as Cell[Cell[ℕ]].
 --          * We can't use dot notation for Split and Cell, e.g. cell.castSucc instead of Cell.castSucc cell.
@@ -24,10 +20,14 @@ import Init.Data.Fin.Basic
 notation "Cell[" α "]" => Set α
 notation:max "Split[" α "]" => Set (Cell[α])
 
+------------------------------------------------------------------------------------------------------------------------
+--                                                  Cells                                                             --
+------------------------------------------------------------------------------------------------------------------------
 
 def Cell.castSucc {n : ℕ} (cell : Cell[Fin n]) : Cell[Fin (n + 1)]
   := Fin.castSucc '' cell
 
+-- TODO: Use a more descriptive name for this (and namespace it).
 -- This is essentially cell ↦ {n} ∪ cell
 def transformCell {n : ℕ} (cell : Cell[Fin n]) : Cell[Fin (n + 1)]
   := (Cell.castSucc cell).insert (Fin.ofNat n)
@@ -42,12 +42,17 @@ theorem transformCell_is_disjoint_insert {n : ℕ} (cell : Cell[Fin n])
     have : k < n := by simp
     exact Or.inl this
 
+------------------------------------------------------------------------------------------------------------------------
+--                                                  Splits                                                            --
+------------------------------------------------------------------------------------------------------------------------
+
 def Split.castSucc {n : ℕ} (split : Split[Fin n]) : Split[Fin (n + 1)]
   := Cell.castSucc '' split
 
 def Split.removeCellAndCastSucc {n : ℕ} (split : Split[Fin n]) (cell : Cell[Fin n]) : Split[Fin (n + 1)]
   := Split.castSucc (split \ singleton cell)
 
+-- TODO: Use a more descriptive name for this (and namespace it).
 -- We don't require targetCell ∈ split, because we want to be able to have ∅ as a target cell as well.
 -- This is essentially split ↦ {transformCell targetCell} ∪ (split \ {targetCell})
 def transformSplit {n : ℕ} (split : Split[Fin n]) (targetCell : Cell[Fin n]) : Split[Fin (n + 1)]
@@ -71,5 +76,26 @@ theorem transformSplit_is_disjoint_insert {n : ℕ} (split : Split[Fin n]) (targ
     have := Set.ext_iff (s := Cell.castSucc cell) (t := transformCell targetCell)
     exact (not_congr this).mpr h_k
 
+-- TODO: Find a better name for this (and namespace it).
+def toSplitsWithN {n : ℕ} (split : Split[Fin n]) : Set (Split[Fin (n + 1)])
+  := {transformSplit split cell | cell ∈ split.insert ∅}
+
+------------------------------------------------------------------------------------------------------------------------
+--                                              Partitions                                                            --
+------------------------------------------------------------------------------------------------------------------------
+
 def Split.IsPartition {n : ℕ} (split : Split[Fin n]) : Prop
   := Setoid.IsPartition split
+
+def partitions (n : ℕ) : Set (Split[Fin n])
+  := {split | Split.IsPartition split}
+
+notation "ℙ[" n "]" => partitions n
+
+def recursivePartitions (n : ℕ) : Set (Split[Fin n])
+  -- TODO: Needs helper function wrapping (toSplitsWithN split) in the appropriate Fin.cast to get
+  --       Fin (n - 1 + 1) = Fin n in the types.
+  --:= ⋃ partition ∈ ℙ[n - 1], toSplitsWithN partition
+  := sorry
+
+notation "ℙᵣ[" n "]" => recursivePartitions n
