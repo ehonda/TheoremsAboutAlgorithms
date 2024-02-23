@@ -7,7 +7,14 @@ import Init.Data.Fin.Basic
 --                                                  Definitions                                                       --
 ------------------------------------------------------------------------------------------------------------------------
 
-universe u
+-- TODO: Is notation really the right way to go here? It has the following disadvantages:
+--          * In lean infoview, terms of type Split[ℕ] are displayed as Cell[Cell[ℕ]].
+--          * We can't use dot notation for Split and Cell, e.g. cell.castSucc instead of Cell.castSucc cell.
+--       Find a better way to define these types.
+
+-- TODO: Is it better to use insert or the mathematical notation for set union using a singleton set (also for sdiff)?
+
+-- TODO: Add comments everywhere (and especially to theorems).
 
 -- Terminology:
 --   * A cell of a type α is a subset of α
@@ -15,64 +22,54 @@ universe u
 --   * A partition of a type α is a split of α such that the cells are pairwise disjoint and non-empty and their union
 --     is the base set.
 notation "Cell[" α "]" => Set α
--- TODO: How can we make it so in Lean infoview, terms of type Split[ℕ] are displayed not displayed as
---       Cell[Cell[ℕ]]?
 notation:max "Split[" α "]" => Set (Cell[α])
 
-def IsPartitionOfNatsUpToN {n : ℕ} (split : Split[Fin n]) : Prop
-  := Setoid.IsPartition split
 
--- TODO: There must be an existing definition for this in the libraries. Find it and use it.
-def embedFinIntoFinSucc {n : ℕ} (i : Fin n) : Fin (n + 1) := ⟨i.val, (Nat.lt.step i.is_lt)⟩
+def Cell.castSucc {n : ℕ} (cell : Cell[Fin n]) : Cell[Fin (n + 1)]
+  := Fin.castSucc '' cell
 
--- This is essentialy cell ↦ cell ∪ {n}
+-- This is essentially cell ↦ {n} ∪ cell
 def transformCell {n : ℕ} (cell : Cell[Fin n]) : Cell[Fin (n + 1)]
-  := insert (Fin.ofNat n) (embedFinIntoFinSucc '' cell)
+  := (Cell.castSucc cell).insert (Fin.ofNat n)
 
 -- TODO: Look for a nicer proof of this.
-theorem transformCell_is_disjoint_union {n : ℕ} (cell : Cell[Fin n])
-  : Disjoint (embedFinIntoFinSucc '' cell) {Fin.ofNat n} := by
+theorem transformCell_is_disjoint_insert {n : ℕ} (cell : Cell[Fin n])
+  : Disjoint {Fin.ofNat n} (Cell.castSucc cell) := by
     apply disjoint_iff.mpr
-    simp
+    simp [Cell.castSucc, Fin.castSucc, Fin.ofNat]
     intro k _
-    rw [embedFinIntoFinSucc, Fin.ofNat]
-    simp
     apply lt_or_lt_iff_ne.mp
-    have : k.val < n := by simp
+    have : k < n := by simp
     exact Or.inl this
 
---def f := Fin.succ (4 : Fin 5)
---
---#check f
---
---example : f.val = 5 := by
---  simp [f]
---  rfl
---
---def g := embedFinIntoFinSucc (4 : Fin 5)
---
---#check g
---
---example : g.val = 4 := by
---  simp [g]
---  rfl
+def Split.castSucc {n : ℕ} (split : Split[Fin n]) : Split[Fin (n + 1)]
+  := Cell.castSucc '' split
 
---def g (i : Fin n) : Fin (n + 1) := match i with
---  | ⟨i, hi⟩ => ⟨i, (Nat.lt.step hi)⟩
---
---def g' (i : Fin n) : Fin (n + 1) := ⟨i.val, (Nat.lt.step i.is_lt)⟩
---
---def g'' (_ : Fin n) : Fin (n + 1) := ⟨n, Nat.lt.base n⟩
+def Split.removeCellAndCastSucc {n : ℕ} (split : Split[Fin n]) (cell : Cell[Fin n]) : Split[Fin (n + 1)]
+  := Split.castSucc (split \ singleton cell)
 
---#print f
-
---#print Fin.ofNat
---
---def b : ℤ :=
---  let a := (Fin.ofNat 4 : Fin 5)
---  ↑a
-
--- TODO: How do we allow empty set for the target cell here (which is also why we don't require targetCell ∈ split)
+-- We don't require targetCell ∈ split, because we want to be able to have ∅ as a target cell as well.
+-- This is essentially split ↦ {transformCell targetCell} ∪ (split \ {targetCell})
 def transformSplit {n : ℕ} (split : Split[Fin n]) (targetCell : Cell[Fin n]) : Split[Fin (n + 1)]
-  -- TODO: Find a cleaner way to write this
-  := insert (transformCell targetCell) ((λ cell ↦ embedFinIntoFinSucc '' cell) '' (split \ {targetCell}))
+  := (Split.removeCellAndCastSucc split targetCell).insert (transformCell targetCell)
+
+theorem transformSplit_is_disjoint_insert {n : ℕ} (split : Split[Fin n]) (targetCell : Cell[Fin n])
+  : Disjoint {transformCell targetCell} (Split.removeCellAndCastSucc split targetCell) := by
+    apply disjoint_iff.mpr
+    simp [Split.removeCellAndCastSucc, Fin.castSucc, Split.castSucc]
+    intro cell _ _
+    have h_k : ¬ (∀ (x : Fin (n + 1)), x ∈ Cell.castSucc cell ↔ x ∈ transformCell targetCell) := by
+      simp [not_iff]
+      exists (Fin.ofNat n)
+      constructor
+      · intro
+        simp [transformCell]
+        exact Set.mem_insert _ _
+      · intro
+        apply Set.disjoint_singleton_left.mp
+        exact transformCell_is_disjoint_insert cell
+    have := Set.ext_iff (s := Cell.castSucc cell) (t := transformCell targetCell)
+    exact (not_congr this).mpr h_k
+
+def Split.IsPartition {n : ℕ} (split : Split[Fin n]) : Prop
+  := Setoid.IsPartition split
