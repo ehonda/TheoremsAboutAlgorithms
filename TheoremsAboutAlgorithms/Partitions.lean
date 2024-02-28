@@ -4,7 +4,7 @@ import Init.Data.Fin.Basic
 -- TODO: Adhere to naming conventions specified in: https://leanprover-community.github.io/contribute/naming.html
 
 -- TODO: Is notation really the right way to go here? It has the following disadvantages:
---          * In lean infoview, terms of type Split[ℕ] are displayed as Cell[Cell[ℕ]].
+--          * In lean infoview, terms of type Split (ℕ) are displayed as Cell (Cell[ℕ)].
 --          * We can't use dot notation for Split and Cell, e.g. cell.castSucc instead of Cell.castSucc cell.
 --       Find a better way to define these types.
 
@@ -17,23 +17,23 @@ import Init.Data.Fin.Basic
 --   * A split of a type α is a collection of cells of α.
 --   * A partition of a type α is a split of α such that the cells are pairwise disjoint and non-empty and their union
 --     is the base set.
-notation "Cell[" α "]" => Set α
-notation:max "Split[" α "]" => Set (Cell[α])
+abbrev Cell (n : ℕ) := Set (Fin n)
+abbrev Split (n : ℕ) := Set (Cell n)
 
 ------------------------------------------------------------------------------------------------------------------------
 --                                                  Cells                                                             --
 ------------------------------------------------------------------------------------------------------------------------
 
-def Cell.castSucc {n : ℕ} (cell : Cell[Fin n]) : Cell[Fin (n + 1)]
+def Cell.castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := Fin.castSucc '' cell
 
 -- TODO: Use a more descriptive name for this (and namespace it).
 -- This is essentially cell ↦ {n} ∪ cell
-def transformCell {n : ℕ} (cell : Cell[Fin n]) : Cell[Fin (n + 1)]
+def transformCell {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := (Cell.castSucc cell).insert (Fin.ofNat n)
 
 -- TODO: Look for a nicer proof of this.
-theorem transformCell_is_disjoint_insert {n : ℕ} (cell : Cell[Fin n])
+theorem transformCell_is_disjoint_insert {n : ℕ} (cell : Cell n)
   : Disjoint {Fin.ofNat n} (Cell.castSucc cell) := by
     apply disjoint_iff.mpr
     simp [Cell.castSucc, Fin.castSucc, Fin.ofNat]
@@ -46,19 +46,19 @@ theorem transformCell_is_disjoint_insert {n : ℕ} (cell : Cell[Fin n])
 --                                                  Splits                                                            --
 ------------------------------------------------------------------------------------------------------------------------
 
-def Split.castSucc {n : ℕ} (split : Split[Fin n]) : Split[Fin (n + 1)]
+def Split.castSucc {n : ℕ} (split : Split n) : Split (n + 1)
   := Cell.castSucc '' split
 
-def Split.removeCellAndCastSucc {n : ℕ} (split : Split[Fin n]) (cell : Cell[Fin n]) : Split[Fin (n + 1)]
+def Split.removeCellAndCastSucc {n : ℕ} (split : Split n) (cell : Cell n) : Split (n + 1)
   := Split.castSucc (split \ singleton cell)
 
 -- TODO: Use a more descriptive name for this (and namespace it).
 -- We don't require targetCell ∈ split, because we want to be able to have ∅ as a target cell as well.
 -- This is essentially split ↦ {transformCell targetCell} ∪ (split \ {targetCell})
-def transformSplit {n : ℕ} (split : Split[Fin n]) (targetCell : Cell[Fin n]) : Split[Fin (n + 1)]
+def transformSplit {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 1)
   := (Split.removeCellAndCastSucc split targetCell).insert (transformCell targetCell)
 
-theorem transformSplit_is_disjoint_insert {n : ℕ} (split : Split[Fin n]) (targetCell : Cell[Fin n])
+theorem transformSplit_is_disjoint_insert {n : ℕ} (split : Split n) (targetCell : Cell n)
   : Disjoint {transformCell targetCell} (Split.removeCellAndCastSucc split targetCell) := by
     apply disjoint_iff.mpr
     simp [Split.removeCellAndCastSucc, Fin.castSucc, Split.castSucc]
@@ -77,22 +77,22 @@ theorem transformSplit_is_disjoint_insert {n : ℕ} (split : Split[Fin n]) (targ
     exact (not_congr this).mpr h_k
 
 -- TODO: Find a better name for this (and namespace it).
-def toSplitsWithN {n : ℕ} (split : Split[Fin n]) : Set (Split[Fin (n + 1)])
+def toSplitsWithN {n : ℕ} (split : Split n) : Set (Split (n + 1))
   := {transformSplit split cell | cell ∈ split.insert ∅}
 
 ------------------------------------------------------------------------------------------------------------------------
 --                                              Partitions                                                            --
 ------------------------------------------------------------------------------------------------------------------------
 
-def Split.IsPartition {n : ℕ} (split : Split[Fin n]) : Prop
+def Split.IsPartition {n : ℕ} (split : Split n) : Prop
   := Setoid.IsPartition split
 
-def partitions (n : ℕ) : Set (Split[Fin n])
+def partitions (n : ℕ) : Set (Split n)
   := {split | Split.IsPartition split}
 
 notation "ℙ[" n "]" => partitions n
 
-def recursivePartitions (n : ℕ) : Set (Split[Fin n])
+def recursivePartitions (n : ℕ) : Set (Split n)
   -- TODO: Needs helper function wrapping (toSplitsWithN split) in the appropriate Fin.cast to get
   --       Fin (n - 1 + 1) = Fin n in the types.
   --:= ⋃ partition ∈ ℙ[n - 1], toSplitsWithN partition
