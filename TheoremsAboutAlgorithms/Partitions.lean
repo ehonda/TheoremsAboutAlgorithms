@@ -3,20 +3,19 @@ import Init.Data.Fin.Basic
 
 -- TODO: Adhere to naming conventions specified in: https://leanprover-community.github.io/contribute/naming.html
 
--- TODO: Is notation really the right way to go here? It has the following disadvantages:
---          * In lean infoview, terms of type Split (ℕ) are displayed as Cell (Cell[ℕ)].
---          * We can't use dot notation for Split and Cell, e.g. cell.castSucc instead of Cell.castSucc cell.
---       Find a better way to define these types.
-
 -- TODO: Is it better to use insert or the mathematical notation for set union using a singleton set (also for sdiff)?
 
 -- TODO: Add comments everywhere (and especially to theorems).
 
 -- Terminology:
---   * A cell of a type α is a subset of α
---   * A split of a type α is a collection of cells of α.
---   * A partition of a type α is a split of α such that the cells are pairwise disjoint and non-empty and their union
---     is the base set.
+--   * For any n : ℕ, a Cell n is a set of Fin n, i.e. a subset of the base set {0, 1, ..., n - 1}.
+--   * For any n : ℕ, a Split n is a set of Cell n, i.e. a collection of subsets of the base set {0, 1, ..., n - 1}.
+--
+-- By using Fin n to represent the base set, we can use the definition Setoid.IsPartition from the standard library
+-- to talk about partitions, which seems to present a nicer api than the one we would get by using Set ℕ and using
+-- the classical definition of a partition, like e.g. the definition on wikipedia:
+--
+--    https://en.wikipedia.org/wiki/Partition_of_a_set#Definition_and_notation
 abbrev Cell (n : ℕ) := Set (Fin n)
 abbrev Split (n : ℕ) := Set (Cell n)
 
