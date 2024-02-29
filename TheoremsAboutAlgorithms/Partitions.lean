@@ -7,6 +7,9 @@ import Init.Data.Fin.Basic
 
 -- TODO: Add comments everywhere (and especially to theorems).
 
+-- TODO: Use namespaces and group definitions and theorems accordingly, to not have to write explicit Cell. and Split.
+--       everywhere.
+
 -- Terminology:
 --   * For any n : ℕ, a Cell n is a set of Fin n, i.e. a subset of the base set {0, 1, ..., n - 1}.
 --   * For any n : ℕ, a Split n is a set of Cell n, i.e. a collection of subsets of the base set {0, 1, ..., n - 1}.
@@ -28,12 +31,12 @@ def Cell.castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
 
 -- TODO: Use a more descriptive name for this (and namespace it).
 -- This is essentially cell ↦ {n} ∪ cell
-def transformCell {n : ℕ} (cell : Cell n) : Cell (n + 1)
-  := (Cell.castSucc cell).insert (Fin.ofNat n)
+def Cell.transform {n : ℕ} (cell : Cell n) : Cell (n + 1)
+  := cell.castSucc.insert (Fin.ofNat n)
 
 -- TODO: Look for a nicer proof of this.
-theorem transformCell_is_disjoint_insert {n : ℕ} (cell : Cell n)
-  : Disjoint {Fin.ofNat n} (Cell.castSucc cell) := by
+theorem Cell.transform_is_disjoint_insert {n : ℕ} (cell : Cell n)
+  : Disjoint {Fin.ofNat n} cell.castSucc := by
     apply disjoint_iff.mpr
     simp [Cell.castSucc, Fin.castSucc, Fin.ofNat]
     intro k _
@@ -53,26 +56,26 @@ def Split.removeCellAndCastSucc {n : ℕ} (split : Split n) (cell : Cell n) : Sp
 
 -- TODO: Use a more descriptive name for this (and namespace it).
 -- We don't require targetCell ∈ split, because we want to be able to have ∅ as a target cell as well.
--- This is essentially split ↦ {transformCell targetCell} ∪ (split \ {targetCell})
+-- This is essentially split ↦ {targetCell.transform} ∪ (split \ {targetCell})
 def transformSplit {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 1)
-  := (Split.removeCellAndCastSucc split targetCell).insert (transformCell targetCell)
+  := (Split.removeCellAndCastSucc split targetCell).insert targetCell.transform
 
 theorem transformSplit_is_disjoint_insert {n : ℕ} (split : Split n) (targetCell : Cell n)
-  : Disjoint {transformCell targetCell} (Split.removeCellAndCastSucc split targetCell) := by
+  : Disjoint {targetCell.transform} (Split.removeCellAndCastSucc split targetCell) := by
     apply disjoint_iff.mpr
     simp [Split.removeCellAndCastSucc, Fin.castSucc, Split.castSucc]
     intro cell _ _
-    have h_k : ¬ (∀ (x : Fin (n + 1)), x ∈ Cell.castSucc cell ↔ x ∈ transformCell targetCell) := by
+    have h_k : ¬ (∀ (x : Fin (n + 1)), x ∈ cell.castSucc ↔ x ∈ targetCell.transform) := by
       simp [not_iff]
       exists (Fin.ofNat n)
       constructor
       · intro
-        simp [transformCell]
+        simp [Cell.transform]
         exact Set.mem_insert _ _
       · intro
         apply Set.disjoint_singleton_left.mp
-        exact transformCell_is_disjoint_insert cell
-    have := Set.ext_iff (s := Cell.castSucc cell) (t := transformCell targetCell)
+        exact Cell.transform_is_disjoint_insert cell
+    have := Set.ext_iff (s := cell.castSucc) (t := targetCell.transform)
     exact (not_congr this).mpr h_k
 
 -- TODO: Find a better name for this (and namespace it).
