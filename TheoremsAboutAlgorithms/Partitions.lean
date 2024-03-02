@@ -35,6 +35,7 @@ def Cell.castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := Fin.castSucc '' cell
 
 -- TODO: Maybe we can find a better name yet (it's alright, but not totally satisfactory).
+-- TODO: Call it Cell.insertSuccLast to be consistent with the naming of Fin.last
 -- This is essentially cell ↦ {n} ∪ cell
 def Cell.insertSuccMax {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := cell.castSucc.insert (Fin.ofNat n)
@@ -104,6 +105,27 @@ def Split.IsPartition {n : ℕ} (split : Split n) : Prop
 def partitions (n : ℕ) : Set (Split n)
   := {split | split.IsPartition}
 
+theorem partitions_0 : partitions 0 = {∅} := by
+  apply Set.eq_of_subset_of_subset
+  · intro split h
+    cases h with
+      | intro h_empty h_fin =>
+        sorry
+        --exact Set.mem_singleton_iff.mpr h_empty
+  · intro split h
+    --apply Setoid.IsPartition split
+    --exact Setoid.IsPartition.empty
+    sorry
+
+--theorem partitions_0_is_empty : partitions 0 = ∅ := by
+--  apply Set.eq_empty_iff_forall_not_mem.mpr
+--  intro split h
+--  cases h with
+--    | intro h_empty h_fin =>
+--      absurd h_empty
+--
+--      sorry
+
 abbrev ℙ (n : ℕ) := partitions n
 
 def recursivePartitions (n : ℕ) : Set (Split n)
@@ -112,6 +134,12 @@ def recursivePartitions (n : ℕ) : Set (Split n)
     | m + 1 => ⋃ partition ∈ ℙ m, partition.insertSuccMax' (Nat.succ_pos m)
 
 abbrev ℙᵣ (n : ℕ) := recursivePartitions n
+
+theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := by
+  intro split h
+  cases n with
+    | zero => sorry
+    | succ m => sorry
 
 theorem partitions_eq_recursivePartitions (n : ℕ) : ℙ n = ℙᵣ n := by
   sorry
