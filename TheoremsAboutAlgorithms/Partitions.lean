@@ -105,32 +105,40 @@ def Split.IsPartition {n : ℕ} (split : Split n) : Prop
 def partitions (n : ℕ) : Set (Split n)
   := {split | split.IsPartition}
 
+-- TODO: Improve this proof and add comments
 theorem partitions_0 : partitions 0 = {∅} := by
   apply Set.eq_of_subset_of_subset
   · intro split h
-    cases h with
-      | intro h_empty h_fin =>
-        sorry
-        --exact Set.mem_singleton_iff.mpr h_empty
+    simp
+    have := eq_or_ne split ∅
+    cases this with
+      | inl h_eq => exact h_eq
+      | inr h_ne =>
+        have := Set.nonempty_iff_ne_empty.mpr h_ne
+        cases this with
+          | intro cell h_cell =>
+            have := eq_or_ne cell ∅
+            cases this with
+              | inl h_eq =>
+                cases h with
+                  | intro h_empty _ => rw [h_eq] at h_cell ; contradiction
+              | inr h_ne' =>
+                have := Set.nonempty_iff_ne_empty.mpr h_ne'
+                cases this with
+                  | intro fin _ => apply Fin.elim0 fin
   · intro split h
-    --apply Setoid.IsPartition split
-    --exact Setoid.IsPartition.empty
-    sorry
-
---theorem partitions_0_is_empty : partitions 0 = ∅ := by
---  apply Set.eq_empty_iff_forall_not_mem.mpr
---  intro split h
---  cases h with
---    | intro h_empty h_fin =>
---      absurd h_empty
---
---      sorry
+    simp at h
+    have h_empty_not_mem : ∅ ∉ split := by simp [h]
+    have h_cover : ∀ (x : Fin 0), ∃! (cell : Cell 0), ∃! (_ : cell ∈ split), x ∈ cell := by
+      intro x
+      apply Fin.elim0 x
+    exact And.intro h_empty_not_mem h_cover
 
 abbrev ℙ (n : ℕ) := partitions n
 
 def recursivePartitions (n : ℕ) : Set (Split n)
   := match n with
-    | 0 => ∅
+    | 0 => {∅}
     | m + 1 => ⋃ partition ∈ ℙ m, partition.insertSuccMax' (Nat.succ_pos m)
 
 abbrev ℙᵣ (n : ℕ) := recursivePartitions n
@@ -138,7 +146,7 @@ abbrev ℙᵣ (n : ℕ) := recursivePartitions n
 theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := by
   intro split h
   cases n with
-    | zero => sorry
+    | zero => simp [partitions_0] at h ; exact h
     | succ m => sorry
 
 theorem partitions_eq_recursivePartitions (n : ℕ) : ℙ n = ℙᵣ n := by
