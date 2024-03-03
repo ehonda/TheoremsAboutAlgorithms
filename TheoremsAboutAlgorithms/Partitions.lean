@@ -36,14 +36,13 @@ def Cell.castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
 
 -- This is essentially cell ↦ {n} ∪ cell
 def Cell.insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
-  -- TODO: Maybe use Fin.last n instead of Fin.ofNat n
-  := cell.castSucc.insert (Fin.ofNat n)
+  := cell.castSucc.insert (Fin.last n)
 
 -- TODO: Look for a nicer proof of this.
 theorem Cell.insertLast_is_disjoint_insert {n : ℕ} (cell : Cell n)
-  : Disjoint {Fin.ofNat n} cell.castSucc := by
+  : Disjoint {Fin.last n} cell.castSucc := by
     apply disjoint_iff.mpr
-    simp [Cell.castSucc, Fin.castSucc, Fin.ofNat]
+    simp [Cell.castSucc, Fin.castSucc]
     intro k _
     apply lt_or_lt_iff_ne.mp
     have : k < n := by simp
@@ -75,7 +74,7 @@ theorem Split.insertLastAt_is_disjoint_insert {n : ℕ} (split : Split n) (targe
     intro cell _ _
     have h_k : ¬ (∀ (x : Fin (n + 1)), x ∈ cell.castSucc ↔ x ∈ targetCell.insertLast) := by
       simp [not_iff]
-      exists (Fin.ofNat n)
+      exists (Fin.last n)
       constructor
       · intro
         simp [Cell.insertLast]
