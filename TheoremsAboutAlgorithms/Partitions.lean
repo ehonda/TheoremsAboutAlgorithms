@@ -93,13 +93,35 @@ def Split.insertLast {n : ℕ} (split : Split n) : Set (Split (n + 1))
 def Split.insertLast' {n : ℕ} (h : n > 0) (split : Split (n - 1)) : Set (Split n)
   := Split.cast (Nat.sub_add_cancel h) '' split.insertLast
 
+-- These aren't too helpful, we want the more specialized versions for partitions with stronger claims.
+--def Split.cellsContaining {n : ℕ} (split : Split n) (x : Fin n) : Split n
+--  := {cell | x ∈ cell ∧ cell ∈ split}
+--
+---- This is kind of the inverse of the insertion operations above
+--def Split.removeLast {n : ℕ} (split : Split (n + 1)) : Split n
+--  := sorry
+--  --:= split \ {Fin.last n}
+
 ------------------------------------------------------------------------------------------------------------------------
 --                                              Partitions                                                            --
 ------------------------------------------------------------------------------------------------------------------------
 
+-- TODO: Namespace all of these
+
 def Split.IsPartition {n : ℕ} (split : Split n) : Prop
   := Setoid.IsPartition split
 
+-- TODO: Why can't we use e.g. partition.insertLast' for partition : Partition n?
+def Partition (n : ℕ) := {split : Split n // split.IsPartition}
+
+-- TODO: Can we provide this value constructively? How do we best encode that it contains Fin.last n?
+def Partition.cellContainingLast {n : ℕ} (partition : Partition (n + 1)) : Cell (n + 1)
+  := sorry
+--  := let split := partition.val
+--     let h := partition.property
+--     h.right (Fin.last n) _
+
+-- TODO: Should we somehow incorporate the subtype definition here?
 def partitions (n : ℕ) : Set (Split n)
   := {split | split.IsPartition}
 
@@ -141,6 +163,13 @@ def recursivePartitions (n : ℕ) : Set (Split n)
 
 abbrev ℙᵣ (n : ℕ) := recursivePartitions n
 
+-- TODO: Naming
+-- TODO: Better structure
+theorem partitions_m_is_partition (n : ℕ) (partition : Split n) (h : partition ∈ ℙ n)
+  : ∀ partition' : Split (n + 1), (partition' ∈ (partition.insertLast' (Nat.succ_pos n)) → partition'.IsPartition) := by
+  intro partition'
+  sorry
+
 theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := by
   intro split h
   cases n with
@@ -151,7 +180,25 @@ theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := 
           | intro _ h_cover => exact h_cover (Fin.ofNat m + 1)
       cases this with
         | intro cell h_cell_unique =>
+          -- TODO: Plan:
+          --        1. Take the split p' that results from removing the cell containing Fin.last m + 1 from split.
+          --        2. Show that this split is a partition of m.
+          --        3. Show that we get p from p' via the recursive construction.
+          sorry
+
+-- Maybe we can use Set.rangeSplitting here? It's noncomputable though.
+theorem recursivePartitions_subset_partitions (n : ℕ) : ℙᵣ n ⊆ ℙ n := by
+  intro split h
+  cases n with
+    | zero => simp [partitions_0, recursivePartitions] at * ; exact h
+    | succ m =>
+      -- TODO: Can we use something like Set.mem_range for this?
+      cases h with
+        | intro partitions h_partitions =>
+          -- TODO: Use partitions_m_is_partition
           sorry
 
 theorem partitions_eq_recursivePartitions (n : ℕ) : ℙ n = ℙᵣ n := by
-  sorry
+  apply Set.eq_of_subset_of_subset
+  · exact partitions_subset_recursivePartitions n
+  · exact recursivePartitions_subset_partitions n
