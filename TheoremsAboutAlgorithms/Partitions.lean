@@ -34,14 +34,13 @@ def Cell.cast {n m : ℕ} (h : n = m) (cell : Cell n) : Cell m
 def Cell.castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := Fin.castSucc '' cell
 
--- TODO: Maybe we can find a better name yet (it's alright, but not totally satisfactory).
--- TODO: Call it Cell.insertSuccLast to be consistent with the naming of Fin.last
 -- This is essentially cell ↦ {n} ∪ cell
-def Cell.insertSuccMax {n : ℕ} (cell : Cell n) : Cell (n + 1)
+def Cell.insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
+  -- TODO: Maybe use Fin.last n instead of Fin.ofNat n
   := cell.castSucc.insert (Fin.ofNat n)
 
 -- TODO: Look for a nicer proof of this.
-theorem Cell.insertSuccMax_is_disjoint_insert {n : ℕ} (cell : Cell n)
+theorem Cell.insertLast_is_disjoint_insert {n : ℕ} (cell : Cell n)
   : Disjoint {Fin.ofNat n} cell.castSucc := by
     apply disjoint_iff.mpr
     simp [Cell.castSucc, Fin.castSucc, Fin.ofNat]
@@ -66,34 +65,34 @@ def Split.removeCell {n : ℕ} (split : Split n) (cell : Cell n) : Split n
 -- TODO: Maybe we can find a better name yet (it's alright, but not totally satisfactory).
 -- We don't require targetCell ∈ split, because we want to be able to have ∅ as a target cell as well.
 -- This is essentially split ↦ {targetCell.transform} ∪ (split \ {targetCell})
-def Split.insertSuccMaxAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 1)
-  := (split.removeCell targetCell).castSucc.insert targetCell.insertSuccMax
+def Split.insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 1)
+  := (split.removeCell targetCell).castSucc.insert targetCell.insertLast
 
-theorem Split.insertSuccMaxAt_is_disjoint_insert {n : ℕ} (split : Split n) (targetCell : Cell n)
-  : Disjoint {targetCell.insertSuccMax} (split.removeCell targetCell).castSucc := by
+theorem Split.insertLastAt_is_disjoint_insert {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : Disjoint {targetCell.insertLast} (split.removeCell targetCell).castSucc := by
     apply disjoint_iff.mpr
     simp [Split.removeCell, Split.castSucc, Fin.castSucc]
     intro cell _ _
-    have h_k : ¬ (∀ (x : Fin (n + 1)), x ∈ cell.castSucc ↔ x ∈ targetCell.insertSuccMax) := by
+    have h_k : ¬ (∀ (x : Fin (n + 1)), x ∈ cell.castSucc ↔ x ∈ targetCell.insertLast) := by
       simp [not_iff]
       exists (Fin.ofNat n)
       constructor
       · intro
-        simp [Cell.insertSuccMax]
+        simp [Cell.insertLast]
         exact Set.mem_insert _ _
       · intro
         apply Set.disjoint_singleton_left.mp
-        exact Cell.insertSuccMax_is_disjoint_insert cell
-    have := Set.ext_iff (s := cell.castSucc) (t := targetCell.insertSuccMax)
+        exact Cell.insertLast_is_disjoint_insert cell
+    have := Set.ext_iff (s := cell.castSucc) (t := targetCell.insertLast)
     exact (not_congr this).mpr h_k
 
 -- TODO: Maybe we can find a better name yet (it's alright, but not totally satisfactory).
 -- TODO: Do we even need this if we have the version below?
-def Split.insertSuccMax {n : ℕ} (split : Split n) : Set (Split (n + 1))
-  := {split.insertSuccMaxAt cell | cell ∈ split.insert ∅}
+def Split.insertLast {n : ℕ} (split : Split n) : Set (Split (n + 1))
+  := {split.insertLastAt cell | cell ∈ split.insert ∅}
 
-def Split.insertSuccMax' {n : ℕ} (h : n > 0) (split : Split (n - 1)) : Set (Split n)
-  := Split.cast (Nat.sub_add_cancel h) '' split.insertSuccMax
+def Split.insertLast' {n : ℕ} (h : n > 0) (split : Split (n - 1)) : Set (Split n)
+  := Split.cast (Nat.sub_add_cancel h) '' split.insertLast
 
 ------------------------------------------------------------------------------------------------------------------------
 --                                              Partitions                                                            --
@@ -139,7 +138,7 @@ abbrev ℙ (n : ℕ) := partitions n
 def recursivePartitions (n : ℕ) : Set (Split n)
   := match n with
     | 0 => {∅}
-    | m + 1 => ⋃ partition ∈ ℙ m, partition.insertSuccMax' (Nat.succ_pos m)
+    | m + 1 => ⋃ partition ∈ ℙ m, partition.insertLast' (Nat.succ_pos m)
 
 abbrev ℙᵣ (n : ℕ) := recursivePartitions n
 
@@ -147,7 +146,13 @@ theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := 
   intro split h
   cases n with
     | zero => simp [partitions_0] at h ; exact h
-    | succ m => sorry
+    | succ m =>
+      have : ∃! (cell : Cell (m + 1)), ∃! (h_cell : cell ∈ split), (Fin.ofNat m + 1) ∈ cell := by
+        cases h with
+          | intro _ h_cover => exact h_cover (Fin.ofNat m + 1)
+      cases this with
+        | intro cell h_cell_unique =>
+          sorry
 
 theorem partitions_eq_recursivePartitions (n : ℕ) : ℙ n = ℙᵣ n := by
   sorry
