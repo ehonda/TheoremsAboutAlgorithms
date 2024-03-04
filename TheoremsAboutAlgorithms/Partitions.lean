@@ -31,12 +31,18 @@ abbrev Split (n : ℕ) := Set (Cell n)
 def Cell.cast {n m : ℕ} (h : n = m) (cell : Cell n) : Cell m
   := Fin.cast h '' cell
 
+theorem Cell.cast_nonempty_iff {n m : ℕ} (h : n = m) (cell : Cell n)
+  : (cell.cast h).Nonempty ↔ cell.Nonempty := by simp [Cell.cast]
+
 def Cell.castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := Fin.castSucc '' cell
 
 -- This is essentially cell ↦ {n} ∪ cell
 def Cell.insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := cell.castSucc.insert (Fin.last n)
+
+theorem Cell.insertLast_nonempty {n : ℕ} (cell : Cell n) : cell.insertLast.Nonempty
+  := Set.insert_nonempty _ _
 
 -- TODO: Look for a nicer proof of this.
 theorem Cell.insertLast_is_disjoint_insert {n : ℕ} (cell : Cell n)
@@ -55,6 +61,9 @@ theorem Cell.insertLast_is_disjoint_insert {n : ℕ} (cell : Cell n)
 def Split.cast {n m : ℕ} (h : n = m) (split : Split n) : Split m
   := Cell.cast h '' split
 
+theorem Split.cast_nonempty_iff {n m : ℕ} (h : n = m) (split : Split n)
+  : (split.cast h).Nonempty ↔ split.Nonempty := by simp [Split.cast]
+
 def Split.castSucc {n : ℕ} (split : Split n) : Split (n + 1)
   := Cell.castSucc '' split
 
@@ -66,6 +75,10 @@ def Split.removeCell {n : ℕ} (split : Split n) (cell : Cell n) : Split n
 -- This is essentially split ↦ {targetCell.transform} ∪ (split \ {targetCell})
 def Split.insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 1)
   := (split.removeCell targetCell).castSucc.insert targetCell.insertLast
+
+theorem Split.insertLastAt_nonempty {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : (split.insertLastAt targetCell).Nonempty
+    := Set.insert_nonempty _ _
 
 theorem Split.insertLastAt_is_disjoint_insert {n : ℕ} (split : Split n) (targetCell : Cell n)
   : Disjoint {targetCell.insertLast} (split.removeCell targetCell).castSucc := by
@@ -90,8 +103,34 @@ theorem Split.insertLastAt_is_disjoint_insert {n : ℕ} (split : Split n) (targe
 def Split.insertLast {n : ℕ} (split : Split n) : Set (Split (n + 1))
   := {split.insertLastAt cell | cell ∈ split.insert ∅}
 
+theorem Split.insertLast_nonempty_of_mem
+  {n : ℕ}
+  {split : Split n}
+  {split' : Split (n + 1)}
+  (h : split' ∈ Split.insertLast split)
+  : split'.Nonempty := by
+    simp [Split.insertLast] at h
+    cases h with
+      | intro cell h_cell =>
+        rw [← h_cell.right]
+        exact Split.insertLastAt_nonempty _ _
+
 def Split.insertLast' {n : ℕ} (h : n > 0) (split : Split (n - 1)) : Set (Split n)
   := Split.cast (Nat.sub_add_cancel h) '' split.insertLast
+
+theorem Split.insertLast'_nonempty_of_mem
+  {n : ℕ}
+  {h : n > 0}
+  {split : Split (n - 1)}
+  {split' : Split n}
+  (h : split' ∈ Split.insertLast' h split)
+  : split'.Nonempty := by
+    simp [Split.insertLast'] at h
+    cases h with
+      | intro split'' h_split'' =>
+        rw [← h_split''.right]
+        have h_split''_nonempty : split''.Nonempty := Split.insertLast_nonempty_of_mem h_split''.left
+        simp [Split.cast_nonempty_iff, h_split''_nonempty]
 
 -- These aren't too helpful, we want the more specialized versions for partitions with stronger claims.
 --def Split.cellsContaining {n : ℕ} (split : Split n) (x : Fin n) : Split n
@@ -163,12 +202,22 @@ def recursivePartitions (n : ℕ) : Set (Split n)
 
 abbrev ℙᵣ (n : ℕ) := recursivePartitions n
 
--- TODO: Naming
--- TODO: Better structure
-theorem partitions_m_is_partition (n : ℕ) (partition : Split n) (h : partition ∈ ℙ n)
-  : ∀ partition' : Split (n + 1), (partition' ∈ (partition.insertLast' (Nat.succ_pos n)) → partition'.IsPartition) := by
-  intro partition'
-  sorry
+-- Here we show that if we take a partition of Fin n and apply the operation partition.insertLast', then every resulting
+-- split' is a partition of Fin (n + 1).
+-- TODO: What namespace should this reside in?
+theorem Partition.insertLast'_produces_partitions
+    {n : ℕ}
+    {partition : Split n}
+    {split : Split (n + 1)}
+    {h_pos : n + 1 > 0}
+    (h_partition : partition ∈ ℙ n)
+    (h_split : split ∈ partition.insertLast' h_pos)
+  : split.IsPartition := by
+    have h_empty_not_mem : ∅ ∉ split := by
+      sorry
+    have h_cover : ∀ (x : Fin (n + 1)), ∃! (cell : Cell (n + 1)), ∃! (_ : cell ∈ split), x ∈ cell := by
+      sorry
+    exact And.intro h_empty_not_mem h_cover
 
 theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := by
   intro split h
@@ -195,7 +244,7 @@ theorem recursivePartitions_subset_partitions (n : ℕ) : ℙᵣ n ⊆ ℙ n := 
       -- TODO: Can we use something like Set.mem_range for this?
       cases h with
         | intro partitions h_partitions =>
-          -- TODO: Use partitions_m_is_partition
+          -- TODO: Use Partition.insertLast'_produces_partitions
           sorry
 
 theorem partitions_eq_recursivePartitions (n : ℕ) : ℙ n = ℙᵣ n := by
