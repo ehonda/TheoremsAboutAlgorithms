@@ -61,11 +61,28 @@ theorem Cell.insertLast_is_disjoint_insert {n : ℕ} (cell : Cell n)
 def Split.cast {n m : ℕ} (h : n = m) (split : Split n) : Split m
   := Cell.cast h '' split
 
+--theorem Split.cast_empty_not_mem_of_empty_not_mem {n m : ℕ} (h : n = m) (split : Split n) (h_empty : ∅ ∉ split)
+--  : ∅ ∉ split.cast h := by
+--    simp [Split.cast]
+--    intro x h_x_mem
+--    simp [Cell.cast]
+--    -- TODO: Show ∅ ∉ split → x ∈ split → ¬x = ∅
+--    sorry
+
+theorem Split.cast_empty_not_mem_iff {n m : ℕ} (h : n = m) (split : Split n)
+  : ∅ ∉ split.cast h ↔ ∅ ∉ split := by
+    -- TODO: Proof
+    sorry
+
 theorem Split.cast_nonempty_iff {n m : ℕ} (h : n = m) (split : Split n)
   : (split.cast h).Nonempty ↔ split.Nonempty := by simp [Split.cast]
 
 def Split.castSucc {n : ℕ} (split : Split n) : Split (n + 1)
   := Cell.castSucc '' split
+
+-- TODO: Fix naming elem -> mem
+theorem Split.castSucc_empty_elem_iff {n : ℕ} (split : Split n)
+  : ∅ ∈ split.castSucc ↔ ∅ ∈ split := by simp [Split.castSucc, Cell.castSucc]
 
 def Split.removeCell {n : ℕ} (split : Split n) (cell : Cell n) : Split n
   := split \ singleton cell
@@ -79,6 +96,28 @@ def Split.insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split
 theorem Split.insertLastAt_nonempty {n : ℕ} (split : Split n) (targetCell : Cell n)
   : (split.insertLastAt targetCell).Nonempty
     := Set.insert_nonempty _ _
+
+-- TODO: Can we simplify this proof?
+theorem Split.insertLastAt_empty_not_mem_of_empty_not_mem
+  {n : ℕ} (split : Split n) (targetCell : Cell n) (h : ∅ ∉ split) : ∅ ∉ split.insertLastAt targetCell := by
+    simp [Split.insertLastAt]
+    intro h_empty_elem
+    cases h_empty_elem with
+      | inl h_elem_insertLast =>
+        have := Cell.insertLast_nonempty targetCell
+        -- TODO: There has to be an easier way to show Set.Nonempty x → ∅ = x → False
+        rw [← h_elem_insertLast] at this
+        cases this with
+          | intro x h_x_elem_empty =>
+            have := Set.mem_empty_iff_false x
+            apply this.mp
+            exact h_x_elem_empty
+      | inr h_elem_removeCell =>
+        simp [removeCell] at h_elem_removeCell
+        have := Set.diff_subset split {targetCell}
+        have h_empty_not_mem_diff := Set.not_mem_subset this h
+        have h_empty_mem_diff := (Split.castSucc_empty_elem_iff (split \ {targetCell})).mp h_elem_removeCell
+        contradiction
 
 theorem Split.insertLastAt_is_disjoint_insert {n : ℕ} (split : Split n) (targetCell : Cell n)
   : Disjoint {targetCell.insertLast} (split.removeCell targetCell).castSucc := by
@@ -131,15 +170,6 @@ theorem Split.insertLast'_nonempty_of_mem
         rw [← h_split''.right]
         have h_split''_nonempty : split''.Nonempty := Split.insertLast_nonempty_of_mem h_split''.left
         simp [Split.cast_nonempty_iff, h_split''_nonempty]
-
--- These aren't too helpful, we want the more specialized versions for partitions with stronger claims.
---def Split.cellsContaining {n : ℕ} (split : Split n) (x : Fin n) : Split n
---  := {cell | x ∈ cell ∧ cell ∈ split}
---
----- This is kind of the inverse of the insertion operations above
---def Split.removeLast {n : ℕ} (split : Split (n + 1)) : Split n
---  := sorry
---  --:= split \ {Fin.last n}
 
 ------------------------------------------------------------------------------------------------------------------------
 --                                              Partitions                                                            --
@@ -214,7 +244,13 @@ theorem Partition.insertLast'_produces_partitions
     (h_split : split ∈ partition.insertLast' h_pos)
   : split.IsPartition := by
     have h_empty_not_mem : ∅ ∉ split := by
-      sorry
+      simp [Split.insertLast', Split.insertLast] at h_split
+      cases h_split with
+        | intro cell h_cell =>
+          have h_empty_not_mem_split'
+            := Split.insertLastAt_empty_not_mem_of_empty_not_mem partition cell h_partition.left
+          rw [← h_cell.right]
+          exact (Split.cast_empty_not_mem_iff _ (partition.insertLastAt cell)).mpr h_empty_not_mem_split'
     have h_cover : ∀ (x : Fin (n + 1)), ∃! (cell : Cell (n + 1)), ∃! (_ : cell ∈ split), x ∈ cell := by
       sorry
     exact And.intro h_empty_not_mem h_cover
