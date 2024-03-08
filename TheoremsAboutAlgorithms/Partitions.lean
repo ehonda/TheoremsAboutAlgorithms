@@ -71,8 +71,7 @@ def Split.cast {n m : ℕ} (h : n = m) (split : Split n) : Split m
 
 theorem Split.cast_empty_not_mem_iff {n m : ℕ} (h : n = m) (split : Split n)
   : ∅ ∉ split.cast h ↔ ∅ ∉ split := by
-    -- TODO: Proof
-    sorry
+    constructor <;> intro _ _ <;> simp [Split.cast, Cell.cast] at * <;> contradiction
 
 theorem Split.cast_nonempty_iff {n m : ℕ} (h : n = m) (split : Split n)
   : (split.cast h).Nonempty ↔ split.Nonempty := by simp [Split.cast]
@@ -252,6 +251,7 @@ theorem Partition.insertLast'_produces_partitions
           rw [← h_cell.right]
           exact (Split.cast_empty_not_mem_iff _ (partition.insertLastAt cell)).mpr h_empty_not_mem_split'
     have h_cover : ∀ (x : Fin (n + 1)), ∃! (cell : Cell (n + 1)), ∃! (_ : cell ∈ split), x ∈ cell := by
+      -- TODO: Show this!
       sorry
     exact And.intro h_empty_not_mem h_cover
 
@@ -280,8 +280,14 @@ theorem recursivePartitions_subset_partitions (n : ℕ) : ℙᵣ n ⊆ ℙ n := 
       -- TODO: Can we use something like Set.mem_range for this?
       cases h with
         | intro partitions h_partitions =>
-          -- TODO: Use Partition.insertLast'_produces_partitions
-          sorry
+          simp at h_partitions
+          cases h_partitions.left with
+            | intro partition h_partition =>
+              -- TODO: Rewrite so it reads nicer
+              have := h_partitions.right
+              rw [← h_partition] at this
+              simp [Set.mem_iUnion] at this
+              exact Partition.insertLast'_produces_partitions this.left this.right
 
 theorem partitions_eq_recursivePartitions (n : ℕ) : ℙ n = ℙᵣ n := by
   apply Set.eq_of_subset_of_subset
