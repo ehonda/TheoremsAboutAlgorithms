@@ -31,6 +31,15 @@ abbrev Split (n : ℕ) := Set (Cell n)
 def Cell.cast {n m : ℕ} (h : n = m) (cell : Cell n) : Cell m
   := Fin.cast h '' cell
 
+theorem Fin.cast_injective {n m : ℕ} (h : n = m) : Function.Injective (Fin.cast h) := by
+  intro x y h
+  simp [cast] at h
+  exact Fin.ext h
+
+theorem Cell.cast_Injective {n m : ℕ} (h : n = m) : Function.Injective (Cell.cast h) := by
+  apply Set.image_injective.mpr
+  exact Fin.cast_injective h
+
 theorem Cell.cast_nonempty_iff {n m : ℕ} (h : n = m) (cell : Cell n)
   : (cell.cast h).Nonempty ↔ cell.Nonempty := by simp [Cell.cast]
 
@@ -91,6 +100,18 @@ def Split.removeCell {n : ℕ} (split : Split n) (cell : Cell n) : Split n
 -- This is essentially split ↦ {targetCell.transform} ∪ (split \ {targetCell})
 def Split.insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 1)
   := (split.removeCell targetCell).castSucc.insert targetCell.insertLast
+
+theorem Split.insertLastAt_castSucc_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : targetCell.castSucc ∈ split.insertLastAt targetCell := by
+    simp [Split.insertLastAt, Cell.insertLast]
+    sorry
+
+theorem Split.insertLastAt_Injective {n : ℕ} (split : Split n) : Function.Injective (split.insertLastAt) := by
+  intro x y h
+  --simp [Split.insertLastAt] at h
+  have := (Set.ext_iff (s := split.insertLastAt x) (t := split.insertLastAt y)).mp h x.castSucc
+  --simp [insertLastAt] at *
+  sorry
 
 theorem Split.insertLastAt_nonempty {n : ℕ} (split : Split n) (targetCell : Cell n)
   : (split.insertLastAt targetCell).Nonempty
