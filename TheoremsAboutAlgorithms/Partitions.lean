@@ -36,15 +36,55 @@ theorem Fin.cast_injective {n m : ℕ} (h : n = m) : Function.Injective (Fin.cas
   simp [cast] at h
   exact Fin.ext h
 
+theorem Fin.cast_surjective {n m : ℕ} (h : n = m) : Function.Surjective (Fin.cast h) := by
+  intro x
+  exists { val := x.val, isLt := by simp [h, x.is_lt] }
+
+theorem Fin.cast_bijective {n m : ℕ} (h : n = m) : Function.Bijective (Fin.cast h)
+  := ⟨Fin.cast_injective h, Fin.cast_surjective h⟩
+
 theorem Cell.cast_Injective {n m : ℕ} (h : n = m) : Function.Injective (Cell.cast h) := by
   apply Set.image_injective.mpr
   exact Fin.cast_injective h
+
+theorem Cell.cast_surjective {n m : ℕ} (h : n = m) : Function.Surjective (Cell.cast h) := by
+  apply Set.image_surjective.mpr
+  exact Fin.cast_surjective h
+
+theorem Cell.cast_bijective {n m : ℕ} (h : n = m) : Function.Bijective (Cell.cast h)
+  := ⟨Cell.cast_Injective h, Cell.cast_surjective h⟩
 
 theorem Cell.cast_nonempty_iff {n m : ℕ} (h : n = m) (cell : Cell n)
   : (cell.cast h).Nonempty ↔ cell.Nonempty := by simp [Cell.cast]
 
 def Cell.castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := Fin.castSucc '' cell
+
+-- Fin.castSucc_injective is already a theorem in Mathlib.Data.Fin.Basic
+theorem Cell.castSucc_injective (n : ℕ) : Function.Injective (Cell.castSucc (n := n)) := by
+  apply Set.image_injective.mpr
+  exact Fin.castSucc_injective n
+
+-- TODO: We don't have surjective / bijective for Cell.castSucc as Fin.last has no preimage. We could however prove it
+--       for the restriction of Cell.castSucc to cells not containing n, but it's not clea how to best do that.
+--
+--       For now we use those "exists_preimage_of_ne_last" theorems to show what we need (but there could be better
+--       abstractions to use).
+theorem Fin.castSucc_exists_preimage_of_ne_last {n : ℕ} {x : Fin (n + 1)} (hx : x ≠ Fin.last n)
+  : ∃! (y : Fin n), y.castSucc = x := by
+    have h_x_lt_n : ↑x < n := by sorry
+    exists { val := x.val, isLt := h_x_lt_n }
+    simp
+    intro y hy
+    sorry
+    --have : castSucc x = { val := x.val, isLt := h_x_lt_n } := by sorry
+
+--theorem Cell.castSucc_exists_preimage_of_ne_last
+--    {n : ℕ}
+--    (cell : Cell n)
+--    (h : ∀ (x : Fin n), x ≠ Fin.last n)
+--  : ∃! (cell' : Cell n), cell'.castSucc = cell := by
+
 
 -- This is essentially cell ↦ {n} ∪ cell
 def Cell.insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
