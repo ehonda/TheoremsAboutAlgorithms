@@ -96,28 +96,46 @@ theorem insertLast'_produces_partitions
           exact (Split.cast_empty_not_mem_iff _ (partition.insertLastAt cell)).mpr h_empty_not_mem_split'
     have h_cover : ∀ (x : Fin (n + 1)), ∃! (cell : Cell (n + 1)), ∃! (_ : cell ∈ split), x ∈ cell := by
       intro x
-      have := eq_or_ne x (Fin.last n)
-      cases this with
-        | inl h_eq =>
-          -- TODO:
-          sorry
-        | inr h_ne =>
-          simp [Split.insertLast', Split.insertLast] at h_split
-          have x' := Fin.castPred x h_ne
-          have := h_partition.right x'
+      simp [Split.insertLast', Split.insertLast] at h_split
+      cases h_split with
+        | intro targetCell h_targetCell =>
+          have := eq_or_ne x (Fin.last n)
           cases this with
-            | intro cell h_cell =>
-              simp at h_cell
-              have cell' := Cell.castSucc cell
-              exists cell'
-              simp
-              -- TODO: We need to show that casting cell yields cell' and have covering of x' and uniqueness follow from
-              --       that.
-              constructor
-              · constructor
-                · sorry
-                · sorry
-              · sorry
+            | inl h_eq =>
+              -- Here we have x = Fin.last n. We know that n is not in any cell of partition, which we can use to show
+              -- that it must be in the result of the insert operation.
+              -- TODO: Show that for any targetCell, after Split.insertLastAt we have exactly one cell that contains
+              --       Fin.last n.
+              sorry
+            | inr h_ne =>
+              -- Here we have x ≠ Fin.last n. We know that x is in some cell of partition.
+              -- If that cell is not the targetCell, we can use castSucc on it and have our unique cell that contains x.
+              -- If it is the targetCell, maybe we can do the following: Remove n from the targetCell:
+              --   * If the resulting cell is not empty, we have a preimage and can use that to show uniqueness
+              --     * TODO: Show that for any cell in Split.insertLastAt, if we remove n from it, we get a cell in the
+              --            original split (if the result is not empty)
+              --   * If the resulting cell is empty, ... (TODO)
+              sorry
+      --cases this with
+      --  | inl h_eq =>
+      --    -- Here we have x = Fin.last n.
+      --    sorry
+      --  | inr h_ne =>
+      --    have x' := Fin.castPred x h_ne
+      --    have := h_partition.right x'
+      --    cases this with
+      --      | intro cell h_cell =>
+      --        simp at h_cell
+      --        have cell' := Cell.castSucc cell
+      --        exists cell'
+      --        simp
+      --        -- TODO: We need to show that casting cell yields cell' and have covering of x' and uniqueness follow from
+      --        --       that.
+      --        constructor
+      --        · constructor
+      --          · sorry
+      --          · sorry
+      --        · sorry
     exact And.intro h_empty_not_mem h_cover
 
 theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := by

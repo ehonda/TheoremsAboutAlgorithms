@@ -86,6 +86,85 @@ theorem insertLastAt_is_disjoint_insert {n : ℕ} (split : Split n) (targetCell 
     have := Set.ext_iff (s := cell.castSucc) (t := targetCell.insertLast)
     exact (not_congr this).mpr h_k
 
+-- Helper prop
+def InSplitInsertLastAtAndContainsLast {n : ℕ} (split : Split n) (targetCell : Cell n) (cell : Cell (n + 1)) : Prop
+  := cell ∈ split.insertLastAt targetCell ∧ Fin.last n ∈ cell
+
+theorem exists_contains_last {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : ∃ (cell : Cell (n + 1)), InSplitInsertLastAtAndContainsLast split targetCell cell := by
+    simp [InSplitInsertLastAtAndContainsLast, insertLastAt, Set.insert, Cell.insertLast]
+
+theorem last_not_mem_of_mem_removeCell_castSucc {n : ℕ} (split : Split n) (targetCell : Cell n) (cell : Cell (n + 1)) (h : cell ∈ (split.removeCell targetCell).castSucc)
+  : Fin.last n ∉ cell := by
+    simp [removeCell, castSucc, Fin.castSucc] at h
+    cases h with
+      | intro cell_pre h_cell_pre =>
+        rw [← h_cell_pre.right]
+        simp [Cell.castSucc]
+        intro x h_x_mem
+        have := Fin.castSucc_lt_last x
+        -- TODO
+        sorry
+
+theorem unique_contains_last {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : ∀ (cell₁ cell₂ : Cell (n + 1)), InSplitInsertLastAtAndContainsLast split targetCell cell₁ → InSplitInsertLastAtAndContainsLast split targetCell cell₂ → cell₁ = cell₂ := by
+    intros cell₁ cell₂ h₁ h₂
+    simp [InSplitInsertLastAtAndContainsLast, insertLastAt, Set.insert] at *
+    -- TODO: Factor out into lemma
+    have h_cell₁ : cell₁ = targetCell.insertLast := by
+      have h_not_in_right : cell₁ ∉ (split.removeCell targetCell).castSucc := by
+        -- TODO: Use last_not_mem_of_mem_removeCell_castSucc
+        sorry
+      apply (or_iff_left (a := cell₁ = targetCell.insertLast) (b := cell₁ ∈ (split.removeCell targetCell).castSucc) h_not_in_right).mp
+      exact h₁.left
+    have h_cell₂ : cell₂ = targetCell.insertLast := by
+      have h_not_in_right : cell₂ ∉ (split.removeCell targetCell).castSucc := by
+        sorry
+      apply (or_iff_left (a := cell₂ = targetCell.insertLast) (b := cell₂ ∈ (split.removeCell targetCell).castSucc) h_not_in_right).mp
+      exact h₂.left
+    rw [h_cell₁, h_cell₂]
+
+-- NOTE: This can be used in insertLast'_produces_partitions
+theorem insertLastAt_unique_cell_last_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
+  --: ExistsUnique (λ (cell : Cell (n + 1)) ↦ cell ∈ split.insertLastAt targetCell ∧ Fin.last n ∈ cell)
+  : ∃! (cell : Cell (n + 1)), InSplitInsertLastAtAndContainsLast split targetCell cell
+    := exists_unique_of_exists_of_unique (exists_contains_last split targetCell) (unique_contains_last split targetCell)
+
+--theorem insertLastAt_unique_cell_last_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
+--  : ExistsUnique (InSplitInsertLastAtAndContainsLast split targetCell) := by
+--    constructor
+--    · constructor
+--      · sorry
+--      · sorry
+--    · sorry
+
+-- TODO: Show that for any targetCell, after Split.insertLastAt we have exactly one cell that contains
+--       Fin.last n.
+-- TODO: Naming
+--theorem insertLastAt_unique_cell_last_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
+--  --: ∃! (cell : Cell (n + 1)), cell ∈ split.insertLastAt targetCell ∧ Fin.last n ∈ cell := by
+--  : ∃! (cell : _) (_ : cell ∈ split.insertLastAt targetCell), Fin.last n ∈ cell := by
+--    -- TODO: constructor doesn't seem to work here, it introduces a meta variable. Use some ExistsUnique.intro or
+--    --       something like that.
+--    --apply ExistsUnique.intro (α := Cell (n + 1))
+--    constructor
+--    · constructor
+--      · sorry
+--      · intro cell h_cell
+--    -- This seems to be that we have to show that there exists an arbitrary value of type Cell (n + 1)
+--    · exact targetCell.castSucc
+--theorem insertLastAt_unique_cell_last_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
+--  : ExistsUnique (λ (cell : Cell (n + 1)) ↦ cell ∈ split.insertLastAt targetCell ∧ Fin.last n ∈ cell) := by
+--    --apply ExistsUnique.intro (α := Cell (n + 1))
+--    constructor
+--    simp
+--    constructor
+--    · constructor
+--      · sorry
+--      · sorry
+--    · sorry
+
+
 -- TODO: Maybe we can find a better name yet (it's alright, but not totally satisfactory).
 -- TODO: Do we even need this if we have the version below?
 def insertLast {n : ℕ} (split : Split n) : Set (Split (n + 1))
