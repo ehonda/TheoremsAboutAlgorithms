@@ -32,4 +32,21 @@ theorem castSucc_injective (n : ℕ) : Function.Injective (castSucc (n := n)) :=
   apply Set.image_injective.mpr
   exact Fin.castSucc_injective n
 
+-- This is essentially cell ↦ {n} ∪ cell
+def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
+  := cell.castSucc.insert (Fin.last n)
+
+theorem insertLast_nonempty {n : ℕ} (cell : Cell n) : cell.insertLast.Nonempty
+  := Set.insert_nonempty _ _
+
+-- TODO: Look for a nicer proof of this.
+theorem insertLast_is_disjoint_insert {n : ℕ} (cell : Cell n)
+  : Disjoint {Fin.last n} cell.castSucc := by
+    apply disjoint_iff.mpr
+    simp [castSucc, Fin.castSucc]
+    intro k _
+    apply lt_or_lt_iff_ne.mp
+    have : k < n := by simp
+    exact Or.inl this
+
 end Cell
