@@ -21,13 +21,16 @@ theorem cast_bijective {n m : ℕ} (h : n = m) : Function.Bijective (cast h)
 --
 --       For now we use those "exists_preimage_of_ne_last" theorems to show what we need (but there could be better
 --       abstractions to use).
+--
+-- TODO: This seems pretty involved, maybe there's an easier way to do this?
 theorem castSucc_exists_preimage_of_ne_last {n : ℕ} {x : Fin (n + 1)} (hx : x ≠ last n)
   : ∃! (y : Fin n), y.castSucc = x := by
-    have h_x_lt_n : ↑x < n := by sorry
+    have h_x_lt_n : ↑x < n := val_lt_last hx
     exists { val := x.val, isLt := h_x_lt_n }
     simp
     intro y hy
-    sorry
-    --have : castSucc x = { val := x.val, isLt := h_x_lt_n } := by sorry
+    simp [castSucc, castAdd, castLE] at hy
+    apply (eq_mk_iff_val_eq (a := y) (hk := h_x_lt_n)).mpr
+    rw [← hy]
 
 end Fin
