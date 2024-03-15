@@ -106,7 +106,12 @@ theorem insertLast'_produces_partitions
               -- that it must be in the result of the insert operation.
               -- TODO: Show that for any targetCell, after Split.insertLastAt we have exactly one cell that contains
               --       Fin.last n.
-              sorry
+              have := Split.insertLastAt_unique_cell_last_mem partition targetCell
+              cases this with
+                | intro cell h_cell =>
+                  simp at *
+                  -- TODO: Use h_cell to build the conclusion
+                  sorry
             | inr h_ne =>
               -- Here we have x ≠ Fin.last n. We know that x is in some cell of partition.
               -- If that cell is not the targetCell, we can use castSucc on it and have our unique cell that contains x.

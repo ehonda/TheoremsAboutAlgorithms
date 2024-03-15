@@ -21,6 +21,17 @@ def castSucc {n : ℕ} (split : Split n) : Split (n + 1)
 theorem castSucc_empty_elem_iff {n : ℕ} (split : Split n)
   : ∅ ∈ split.castSucc ↔ ∅ ∈ split := by simp [castSucc, Cell.castSucc]
 
+-- TODO: This is more general than last_not_mem_of_mem_removeCell_castSucc right? We don't need the other one
+theorem castSucc_last_not_mem_of_mem {n : ℕ} {split : Split n} {cell : Cell (n + 1)} (h : cell ∈ split.castSucc)
+  : Fin.last n ∉ cell := by
+    simp [castSucc, Cell.castSucc] at h
+    cases h with
+      | intro cell_pre h_cell_pre =>
+        rw [← h_cell_pre.right]
+        simp
+        intro x _
+        exact Fin.ne_of_lt (Fin.castSucc_lt_last x)
+
 def removeCell {n : ℕ} (split : Split n) (cell : Cell n) : Split n
   := split \ singleton cell
 
@@ -30,17 +41,17 @@ def removeCell {n : ℕ} (split : Split n) (cell : Cell n) : Split n
 def insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 1)
   := (split.removeCell targetCell).castSucc.insert targetCell.insertLast
 
-theorem insertLastAt_castSucc_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
-  : targetCell.castSucc ∈ split.insertLastAt targetCell := by
-    simp [insertLastAt, Cell.insertLast]
-    sorry
-
-theorem insertLastAt_Injective {n : ℕ} (split : Split n) : Function.Injective (split.insertLastAt) := by
-  intro x y h
-  --simp [insertLastAt] at h
-  have := (Set.ext_iff (s := split.insertLastAt x) (t := split.insertLastAt y)).mp h x.castSucc
-  --simp [insertLastAt] at *
-  sorry
+--theorem insertLastAt_castSucc_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
+--  : targetCell.castSucc ∈ split.insertLastAt targetCell := by
+--    simp [insertLastAt, Cell.insertLast]
+--    sorry
+--
+--theorem insertLastAt_Injective {n : ℕ} (split : Split n) : Function.Injective (split.insertLastAt) := by
+--  intro x y h
+--  --simp [insertLastAt] at h
+--  have := (Set.ext_iff (s := split.insertLastAt x) (t := split.insertLastAt y)).mp h x.castSucc
+--  --simp [insertLastAt] at *
+--  sorry
 
 theorem insertLastAt_nonempty {n : ℕ} (split : Split n) (targetCell : Cell n)
   : (split.insertLastAt targetCell).Nonempty
@@ -101,25 +112,28 @@ theorem last_not_mem_of_mem_removeCell_castSucc {n : ℕ} (split : Split n) (tar
       | intro cell_pre h_cell_pre =>
         rw [← h_cell_pre.right]
         simp [Cell.castSucc]
-        intro x h_x_mem
-        have := Fin.castSucc_lt_last x
-        -- TODO
-        sorry
+        intro x _
+        exact Fin.ne_of_lt (Fin.castSucc_lt_last x)
 
 theorem unique_contains_last {n : ℕ} (split : Split n) (targetCell : Cell n)
   : ∀ (cell₁ cell₂ : Cell (n + 1)), InSplitInsertLastAtAndContainsLast split targetCell cell₁ → InSplitInsertLastAtAndContainsLast split targetCell cell₂ → cell₁ = cell₂ := by
     intros cell₁ cell₂ h₁ h₂
     simp [InSplitInsertLastAtAndContainsLast, insertLastAt, Set.insert] at *
-    -- TODO: Factor out into lemma
+    -- TODO: Factor out into lemma to not have to repeat this stuff
     have h_cell₁ : cell₁ = targetCell.insertLast := by
       have h_not_in_right : cell₁ ∉ (split.removeCell targetCell).castSucc := by
-        -- TODO: Use last_not_mem_of_mem_removeCell_castSucc
-        sorry
+        by_contra h_in_right
+        have h_last_not_mem := last_not_mem_of_mem_removeCell_castSucc split targetCell cell₁ h_in_right
+        have h_last_mem := h₁.right
+        contradiction
       apply (or_iff_left (a := cell₁ = targetCell.insertLast) (b := cell₁ ∈ (split.removeCell targetCell).castSucc) h_not_in_right).mp
       exact h₁.left
     have h_cell₂ : cell₂ = targetCell.insertLast := by
       have h_not_in_right : cell₂ ∉ (split.removeCell targetCell).castSucc := by
-        sorry
+        by_contra h_in_right
+        have h_last_not_mem := last_not_mem_of_mem_removeCell_castSucc split targetCell cell₂ h_in_right
+        have h_last_mem := h₂.right
+        contradiction
       apply (or_iff_left (a := cell₂ = targetCell.insertLast) (b := cell₂ ∈ (split.removeCell targetCell).castSucc) h_not_in_right).mp
       exact h₂.left
     rw [h_cell₁, h_cell₂]
