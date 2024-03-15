@@ -109,7 +109,13 @@ theorem insertLast'_produces_partitions
               have := Split.insertLastAt_unique_cell_last_mem partition targetCell
               cases this with
                 | intro cell h_cell =>
-                  simp at *
+                  simp [Split.InSplitInsertLastAtAndContainsLast] at *
+                  rw [← h_targetCell.right]
+                  -- TODO: Use cell ∈ split → cell ∈ split.cast _
+                  -- TODO: We also have to get the cast into `∀ y ∈ Split.insertLastAt partition targetCell, Fin.last n ∈ y → y = cell`
+                  -- Then we can use some ExistsUnique theorem to get the ∃! using cell as the unique cell
+                  have cell_mem_split : cell ∈ split := by sorry
+                  have last_mem_cell : Fin.last n ∈ cell := h_cell.left.right
                   -- TODO: Use h_cell to build the conclusion
                   sorry
             | inr h_ne =>
