@@ -50,30 +50,6 @@ def recursivePartitions (n : ℕ) : Set (Split n)
 
 abbrev ℙᵣ (n : ℕ) := recursivePartitions n
 
--- TODO: Better name
--- TODO: Provide the version for Split 0 as well
-theorem insertLast'_mem_mem_of_mem_of_last_not_mem
-    {n : ℕ}
-    {split : Split (n + 1)}
-    {split' : Split (n + 2)}
-    {cell : Cell (n + 1)}
-    {h_pos : n + 2 > 0}
-    (h_split : split' ∈ split.insertLast' h_pos)
-    (h_mem : cell ∈ split)
-    -- We need split : Split (n + 1) above so we can cast the Fin.last (otherwise we don't get n - 1 + 1 = n because
-    -- we don't have n ≥ 1).
-    -- TODO: This is wrong. Of course (Fin.last n) ∉ cell, because we only insert it via split.insertLastAt cell.
-    --       What we could to is take a cell' ∈ split' where (Fin.last n) ∉ cell' and show that cell'.castPred is in
-    --       split.
-    (h_last_not_mem : (Fin.last n) ∉ cell)
-  : cell.castSucc ∈ split' := by
-    simp [Split.insertLast', Split.insertLast] at h_split
-    cases h_split with
-      | intro targetCell h_targetCell =>
-        rw [← h_targetCell.right]
-        simp at *
-        sorry
-
 -- Here we show that if we take a partition of Fin n and apply the operation partition.insertLast', then every resulting
 -- split' is a partition of Fin (n + 1).
 -- TODO: What namespace should this reside in?
