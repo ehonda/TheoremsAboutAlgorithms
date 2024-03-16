@@ -10,6 +10,9 @@ namespace Cell
 def cast {n m : ℕ} (h : n = m) (cell : Cell n) : Cell m
   := Fin.cast h '' cell
 
+theorem cast_mem_iff {n : ℕ} (cell : Cell n) (x : Fin n)
+  : x ∈ cell.cast rfl ↔ x ∈ cell := by simp [cast]
+
 theorem cast_Injective {n m : ℕ} (h : n = m) : Function.Injective (cast h) := by
   apply Set.image_injective.mpr
   exact Fin.cast_injective h

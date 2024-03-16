@@ -11,6 +11,9 @@ theorem cast_empty_not_mem_iff {n m : ℕ} (h : n = m) (split : Split n)
   : ∅ ∉ split.cast h ↔ ∅ ∉ split := by
     constructor <;> intro _ _ <;> simp [cast, Cell.cast] at * <;> contradiction
 
+theorem cast_mem_iff {n : ℕ} (split : Split n) (cell : Cell n)
+  : cell ∈ split.cast rfl ↔ cell ∈ split := by simp [cast, Cell.cast]
+
 theorem cast_nonempty_iff {n m : ℕ} (h : n = m) (split : Split n)
   : (split.cast h).Nonempty ↔ split.Nonempty := by simp [cast]
 
@@ -140,43 +143,8 @@ theorem unique_contains_last {n : ℕ} (split : Split n) (targetCell : Cell n)
 
 -- NOTE: This can be used in insertLast'_produces_partitions
 theorem insertLastAt_unique_cell_last_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
-  --: ExistsUnique (λ (cell : Cell (n + 1)) ↦ cell ∈ split.insertLastAt targetCell ∧ Fin.last n ∈ cell)
   : ∃! (cell : Cell (n + 1)), InSplitInsertLastAtAndContainsLast split targetCell cell
     := exists_unique_of_exists_of_unique (exists_contains_last split targetCell) (unique_contains_last split targetCell)
-
---theorem insertLastAt_unique_cell_last_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
---  : ExistsUnique (InSplitInsertLastAtAndContainsLast split targetCell) := by
---    constructor
---    · constructor
---      · sorry
---      · sorry
---    · sorry
-
--- TODO: Show that for any targetCell, after Split.insertLastAt we have exactly one cell that contains
---       Fin.last n.
--- TODO: Naming
---theorem insertLastAt_unique_cell_last_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
---  --: ∃! (cell : Cell (n + 1)), cell ∈ split.insertLastAt targetCell ∧ Fin.last n ∈ cell := by
---  : ∃! (cell : _) (_ : cell ∈ split.insertLastAt targetCell), Fin.last n ∈ cell := by
---    -- TODO: constructor doesn't seem to work here, it introduces a meta variable. Use some ExistsUnique.intro or
---    --       something like that.
---    --apply ExistsUnique.intro (α := Cell (n + 1))
---    constructor
---    · constructor
---      · sorry
---      · intro cell h_cell
---    -- This seems to be that we have to show that there exists an arbitrary value of type Cell (n + 1)
---    · exact targetCell.castSucc
---theorem insertLastAt_unique_cell_last_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
---  : ExistsUnique (λ (cell : Cell (n + 1)) ↦ cell ∈ split.insertLastAt targetCell ∧ Fin.last n ∈ cell) := by
---    --apply ExistsUnique.intro (α := Cell (n + 1))
---    constructor
---    simp
---    constructor
---    · constructor
---      · sorry
---      · sorry
---    · sorry
 
 
 -- TODO: Maybe we can find a better name yet (it's alright, but not totally satisfactory).

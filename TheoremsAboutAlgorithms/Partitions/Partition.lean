@@ -104,20 +104,25 @@ theorem insertLast'_produces_partitions
             | inl h_eq =>
               -- Here we have x = Fin.last n. We know that n is not in any cell of partition, which we can use to show
               -- that it must be in the result of the insert operation.
-              -- TODO: Show that for any targetCell, after Split.insertLastAt we have exactly one cell that contains
-              --       Fin.last n.
               have := Split.insertLastAt_unique_cell_last_mem partition targetCell
               cases this with
                 | intro cell h_cell =>
                   simp [Split.InSplitInsertLastAtAndContainsLast] at *
                   rw [← h_targetCell.right]
-                  -- TODO: Use cell ∈ split → cell ∈ split.cast _
-                  -- TODO: We also have to get the cast into `∀ y ∈ Split.insertLastAt partition targetCell, Fin.last n ∈ y → y = cell`
-                  -- Then we can use some ExistsUnique theorem to get the ∃! using cell as the unique cell
-                  have cell_mem_split : cell ∈ split := by sorry
-                  have last_mem_cell : Fin.last n ∈ cell := h_cell.left.right
-                  -- TODO: Use h_cell to build the conclusion
-                  sorry
+                  have h_cell_mem_split : cell ∈ split := by
+                    rw [← h_targetCell.right]
+                    apply (Split.cast_mem_iff (partition.insertLastAt targetCell) cell).mpr
+                    exact h_cell.left.left
+                  have h_last_mem_cell : Fin.last n ∈ cell := h_cell.left.right
+                  rw [h_targetCell.right, h_eq]
+                  apply ExistsUnique.intro cell
+                  · exact And.intro h_cell_mem_split h_last_mem_cell
+                  · intro otherCell h_otherCell
+                    have otherCell_mem_split' : otherCell ∈ Split.insertLastAt partition targetCell := by
+                      rw [← h_targetCell.right] at h_otherCell
+                      apply (Split.cast_mem_iff (partition.insertLastAt targetCell) otherCell).mp
+                      exact h_otherCell.left
+                    exact h_cell.right _ otherCell_mem_split' h_otherCell.right
             | inr h_ne =>
               -- Here we have x ≠ Fin.last n. We know that x is in some cell of partition.
               -- If that cell is not the targetCell, we can use castSucc on it and have our unique cell that contains x.
@@ -127,26 +132,6 @@ theorem insertLast'_produces_partitions
               --            original split (if the result is not empty)
               --   * If the resulting cell is empty, ... (TODO)
               sorry
-      --cases this with
-      --  | inl h_eq =>
-      --    -- Here we have x = Fin.last n.
-      --    sorry
-      --  | inr h_ne =>
-      --    have x' := Fin.castPred x h_ne
-      --    have := h_partition.right x'
-      --    cases this with
-      --      | intro cell h_cell =>
-      --        simp at h_cell
-      --        have cell' := Cell.castSucc cell
-      --        exists cell'
-      --        simp
-      --        -- TODO: We need to show that casting cell yields cell' and have covering of x' and uniqueness follow from
-      --        --       that.
-      --        constructor
-      --        · constructor
-      --          · sorry
-      --          · sorry
-      --        · sorry
     exact And.intro h_empty_not_mem h_cover
 
 theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := by
