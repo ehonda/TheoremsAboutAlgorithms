@@ -125,6 +125,7 @@ theorem unique_contains_last {n : ℕ} (split : Split n) (targetCell : Cell n)
     -- TODO: Factor out into lemma to not have to repeat this stuff
     have h_cell₁ : cell₁ = targetCell.insertLast := by
       have h_not_in_right : cell₁ ∉ (split.removeCell targetCell).castSucc := by
+        -- TODO: Maybe we can do this without by_contra (since it isn't constructive is it?)
         by_contra h_in_right
         have h_last_not_mem := last_not_mem_of_mem_removeCell_castSucc split targetCell cell₁ h_in_right
         have h_last_mem := h₁.right
@@ -146,6 +147,17 @@ theorem insertLastAt_unique_cell_last_mem {n : ℕ} (split : Split n) (targetCel
   : ∃! (cell : Cell (n + 1)), InSplitInsertLastAtAndContainsLast split targetCell cell
     := exists_unique_of_exists_of_unique (exists_contains_last split targetCell) (unique_contains_last split targetCell)
 
+theorem insertLastAt_castSucc_mem_of_mem_of_ne_targetCell
+    {n : ℕ}
+    {split : Split n}
+    {targetCell : Cell n}
+    {cell : Cell n}
+    (h_mem : cell ∈ split)
+    (h_ne : cell ≠ targetCell)
+  : cell.castSucc ∈ split.insertLastAt targetCell := by
+    simp [insertLastAt, Set.insert, Split,castSucc]
+    right
+    exists cell
 
 -- TODO: Maybe we can find a better name yet (it's alright, but not totally satisfactory).
 -- TODO: Do we even need this if we have the version below?

@@ -107,7 +107,42 @@ theorem insertLast'_produces_partitions
               --     * TODO: Show that for any cell in Split.insertLastAt, if we remove n from it, we get a cell in the
               --            original split (if the result is not empty)
               --   * If the resulting cell is empty, ... (TODO)
-              sorry
+              -- TODO: How can we use x' := x.castPred h_ne here?
+              have := h_partition.right (x.castPred h_ne)
+              cases this with
+                | intro cell' h_cell' =>
+                  simp at h_cell'
+                  have := eq_or_ne cell' targetCell
+                  cases this with
+                    | inl h_eq_targetCell => sorry
+                    | inr h_ne_targetCell =>
+                      -- TODO: Probably place that higher up the stack to get rid of that `∃! cell x_1, x ∈ cell`
+                      -- earlier
+                      simp
+                      -- TODO: How can we use cell := Cell.castSucc cell' here?
+                      apply ExistsUnique.intro (Cell.castSucc cell')
+                      · have cell_mem_split : (Cell.castSucc cell') ∈ split := by
+                          rw [← h_targetCell.right]
+                          apply (Split.cast_mem_iff (partition.insertLastAt targetCell) (Cell.castSucc cell')).mpr
+                          exact Split.insertLastAt_castSucc_mem_of_mem_of_ne_targetCell
+                            h_cell'.left.left h_ne_targetCell
+                        have x_mem_cell : x ∈ (Cell.castSucc cell') := by
+                          simp [Cell.castSucc]
+                          exists x.castPred h_ne
+                          constructor
+                          · exact h_cell'.left.right
+                          · exact Fin.castSucc_castPred _ _
+                        exact And.intro cell_mem_split x_mem_cell
+                      · intro otherCell h_otherCell
+                        have otherCell_mem_split' : otherCell ∈ Split.insertLastAt partition targetCell := by
+                          rw [← h_targetCell.right] at h_otherCell
+                          apply (Split.cast_mem_iff (partition.insertLastAt targetCell) otherCell).mp
+                          exact h_otherCell.left
+                        -- TODO: Here we probably have to argue something like this:
+                        --       * If otherCell does not contain last n, we can use the preimage of otherCell to show
+                        --         uniqueness
+                        --       * If otherCell does contain last n, it's pre image must be the targetCell, ...
+                        sorry
     exact And.intro h_empty_not_mem h_cover
 
 theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := by
