@@ -112,13 +112,41 @@ theorem insertLast'_produces_partitions
               cases this with
                 | intro cell' h_cell' =>
                   simp at h_cell'
+                  -- TODO: Probably place that higher up the stack to get rid of that `∃! cell x_1, x ∈ cell` earlier
+                  simp
                   have := eq_or_ne cell' targetCell
                   cases this with
-                    | inl h_eq_targetCell => sorry
+                    | inl h_eq_targetCell =>
+                      simp [Set.insert] at h_targetCell
+                      cases h_targetCell.left with
+                        | inl h_empty =>
+                          have := Set.not_mem_empty (x.castPred h_ne)
+                          have : x.castPred h_ne ∈ ∅ := by
+                            rw [h_eq_targetCell, h_empty] at h_cell'
+                            exact h_cell'.left.right
+                          contradiction
+                        | inr h_targetCell_mem_partition =>
+                          apply ExistsUnique.intro (Cell.insertLast cell')
+                          · have cell'_mem_split : (Cell.insertLast cell') ∈ split := by
+                              rw [← h_targetCell.right]
+                              apply (Split.cast_mem_iff (partition.insertLastAt targetCell) (Cell.insertLast cell')).mpr
+                              simp [Split.insertLastAt, h_eq_targetCell, Set.insert]
+                            have x_mem_cell' : x ∈ (Cell.insertLast cell') := by
+                              simp [Cell.insertLast, Set.insert, Cell.castSucc]
+                              right
+                              exists x.castPred h_ne
+                              constructor
+                              · exact h_cell'.left.right
+                              · exact Fin.castSucc_castPred _ _
+                            exact And.intro cell'_mem_split x_mem_cell'
+                          · intro otherCell h_otherCell
+                            have otherCell_mem_split' : otherCell ∈ Split.insertLastAt partition targetCell := by
+                              rw [← h_targetCell.right] at h_otherCell
+                              apply (Split.cast_mem_iff (partition.insertLastAt targetCell) otherCell).mp
+                              exact h_otherCell.left
+                            -- TODO: Again, this is the same situation as below
+                            sorry
                     | inr h_ne_targetCell =>
-                      -- TODO: Probably place that higher up the stack to get rid of that `∃! cell x_1, x ∈ cell`
-                      -- earlier
-                      simp
                       -- TODO: How can we use cell := Cell.castSucc cell' here?
                       apply ExistsUnique.intro (Cell.castSucc cell')
                       · have cell_mem_split : (Cell.castSucc cell') ∈ split := by
