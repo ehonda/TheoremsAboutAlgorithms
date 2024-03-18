@@ -17,6 +17,8 @@ theorem partitions_0 : partitions 0 = {∅} := by
   apply Set.eq_of_subset_of_subset
   · intro split h
     simp
+    -- TODO: eq_or_ne uses em, maybe there's a constructive way to do this? Maybe Decidable.eq_or_ne? Or another route?
+    --       Maybe we can use Finset.decidableEq as well?
     have := eq_or_ne split ∅
     cases this with
       | inl h_eq => exact h_eq
@@ -75,7 +77,7 @@ theorem insertLast'_produces_partitions
       simp [Split.insertLast', Split.insertLast] at h_split
       cases h_split with
         | intro targetCell h_targetCell =>
-          have := eq_or_ne x (Fin.last n)
+          have := Decidable.eq_or_ne x (Fin.last n)
           cases this with
             | inl h_eq =>
               -- Here we have x = Fin.last n. We know that n is not in any cell of partition, which we can use to show
@@ -170,7 +172,12 @@ theorem insertLast'_produces_partitions
                         --       * If otherCell does not contain last n, we can use the preimage of otherCell to show
                         --         uniqueness
                         --       * If otherCell does contain last n, it's pre image must be the targetCell, ...
-                        sorry
+                        have := otherCell.mem_or_not_mem (Fin.last n)
+                        cases this with
+                          | inl h_last_mem_otherCell => sorry
+                          | inr h_last_not_mem_otherCell =>
+                            --have := h_cell'.right (otherCell.castPred sorry) h_otherCell.left
+                            sorry
     exact And.intro h_empty_not_mem h_cover
 
 theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := by

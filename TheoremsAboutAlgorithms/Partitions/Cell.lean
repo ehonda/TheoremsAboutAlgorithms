@@ -1,4 +1,5 @@
 import Mathlib.Data.Fin.Basic
+import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Set.Defs
 import Mathlib.Data.Set.Image
 import TheoremsAboutAlgorithms.Partitions.Defs
@@ -30,6 +31,11 @@ theorem cast_nonempty_iff {n m : ℕ} (h : n = m) (cell : Cell n)
 def castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := Fin.castSucc '' cell
 
+-- TODO: How do we remove the sorry?
+def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) : Cell n
+  --:= (λ x : {y : Fin (n + 1) // y ∈ cell}  ↦ Fin.castPred x sorry) '' cell
+  := (λ x ↦ Fin.castPred x sorry) '' cell
+
 -- Fin.castSucc_injective is already a theorem in Mathlib.Data.Fin.Basic
 theorem castSucc_injective (n : ℕ) : Function.Injective (castSucc (n := n)) := by
   apply Set.image_injective.mpr
@@ -51,5 +57,12 @@ theorem insertLast_is_disjoint_insert {n : ℕ} (cell : Cell n)
     apply lt_or_lt_iff_ne.mp
     have : k < n := by simp
     exact Or.inl this
+
+-- TODO: Maybe use Set.mem_toFinset
+theorem mem_or_not_mem {n : ℕ} (cell : Cell n) (x : Fin n)
+  : x ∈ cell ∨ x ∉ cell :=
+    sorry
+    --let cell' := Set.toFinset cell
+    --sorry
 
 end Cell
