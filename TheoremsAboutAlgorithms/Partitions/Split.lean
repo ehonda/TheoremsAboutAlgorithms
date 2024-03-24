@@ -147,6 +147,16 @@ theorem insertLastAt_unique_cell_last_mem {n : ℕ} (split : Split n) (targetCel
   : ∃! (cell : Cell (n + 1)), InSplitInsertLastAtAndContainsLast split targetCell cell
     := exists_unique_of_exists_of_unique (exists_contains_last split targetCell) (unique_contains_last split targetCell)
 
+--theorem insertLastAt_last_mem_insertLast_targetCell
+--    {n : ℕ}
+--    (split : Split n)
+--    (targetCell : Cell n)
+--    (_ : )
+--  : Fin.last n ∈ split.insertLastAt targetCell := by
+--    simp [insertLastAt, Set.insert]
+--    right
+--    exact targetCell
+
 theorem insertLastAt_castSucc_mem_of_mem_of_ne_targetCell
     {n : ℕ}
     {split : Split n}

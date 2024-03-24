@@ -32,14 +32,27 @@ def castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := Fin.castSucc '' cell
 
 -- TODO: How do we remove the sorry?
-def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) : Cell n
-  --:= (λ x : {y : Fin (n + 1) // y ∈ cell}  ↦ Fin.castPred x sorry) '' cell
-  := (λ x ↦ Fin.castPred x sorry) '' cell
+--def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) : Cell n
+--  --:= (λ x : {y : Fin (n + 1) // y ∈ cell}  ↦ Fin.castPred x sorry) '' cell
+--  := (λ x ↦ Fin.castPred x sorry) '' cell
 
 -- Fin.castSucc_injective is already a theorem in Mathlib.Data.Fin.Basic
 theorem castSucc_injective (n : ℕ) : Function.Injective (castSucc (n := n)) := by
   apply Set.image_injective.mpr
   exact Fin.castSucc_injective n
+
+-- TODO: Naming
+-- TODO: Maybe this should be in Fin namespace?
+theorem castPred_mem_of_mem_castSucc_of_ne_last
+    {n : ℕ}
+    {cell : Cell n}
+    {x : Fin (n + 1)}
+    (x_mem_castSucc_cell : x ∈ cell.castSucc)
+    (x_ne_last : x ≠ Fin.last n)
+  : x.castPred x_ne_last ∈ cell := by
+    simp [castSucc, Fin.castSucc, Fin.castAdd, Fin.castLE] at x_mem_castSucc_cell
+    obtain ⟨y, y_mem_cell, y_def⟩ := x_mem_castSucc_cell
+    simp [← y_def, y_mem_cell]
 
 -- This is essentially cell ↦ {n} ∪ cell
 def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
