@@ -118,17 +118,23 @@ theorem insertLast'_produces_partitions
                   simp
                   have := eq_or_ne cell' targetCell
                   cases this with
+                    -- Here we have that x ∈ cell' and cell' = targetCell
                     | inl h_eq_targetCell =>
                       simp [Set.insert] at h_targetCell
                       cases h_targetCell.left with
+                      -- Case targetCell = ∅
                         | inl h_empty =>
                           have := Set.not_mem_empty (x.castPred h_ne)
                           have : x.castPred h_ne ∈ ∅ := by
                             rw [h_eq_targetCell, h_empty] at h_cell'
                             exact h_cell'.left.right
                           contradiction
+                        -- Case targetCell ∈ partition
                         | inr h_targetCell_mem_partition =>
+                          -- We want to show that cell'.insertLast is the unique cell that covers x and to that end we
+                          -- apply ExistsUnique.intro
                           apply ExistsUnique.intro (Cell.insertLast cell')
+                          -- We show that cell'.insertLast is in split and that x is in it
                           · have cell'_mem_split : (Cell.insertLast cell') ∈ split := by
                               rw [← h_targetCell.right]
                               apply (Split.cast_mem_iff (partition.insertLastAt targetCell) (Cell.insertLast cell')).mpr
@@ -141,13 +147,38 @@ theorem insertLast'_produces_partitions
                               · exact h_cell'.left.right
                               · exact Fin.castSucc_castPred _ _
                             exact And.intro cell'_mem_split x_mem_cell'
+                          -- We show that cell'.insertLast is unique by assuming that there is another cell that covers
+                          -- x and showing that it must be cell'.insertLast
                           · intro otherCell h_otherCell
                             have otherCell_mem_split' : otherCell ∈ Split.insertLastAt partition targetCell := by
                               rw [← h_targetCell.right] at h_otherCell
                               apply (Split.cast_mem_iff (partition.insertLastAt targetCell) otherCell).mp
                               exact h_otherCell.left
-                            -- TODO: Again, this is the same situation as below
-                            sorry
+                            -- TODO: This is very similar to what we should below, except here we have cell'.insertLast
+                            --       instead of cell'.castSucc. How can we leverage that?
+                            have := otherCell.mem_or_not_mem (Fin.last n)
+                            cases this with
+                              | inl last_mem_otherCell =>
+                                -- TODO: This is duplicate code, extract it into a lemma
+                                have otherCell_eq_insertLast_targetCell : otherCell = targetCell.insertLast := by
+                                  have p_otherCell := And.intro otherCell_mem_split' last_mem_otherCell
+                                  have p_insertLast_targetCell : targetCell.insertLast ∈ partition.insertLastAt targetCell ∧ Fin.last n ∈ targetCell.insertLast := by
+                                    constructor
+                                    · simp [Split.insertLastAt, Set.insert]
+                                    · simp [Cell.insertLast, Set.insert]
+                                  have := Split.insertLastAt_unique_cell_last_mem partition targetCell
+                                  exact ExistsUnique.unique this p_otherCell p_insertLast_targetCell
+                                rw [h_eq_targetCell]
+                                exact otherCell_eq_insertLast_targetCell
+                              | inr last_not_mem_otherCell =>
+                                -- (I)
+                                -- TODO: Plan:
+                                --        * We probably castPred over otherCell here?
+                                --        * Then we get otherCell' which contains x.castPred
+                                --        * We also know otherCell' ∈ partition (How?)
+                                --        * We can then show that otherCell' = cell' = targetCell
+                                --        * What next? How do we get to a contradiction?
+                                sorry
                     | inr h_ne_targetCell =>
                       -- TODO: How can we use cell := Cell.castSucc cell' here?
                       apply ExistsUnique.intro (Cell.castSucc cell')
@@ -175,31 +206,25 @@ theorem insertLast'_produces_partitions
                         have := otherCell.mem_or_not_mem (Fin.last n)
                         cases this with
                           | inl h_last_mem_otherCell =>
+                            -- TODO: Extract lemma for this `otherCell = targetCell.insertLast`
+                            have otherCell_eq_insertLast_targetCell : otherCell = targetCell.insertLast := by
+                              have p_otherCell := And.intro otherCell_mem_split' h_last_mem_otherCell
+                              have p_insertLast_targetCell : targetCell.insertLast ∈ partition.insertLastAt targetCell ∧ Fin.last n ∈ targetCell.insertLast := by
+                                constructor
+                                · simp [Split.insertLastAt, Set.insert]
+                                · simp [Cell.insertLast, Set.insert]
+                              have := Split.insertLastAt_unique_cell_last_mem partition targetCell
+                              exact ExistsUnique.unique this p_otherCell p_insertLast_targetCell
                             cases h_targetCell.left with
                               | inl targetCell_eq_empty =>
-                                sorry
+                                have : x = Fin.last n := by
+                                  rw [otherCell_eq_insertLast_targetCell, targetCell_eq_empty] at h_otherCell
+                                  simp [Cell.insertLast, Set.insert] at h_otherCell
+                                  have : x ∉ Cell.castSucc ∅ := by simp [Cell.castSucc]
+                                  exact or_iff_not_imp_right.mp h_otherCell.right this
+                                contradiction
                               | inr targetCell_mem_partition =>
-                                -- TODO: These two should be lemmas
-                                --have last_mem_targetCell' : Fin.last n ∈ targetCell.insertLast := by
-                                --  simp [Cell.insertLast, Set.insert]
-                                --have targetCell'_mem_insertLastAt : targetCell.insertLast ∈ partition.insertLastAt targetCell := by
-                                --  simp [Split.insertLastAt, Set.insert]
-                                --have := Split.insertLastAt_unique_cell_last_mem partition targetCell
-                                --have : otherCell = targetCell.insertLast := by
-                                --  sorry
-                                -- TODO: Argue like this:
-                                --          * Fin.last n ∈ otherCell → otherCell = targetCell.insertLast
-                                --          * x ∈ otherCell → Fin.castPred x h_ne ∈ targetCell
-                                --          * cell' = targetCell
                                 have cell'_eq_targetCell : cell' = targetCell := by
-                                  have otherCell_eq_insertLast_targetCell : otherCell = targetCell.insertLast := by
-                                    have p_otherCell := And.intro otherCell_mem_split' h_last_mem_otherCell
-                                    have p_insertLast_targetCell : targetCell.insertLast ∈ partition.insertLastAt targetCell ∧ Fin.last n ∈ targetCell.insertLast := by
-                                      constructor
-                                      · simp [Split.insertLastAt, Set.insert]
-                                      · simp [Cell.insertLast, Set.insert]
-                                    have := Split.insertLastAt_unique_cell_last_mem partition targetCell
-                                    exact ExistsUnique.unique this p_otherCell p_insertLast_targetCell
                                   have castPred_x_mem_targetCell : x.castPred h_ne ∈ targetCell := by
                                     have : x ∈ targetCell.insertLast := by
                                       rw [otherCell_eq_insertLast_targetCell] at h_otherCell
@@ -213,7 +238,7 @@ theorem insertLast'_produces_partitions
                                 --have : otherCell = targetCell := by
                                 --  sorry
                           | inr h_last_not_mem_otherCell =>
-                            --have := h_cell'.right (otherCell.castPred sorry) h_otherCell.left
+                            -- TODO: See how we do it in (I) and argue similarly here
                             sorry
     exact And.intro h_empty_not_mem h_cover
 
