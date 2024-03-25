@@ -31,33 +31,16 @@ theorem cast_nonempty_iff {n m : ℕ} (h : n = m) (cell : Cell n)
 def castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := Fin.castSucc '' cell
 
---def castPredLambda {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n)
---  := (λ x : {y : Fin (n + 1) // y ∈ cell} ↦ Fin.castPred x.val (h x.val x.property))
---
---theorem cell_eq_subtype {n : ℕ} (cell : Cell n) : Cell n = Set {x : Fin n // x ∈ cell} := by
---  simp [Cell]
---  sorry
+-- Useful: https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/Set/Function.html#Restrict
+def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) (x : cell) : Fin n
+  -- s := cell, f := Fin.castPred, a := x
+  -- We then get `↑x ≠ Fin.last n → Fin n` and therefore provide `(h x x.property)` to get `Fin n`
+  -- We don't need to parenthesize the first expression, but we do so for clarity.
+  := (Set.restrict cell Fin.castPred x) (h x x.property)
 
--- TODO: How do we remove the sorry?
---def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) : Cell n
---  --:= sorry
---  := (castPredLambda cell h) '' (cell_eq_subtype _ ▸ cell)
---  --:= (λ x ↦ Fin.castPred x sorry) '' cell
-
---def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) : Cell n
---  --:= sorry
---  := (λ x ↦ Fin.castPred x (h x _)) '' cell
---  --:= (λ x ↦ Fin.castPred x sorry) '' cell
-
-theorem coe_cell_eq_fin {n : ℕ} (cell : Cell n) : ↑cell = Fin n := by
-  
-  sorry
-
-def f_restrict {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) (x : cell) : Fin n
-  := Fin.castPred x (h x x.property)
-
-def castPredLambda {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) : ↑cell → Fin n
-  := Set.restrict cell (coe_cell_eq_fin cell ▸ f_restrict cell h)
+-- Useful: Set.range_restrict
+def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) : Cell n
+  := Set.range (cell.restrictFinCastPred h)
 
 -- Fin.castSucc_injective is already a theorem in Mathlib.Data.Fin.Basic
 theorem castSucc_injective (n : ℕ) : Function.Injective (castSucc (n := n)) := by

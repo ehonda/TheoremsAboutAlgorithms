@@ -178,6 +178,19 @@ theorem insertLast'_produces_partitions
                                 --        * We also know otherCell' ∈ partition (How?)
                                 --        * We can then show that otherCell' = cell' = targetCell
                                 --        * What next? How do we get to a contradiction?
+                                have mem_otherCell_ne_last : ∀ x ∈ otherCell, x ≠ Fin.last n := by
+                                  intro y h_y
+                                  sorry
+                                have x_mem_otherCell' : x.castPred h_ne ∈ otherCell.castPred mem_otherCell_ne_last := by
+                                  simp [Cell.castPred, Set.range_restrict, Cell.restrictFinCastPred, Set.restrict]
+                                  exists x
+                                  exists h_otherCell.right
+                                have otherCell'_mem_partition : otherCell.castPred mem_otherCell_ne_last ∈ partition := by
+                                  sorry
+                                have targetCell_eq_otherCell' : targetCell = otherCell.castPred mem_otherCell_ne_last := by
+                                  have : cell' = otherCell.castPred mem_otherCell_ne_last :=
+                                    (h_cell'.right (otherCell.castPred mem_otherCell_ne_last) otherCell'_mem_partition x_mem_otherCell').symm
+                                  rw [←this, h_eq_targetCell]
                                 sorry
                     | inr h_ne_targetCell =>
                       -- TODO: How can we use cell := Cell.castSucc cell' here?
