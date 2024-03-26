@@ -71,6 +71,10 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
         -- TODO: This is just symmetric, maybe use wlog?
         sorry
 
+-- TODO:
+--   * insertLastAt_surjOn
+--   * insertLastAt_bijOn
+
 --theorem insertLastAt_castSucc_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
 --  : targetCell.castSucc ∈ split.insertLastAt targetCell := by
 --    simp [insertLastAt, Cell.insertLast]
