@@ -47,16 +47,29 @@ def insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 
 theorem insertLastAt_injOn {n : ℕ} (split : Split n)
   : Set.InjOn (split.insertLastAt) (split.insert ∅) := by
     intros x x_mem_split' y y_mem_split' insertLastAt_x_eq_insertLastAt_y
-    --simp [insertLastAt, Set.insert] at *
     cases x_mem_split' with
       | inl x_eq_empty =>
         cases y_mem_split' with
           | inl y_eq_empty => rw [x_eq_empty, y_eq_empty]
           | inr y_mem_split =>
-            absurd y_mem_split
-            simp [x_eq_empty, insertLastAt, Set.insert] at insertLastAt_x_eq_insertLastAt_y
-            sorry
-      | inr x_mem_split => sorry
+            have singleton_last_mem_split'_x : {Fin.last _} ∈ split.insertLastAt x := by
+              simp [x_eq_empty, insertLastAt, Set.insert, Cell.insertLast, Cell.castSucc]
+                at insertLastAt_x_eq_insertLastAt_y ⊢
+            have singleton_last_mem_split'_y : {Fin.last _} ∈ split.insertLastAt y := by
+              rw [← insertLastAt_x_eq_insertLastAt_y]
+              exact singleton_last_mem_split'_x
+            have singleton_last_eq_y_insertLast : {Fin.last _} = y.insertLast := by
+              simp [insertLastAt, Cell.insertLast] at singleton_last_mem_split'_y
+              sorry
+            simp [insertLastAt, Set.insert] at *
+            have y_eq_empty : y = ∅ := by
+              -- TODO: Show there exists no x ∈ y such that x ≠ Fin.castSucc x = n
+              simp [Cell.insertLast, Set.insert, Cell.castSucc] at singleton_last_eq_y_insertLast
+              sorry
+            rw [x_eq_empty, y_eq_empty]
+      | inr x_mem_split =>
+        -- TODO: This is just symmetric, maybe use wlog?
+        sorry
 
 --theorem insertLastAt_castSucc_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
 --  : targetCell.castSucc ∈ split.insertLastAt targetCell := by
