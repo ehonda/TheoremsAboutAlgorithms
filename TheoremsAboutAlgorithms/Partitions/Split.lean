@@ -44,6 +44,20 @@ def removeCell {n : ℕ} (split : Split n) (cell : Cell n) : Split n
 def insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 1)
   := (split.removeCell targetCell).castSucc.insert targetCell.insertLast
 
+theorem insertLastAt_injOn {n : ℕ} (split : Split n)
+  : Set.InjOn (split.insertLastAt) (split.insert ∅) := by
+    intros x x_mem_split' y y_mem_split' insertLastAt_x_eq_insertLastAt_y
+    --simp [insertLastAt, Set.insert] at *
+    cases x_mem_split' with
+      | inl x_eq_empty =>
+        cases y_mem_split' with
+          | inl y_eq_empty => rw [x_eq_empty, y_eq_empty]
+          | inr y_mem_split =>
+            absurd y_mem_split
+            simp [x_eq_empty, insertLastAt, Set.insert] at insertLastAt_x_eq_insertLastAt_y
+            sorry
+      | inr x_mem_split => sorry
+
 --theorem insertLastAt_castSucc_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
 --  : targetCell.castSucc ∈ split.insertLastAt targetCell := by
 --    simp [insertLastAt, Cell.insertLast]
