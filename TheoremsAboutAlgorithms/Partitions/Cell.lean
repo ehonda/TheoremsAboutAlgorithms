@@ -62,7 +62,7 @@ theorem castPred_mem_of_mem_castSucc_of_ne_last
 
 -- This is essentially cell ↦ {n} ∪ cell
 def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
-  := cell.castSucc.insert (Fin.last n)
+  := insert (Fin.last n) (cell.castSucc)
 
 theorem insertLast_nonempty {n : ℕ} (cell : Cell n) : cell.insertLast.Nonempty
   := Set.insert_nonempty _ _

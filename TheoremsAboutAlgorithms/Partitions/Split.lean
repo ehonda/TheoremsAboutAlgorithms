@@ -42,7 +42,7 @@ def removeCell {n : ℕ} (split : Split n) (cell : Cell n) : Split n
 -- We don't require targetCell ∈ split, because we want to be able to have ∅ as a target cell as well.
 -- This is essentially split ↦ {targetCell.transform} ∪ (split \ {targetCell})
 def insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 1)
-  := (split.removeCell targetCell).castSucc.insert targetCell.insertLast
+  := insert (targetCell.insertLast) (split.removeCell targetCell).castSucc
 
 theorem insertLastAt_injOn {n : ℕ} (split : Split n)
   : Set.InjOn (split.insertLastAt) (split.insert ∅) := by
@@ -68,27 +68,13 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
                 | inr singleton_last_mem_removeCell =>
                   have := castSucc_last_not_mem_of_mem singleton_last_mem_removeCell
                   contradiction
-            --simp [insertLastAt, Set.insert] at *
-            -- TODO: This is exactly the same as above, factor out into lemma
-            --have singleton_last_eq_x_insertLast : {Fin.last _} = x.insertLast := by
-            --  simp [insertLastAt, Cell.insertLast] at singleton_last_mem_split'_x
-            --  cases singleton_last_mem_split'_x with
-            --    | inl singleton_last_mem_set_insert =>
-            --      simp [Cell.insertLast]
-            --      exact singleton_last_mem_set_insert
-            --    | inr singleton_last_mem_removeCell =>
-            --      have := castSucc_last_not_mem_of_mem singleton_last_mem_removeCell
-            --      contradiction
             have y_eq_empty : y = ∅ := by
-              --rw [singleton_last_eq_y_insertLast] at singleton_last_eq_x_insertLast
-              -- TODO: Show there exists no x ∈ y such that x ≠ Fin.castSucc x = n
-              simp [Cell.insertLast, Set.insert, Cell.castSucc, x_eq_empty] at singleton_last_eq_y_insertLast
-              -- Plan:
-              --    * Have {Fin.last _} = {b | b = Fin.last _} ∪ {b | ∃ x ∈ y, b = Fin.castSucc x}
-              --    * i.e. {Fin.last _} = {Fin.last _} ∪ X
-              --    * i.e. X ⊆ {Fin.last _}
-              --    * Show Fin.last _ ∉ X
-              --    * i.e. X = ∅
+              simp [Cell.insertLast] at singleton_last_eq_y_insertLast
+              -- For some reason simp times out if we use it there
+              rw [Set.insert_eq (Fin.last n) (Cell.castSucc y)] at singleton_last_eq_y_insertLast
+              -- TODO: Plan:
+              --    * We know {Fin.last _} and y.castSucc are disjoint
+              --    * ...
               sorry
             rw [x_eq_empty, y_eq_empty]
       | inr x_mem_split =>
@@ -148,7 +134,6 @@ theorem insertLastAt_is_disjoint_insert {n : ℕ} (split : Split n) (targetCell 
       constructor
       · intro
         simp [Cell.insertLast]
-        exact Set.mem_insert _ _
       · intro
         apply Set.disjoint_singleton_left.mp
         exact Cell.insertLast_is_disjoint_insert cell
