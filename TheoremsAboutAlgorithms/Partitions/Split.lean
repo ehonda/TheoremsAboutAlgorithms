@@ -52,6 +52,7 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
         cases y_mem_split' with
           | inl y_eq_empty => rw [x_eq_empty, y_eq_empty]
           | inr y_mem_split =>
+            -- TODO: Do we need all these have's? We can probably get rid of some of them
             have singleton_last_mem_split'_x : {Fin.last _} ∈ split.insertLastAt x := by
               simp [x_eq_empty, insertLastAt, Set.insert, Cell.insertLast, Cell.castSucc]
                 at insertLastAt_x_eq_insertLastAt_y ⊢
@@ -60,11 +61,34 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
               exact singleton_last_mem_split'_x
             have singleton_last_eq_y_insertLast : {Fin.last _} = y.insertLast := by
               simp [insertLastAt, Cell.insertLast] at singleton_last_mem_split'_y
-              sorry
-            simp [insertLastAt, Set.insert] at *
+              cases singleton_last_mem_split'_y with
+                | inl singleton_last_mem_set_insert =>
+                  simp [Cell.insertLast]
+                  exact singleton_last_mem_set_insert
+                | inr singleton_last_mem_removeCell =>
+                  have := castSucc_last_not_mem_of_mem singleton_last_mem_removeCell
+                  contradiction
+            --simp [insertLastAt, Set.insert] at *
+            -- TODO: This is exactly the same as above, factor out into lemma
+            --have singleton_last_eq_x_insertLast : {Fin.last _} = x.insertLast := by
+            --  simp [insertLastAt, Cell.insertLast] at singleton_last_mem_split'_x
+            --  cases singleton_last_mem_split'_x with
+            --    | inl singleton_last_mem_set_insert =>
+            --      simp [Cell.insertLast]
+            --      exact singleton_last_mem_set_insert
+            --    | inr singleton_last_mem_removeCell =>
+            --      have := castSucc_last_not_mem_of_mem singleton_last_mem_removeCell
+            --      contradiction
             have y_eq_empty : y = ∅ := by
+              --rw [singleton_last_eq_y_insertLast] at singleton_last_eq_x_insertLast
               -- TODO: Show there exists no x ∈ y such that x ≠ Fin.castSucc x = n
-              simp [Cell.insertLast, Set.insert, Cell.castSucc] at singleton_last_eq_y_insertLast
+              simp [Cell.insertLast, Set.insert, Cell.castSucc, x_eq_empty] at singleton_last_eq_y_insertLast
+              -- Plan:
+              --    * Have {Fin.last _} = {b | b = Fin.last _} ∪ {b | ∃ x ∈ y, b = Fin.castSucc x}
+              --    * i.e. {Fin.last _} = {Fin.last _} ∪ X
+              --    * i.e. X ⊆ {Fin.last _}
+              --    * Show Fin.last _ ∉ X
+              --    * i.e. X = ∅
               sorry
             rw [x_eq_empty, y_eq_empty]
       | inr x_mem_split =>
