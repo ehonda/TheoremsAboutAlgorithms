@@ -31,8 +31,22 @@ theorem cast_nonempty_iff {n m : ℕ} (h : n = m) (cell : Cell n)
 def castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := Fin.castSucc '' cell
 
+theorem disjoint_singleton_last_castSucc {n : ℕ} (cell : Cell n)
+  : Disjoint {Fin.last n} cell.castSucc := by
+    apply disjoint_iff.mpr
+    simp [castSucc, Fin.castSucc]
+    intro k _
+    apply lt_or_lt_iff_ne.mp
+    have : k < n := by simp
+    exact Or.inl this
+
 theorem castSucc_empty_iff {n : ℕ} (cell : Cell n)
   : cell.castSucc = ∅ ↔ cell = ∅ := by simp [castSucc]
+
+-- Fin.castSucc_injective is already a theorem in Mathlib.Data.Fin.Basic
+theorem castSucc_injective (n : ℕ) : Function.Injective (castSucc (n := n)) := by
+  apply Set.image_injective.mpr
+  exact Fin.castSucc_injective n
 
 -- Useful: https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/Set/Function.html#Restrict
 def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) (x : cell) : Fin n
@@ -44,11 +58,6 @@ def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x �
 -- Useful: Set.range_restrict
 def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) : Cell n
   := Set.range (cell.restrictFinCastPred h)
-
--- Fin.castSucc_injective is already a theorem in Mathlib.Data.Fin.Basic
-theorem castSucc_injective (n : ℕ) : Function.Injective (castSucc (n := n)) := by
-  apply Set.image_injective.mpr
-  exact Fin.castSucc_injective n
 
 -- TODO: Naming
 -- TODO: Maybe this should be in Fin namespace?
@@ -66,6 +75,22 @@ theorem castPred_mem_of_mem_castSucc_of_ne_last
 -- This is essentially cell ↦ {n} ∪ cell
 def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := insert (Fin.last n) (cell.castSucc)
+
+-- TODO
+theorem insertLast_injective {n : ℕ} : Function.Injective (insertLast (n := n)) := by
+  intro x y h
+  simp [insertLast] at h
+  repeat rw [Set.insert_eq] at h
+  have castSucc_x_eq_castSucc_y : x.castSucc = y.castSucc := by
+    apply Set.eq_of_subset_of_subset
+    -- TODO: Remove the duplication, wlog it
+    · have : castSucc x ⊆ {Fin.last _} ∪ castSucc y := by
+        exact HasSubset.subset.trans_eq (Set.subset_union_right _ _) h
+      exact Disjoint.subset_right_of_subset_union this (disjoint_singleton_last_castSucc x).symm
+    · have : castSucc y ⊆ {Fin.last _} ∪ castSucc x := by
+        exact HasSubset.subset.trans_eq (Set.subset_union_right _ _) h.symm
+      exact Disjoint.subset_right_of_subset_union this (disjoint_singleton_last_castSucc y).symm
+  exact (castSucc_injective (n := n)) castSucc_x_eq_castSucc_y
 
 theorem insertLast_nonempty {n : ℕ} (cell : Cell n) : cell.insertLast.Nonempty
   := Set.insert_nonempty _ _

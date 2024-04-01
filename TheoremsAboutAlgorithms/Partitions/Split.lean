@@ -20,6 +20,12 @@ theorem cast_nonempty_iff {n m : ℕ} (h : n = m) (split : Split n)
 def castSucc {n : ℕ} (split : Split n) : Split (n + 1)
   := Cell.castSucc '' split
 
+theorem castSucc_injective {n : ℕ} : Function.Injective (castSucc (n := n)) := by
+  intro x y h
+  simp [castSucc] at h
+  have Cell.castSucc_injective_on_split := Function.Injective.image_injective (Cell.castSucc_injective (n := n))
+  exact Cell.castSucc_injective_on_split h
+
 -- TODO: Fix naming elem -> mem
 theorem castSucc_empty_elem_iff {n : ℕ} (split : Split n)
   : ∅ ∈ split.castSucc ↔ ∅ ∈ split := by simp [castSucc, Cell.castSucc]
@@ -38,11 +44,39 @@ theorem castSucc_last_not_mem_of_mem {n : ℕ} {split : Split n} {cell : Cell (n
 def removeCell {n : ℕ} (split : Split n) (cell : Cell n) : Split n
   := split \ singleton cell
 
+--theorem removeCell_injective {n : ℕ} (split : Split n) : Function.Injective (split.removeCell) := by
+--  --intro split
+--  --intro x y h
+--  --simp [removeCell] at h
+--  --have := Set.diff_eq_diff_compl (split.removeCell x) (split.removeCell y)
+--  --simp [Set.diff] at this
+--  --exact this.mp h
+
 -- TODO: Maybe we can find a better name yet (it's alright, but not totally satisfactory).
 -- We don't require targetCell ∈ split, because we want to be able to have ∅ as a target cell as well.
 -- This is essentially split ↦ {targetCell.transform} ∪ (split \ {targetCell})
 def insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 1)
   := insert (targetCell.insertLast) (split.removeCell targetCell).castSucc
+
+-- TODO: NAMING!
+-- TODO: Proof it
+theorem insertLastAt_injOn_helper
+    {n : ℕ}
+    {cell cell' : Cell n}
+    {split split' : Split (n + 1)}
+    (h : insert cell.insertLast split = insert cell'.insertLast split')
+  : split = split' := by
+    -- TODO: We know that insertLast is injective, use it here!
+    sorry
+
+-- TODO: Proof it
+theorem insertLastAt_injOn_disjoint_helper
+    {n : ℕ}
+    (x y : Cell n)
+    (split : Split n)
+  : Disjoint {x.insertLast} (split.removeCell y).castSucc := by
+    simp
+    sorry
 
 theorem insertLastAt_injOn {n : ℕ} (split : Split n)
   : Set.InjOn (split.insertLastAt) (split.insert ∅) := by
@@ -104,8 +138,27 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
                   contradiction
             rw [x_eq_empty, y_eq_empty]
       | inr x_mem_split =>
-        -- TODO: This is just symmetric, maybe use wlog?
-        sorry
+        cases y_mem_split' with
+          -- TODO: This is just symmetric, wlog it
+          | inl y_eq_empty => sorry
+          | inr y_mem_split =>
+            simp [insertLastAt] at insertLastAt_x_eq_insertLastAt_y
+            have castSucc_eq : (split.removeCell x).castSucc = (split.removeCell y).castSucc
+              := insertLastAt_injOn_helper insertLastAt_x_eq_insertLastAt_y
+            rw [castSucc_eq] at insertLastAt_x_eq_insertLastAt_y
+            repeat rw [Set.insert_eq] at insertLastAt_x_eq_insertLastAt_y
+            -- TODO: There's probably a more straightforward way to do this
+            have singleton_insertLast_x_subset_y_union : {Cell.insertLast x} ⊆ {Cell.insertLast y} ∪ castSucc (removeCell split y) := by
+              have := Set.subset_union_left {Cell.insertLast x} (castSucc (split.removeCell y))
+              rw [insertLastAt_x_eq_insertLastAt_y] at this
+              exact this
+            have singleton_insertLast_x_subsetsingleton_insertLast_y : {Cell.insertLast x} ⊆ ({Cell.insertLast y} : (Split (n + 1))) := by
+              have singleton_insertLast_x_disjoint_castSucc := insertLastAt_injOn_disjoint_helper x y split
+              exact Disjoint.subset_left_of_subset_union singleton_insertLast_x_subset_y_union singleton_insertLast_x_disjoint_castSucc
+            have : Cell.insertLast x = Cell.insertLast y := by
+              apply Set.singleton_subset_singleton.mp
+              exact singleton_insertLast_x_subsetsingleton_insertLast_y
+            exact Cell.insertLast_injective this
 
 -- TODO:
 --   * insertLastAt_surjOn
