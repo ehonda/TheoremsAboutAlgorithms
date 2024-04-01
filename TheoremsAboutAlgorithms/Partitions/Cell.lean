@@ -31,6 +31,9 @@ theorem cast_nonempty_iff {n m : ℕ} (h : n = m) (cell : Cell n)
 def castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := Fin.castSucc '' cell
 
+theorem castSucc_empty_iff {n : ℕ} (cell : Cell n)
+  : cell.castSucc = ∅ ↔ cell = ∅ := by simp [castSucc]
+
 -- Useful: https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/Set/Function.html#Restrict
 def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) (x : cell) : Fin n
   -- s := cell, f := Fin.castPred, a := x

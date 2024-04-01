@@ -72,10 +72,36 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
               simp [Cell.insertLast] at singleton_last_eq_y_insertLast
               -- For some reason simp times out if we use it there
               rw [Set.insert_eq (Fin.last n) (Cell.castSucc y)] at singleton_last_eq_y_insertLast
-              -- TODO: Plan:
-              --    * We know {Fin.last _} and y.castSucc are disjoint
-              --    * ...
-              sorry
+              have castSucc_y_subset_singleton_last : Cell.castSucc y ⊆ {Fin.last _} := by
+                rw [singleton_last_eq_y_insertLast]
+                exact Set.subset_union_right _ _
+              have castSucc_y_Subsingleton : Set.Subsingleton (Cell.castSucc y)
+                := Set.subsingleton_of_subset_singleton castSucc_y_subset_singleton_last
+              have := Set.Subsingleton.eq_empty_or_singleton castSucc_y_Subsingleton
+              cases this with
+                | inl y_eq_empty => exact (Cell.castSucc_empty_iff y).mp y_eq_empty
+                | inr y_eq_singleton =>
+                  -- TODO: Naming
+                  obtain ⟨y_mem, y_mem_def⟩ := y_eq_singleton
+                  have y_mem_eq_last : y_mem = Fin.last _ := by
+                    rw [y_mem_def] at castSucc_y_subset_singleton_last
+                    simp at castSucc_y_subset_singleton_last
+                    exact castSucc_y_subset_singleton_last
+                  have y_mem_ne_last : y_mem ≠ Fin.last _ := by
+                    have exists_castSucc_eq_y_mem : ∃ (y' : Fin n), y'.castSucc = y_mem := by
+                      rw [y_mem_eq_last]
+                      simp [Cell.castSucc, Set.image] at y_mem_def
+                      have : ∃ a ∈ y, Fin.castSucc a = y_mem := by
+                        have : y_mem ∈ {x | ∃ a ∈ y, Fin.castSucc a = x} := by
+                          have := Set.mem_singleton y_mem
+                          rw [← y_mem_def] at this
+                          exact this
+                        exact Set.mem_setOf.mp this
+                      rw [y_mem_eq_last] at this
+                      obtain ⟨y', y'_mem, y'_eq_y_mem⟩ := this
+                      exists y'
+                    exact Fin.exists_castSucc_eq.mp exists_castSucc_eq_y_mem
+                  contradiction
             rw [x_eq_empty, y_eq_empty]
       | inr x_mem_split =>
         -- TODO: This is just symmetric, maybe use wlog?
