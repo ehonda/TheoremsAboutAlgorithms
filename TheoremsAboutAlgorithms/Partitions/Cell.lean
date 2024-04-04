@@ -76,6 +76,9 @@ theorem castPred_mem_of_mem_castSucc_of_ne_last
 def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := insert (Fin.last n) (cell.castSucc)
 
+theorem last_mem_insertLast {n : ℕ} (cell : Cell n) : Fin.last n ∈ cell.insertLast := by
+  simp [insertLast]
+
 -- TODO
 theorem insertLast_injective {n : ℕ} : Function.Injective (insertLast (n := n)) := by
   intro x y h
@@ -106,6 +109,7 @@ theorem insertLast_is_disjoint_insert {n : ℕ} (cell : Cell n)
     exact Or.inl this
 
 -- TODO: Maybe use Set.mem_toFinset
+-- TODO: Do we actually use this somewhere? Can we get rid of it in favor of a constructive proof?
 theorem mem_or_not_mem {n : ℕ} (cell : Cell n) (x : Fin n)
   : x ∈ cell ∨ x ∉ cell :=
     sorry

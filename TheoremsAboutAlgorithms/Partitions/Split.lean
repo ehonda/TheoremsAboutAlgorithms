@@ -31,6 +31,7 @@ theorem castSucc_empty_elem_iff {n : ℕ} (split : Split n)
   : ∅ ∈ split.castSucc ↔ ∅ ∈ split := by simp [castSucc, Cell.castSucc]
 
 -- TODO: This is more general than last_not_mem_of_mem_removeCell_castSucc right? We don't need the other one
+-- TODO: Rename, the naming seems of no? Should be last_not_mem_of_mem_castSucc?
 theorem castSucc_last_not_mem_of_mem {n : ℕ} {split : Split n} {cell : Cell (n + 1)} (h : cell ∈ split.castSucc)
   : Fin.last n ∉ cell := by
     simp [castSucc, Cell.castSucc] at h
@@ -60,6 +61,11 @@ def insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 
 
 -- TODO: NAMING!
 -- TODO: Proof it
+-- TODO: This is probably not actually true, but we can prove the weaker version that we actually need:
+--
+--    insert (Cell.insertLast x) (castSucc (removeCell split x)) = insert (Cell.insertLast y) (castSucc (removeCell split y))
+--
+--       or maybe we just have to require that cell ∉ split?
 theorem insertLastAt_injOn_helper
     {n : ℕ}
     {cell cell' : Cell n}
@@ -67,7 +73,18 @@ theorem insertLastAt_injOn_helper
     (h : insert cell.insertLast split = insert cell'.insertLast split')
   : split = split' := by
     -- TODO: We know that insertLast is injective, use it here!
-    sorry
+    -- TODO: Totally symmetric, can we wlog it?
+    apply Set.eq_of_subset_of_subset
+    · intro x x_mem_split
+      have x_mem_insert_insertLast_cell'_split' : x ∈ insert cell'.insertLast split' := by
+        rw [← h]; simp; right; exact x_mem_split
+      cases x_mem_insert_insertLast_cell'_split' with
+        | inl x_eq_insertLast_cell' =>
+          simp [Cell.insertLast] at x_eq_insertLast_cell'
+          rw [Set.insert_eq] at x_eq_insertLast_cell'
+          sorry
+        | inr x_mem_split' => exact x_mem_split'
+    · sorry
 
 -- TODO: Proof it
 theorem insertLastAt_injOn_disjoint_helper
@@ -76,6 +93,11 @@ theorem insertLastAt_injOn_disjoint_helper
     (split : Split n)
   : Disjoint {x.insertLast} (split.removeCell y).castSucc := by
     simp
+    have last_mem_insertLast_x := Cell.last_mem_insertLast x
+    have last_not_mem_of_mem_castSucc_split' : ∀ cell, cell ∈ (split.removeCell y).castSucc → (Fin.last _) ∉ cell
+      := by intro cell cell_mem_split'; exact castSucc_last_not_mem_of_mem cell_mem_split'
+    -- TODO: We know that (last _) ∈ x' and ∀ c ∈ split', (last _) ∉ c.
+    --       How do we combine this to show that x' ∉ split'?
     sorry
 
 theorem insertLastAt_injOn {n : ℕ} (split : Split n)
