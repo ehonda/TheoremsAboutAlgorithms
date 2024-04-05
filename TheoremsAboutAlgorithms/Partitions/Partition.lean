@@ -52,6 +52,20 @@ def recursivePartitions (n : ℕ) : Set (Split n)
 
 abbrev ℙᵣ (n : ℕ) := recursivePartitions n
 
+-- TODO: This name is probably not quite right
+theorem isPartition_of_mem_insertLast'_of_isPartition
+    -- We use split : Split (n + 1) here because that's the form we need it in further down below
+    {n : ℕ}
+    {partition : Split n}
+    {split : Split (n + 1)}
+    {h_pos : n + 1 > 0}
+    (h_partition : partition ∈ ℙ n)
+    (h_split : split ∈ partition.insertLast' h_pos)
+  : split.IsPartition := by
+    -- TODO: This is our rewrite of `insertLast'_produces_partitions` where we plan to use `insertLastAt_bijOn` to prove
+    --       the covering of all x.
+    sorry
+
 -- Here we show that if we take a partition of Fin n and apply the operation partition.insertLast', then every resulting
 -- split' is a partition of Fin (n + 1).
 -- TODO: What namespace should this reside in?

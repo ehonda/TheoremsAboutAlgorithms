@@ -45,46 +45,62 @@ theorem castSucc_last_not_mem_of_mem {n : ℕ} {split : Split n} {cell : Cell (n
 def removeCell {n : ℕ} (split : Split n) (cell : Cell n) : Split n
   := split \ singleton cell
 
---theorem removeCell_injective {n : ℕ} (split : Split n) : Function.Injective (split.removeCell) := by
---  --intro split
---  --intro x y h
---  --simp [removeCell] at h
---  --have := Set.diff_eq_diff_compl (split.removeCell x) (split.removeCell y)
---  --simp [Set.diff] at this
---  --exact this.mp h
-
 -- TODO: Maybe we can find a better name yet (it's alright, but not totally satisfactory).
 -- We don't require targetCell ∈ split, because we want to be able to have ∅ as a target cell as well.
 -- This is essentially split ↦ {targetCell.transform} ∪ (split \ {targetCell})
 def insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 1)
   := insert (targetCell.insertLast) (split.removeCell targetCell).castSucc
 
--- TODO: NAMING!
--- TODO: Proof it
--- TODO: This is probably not actually true, but we can prove the weaker version that we actually need:
---
---    insert (Cell.insertLast x) (castSucc (removeCell split x)) = insert (Cell.insertLast y) (castSucc (removeCell split y))
---
---       or maybe we just have to require that cell ∉ split?
-theorem insertLastAt_injOn_helper
+------------------------------------------------------------------------------------------------------------------------
+--                                          Injectivity of insertLastAt                                               --
+------------------------------------------------------------------------------------------------------------------------
+
+theorem insertLastAt_injOn_helper_generalized_subset_helper
     {n : ℕ}
-    {cell cell' : Cell n}
-    {split split' : Split (n + 1)}
-    (h : insert cell.insertLast split = insert cell'.insertLast split')
-  : split = split' := by
+    {cell otherCell : Cell n}
+    {split otherSplit : Split (n + 1)}
+    (split'_eq_otherSplit' : insert cell.insertLast split = insert otherCell.insertLast otherSplit)
+    (last_not_mem_of_mem_split : ∀ cell, cell ∈ split → Fin.last n ∉ cell)
+  : split ⊆ otherSplit := by
+    intro x x_mem_split
+    have x_mem_insert_insertLast_otherCell_otherSplit : x ∈ insert otherCell.insertLast otherSplit := by
+      rw [← split'_eq_otherSplit']; simp; right; exact x_mem_split
+    cases x_mem_insert_insertLast_otherCell_otherSplit with
+      | inl x_eq_insertLast_otherCell =>
+        have last_mem_x := Cell.last_mem_insertLast otherCell
+        rw [← x_eq_insertLast_otherCell] at last_mem_x
+        have last_not_mem_x := last_not_mem_of_mem_split x x_mem_split
+        contradiction
+      | inr x_mem_otherSplit => exact x_mem_otherSplit
+
+-- TODO: NAMING!
+theorem insertLastAt_injOn_helper_generalized
+    {n : ℕ}
+    {cell otherCell : Cell n}
+    {split otherSplit : Split (n + 1)}
+    (split'_eq_otherSplit' : insert cell.insertLast split = insert otherCell.insertLast otherSplit)
+    (last_not_mem_of_mem_split : ∀ cell, cell ∈ split → Fin.last n ∉ cell)
+    (last_not_mem_of_mem_otherSplit : ∀ cell, cell ∈ otherSplit → Fin.last n ∉ cell)
+  : split = otherSplit := by
     -- TODO: We know that insertLast is injective, use it here!
     -- TODO: Totally symmetric, can we wlog it?
     apply Set.eq_of_subset_of_subset
-    · intro x x_mem_split
-      have x_mem_insert_insertLast_cell'_split' : x ∈ insert cell'.insertLast split' := by
-        rw [← h]; simp; right; exact x_mem_split
-      cases x_mem_insert_insertLast_cell'_split' with
-        | inl x_eq_insertLast_cell' =>
-          simp [Cell.insertLast] at x_eq_insertLast_cell'
-          rw [Set.insert_eq] at x_eq_insertLast_cell'
-          sorry
-        | inr x_mem_split' => exact x_mem_split'
-    · sorry
+    · exact insertLastAt_injOn_helper_generalized_subset_helper split'_eq_otherSplit' last_not_mem_of_mem_split
+    · exact insertLastAt_injOn_helper_generalized_subset_helper
+        split'_eq_otherSplit'.symm last_not_mem_of_mem_otherSplit
+
+theorem insertLastAt_injOn_helper
+    {n : ℕ}
+    {cell otherCell : Cell n}
+    {split : Split n}
+    (h : insert cell.insertLast (split.removeCell cell).castSucc
+          = insert otherCell.insertLast (split.removeCell otherCell).castSucc)
+  : (split.removeCell cell).castSucc = (split.removeCell otherCell).castSucc := by
+    have last_not_mem_of_mem_split' : ∀ x, x ∈ (split.removeCell cell).castSucc → Fin.last n ∉ x
+      := by intro _ x_mem_split'; exact castSucc_last_not_mem_of_mem x_mem_split'
+    have last_not_mem_of_mem_otherSplit' : ∀ x, x ∈ (split.removeCell otherCell).castSucc → Fin.last n ∉ x
+      := by intro _ x_mem_split'; exact castSucc_last_not_mem_of_mem x_mem_split'
+    exact insertLastAt_injOn_helper_generalized h last_not_mem_of_mem_split' last_not_mem_of_mem_otherSplit'
 
 -- TODO: Proof it
 theorem insertLastAt_injOn_disjoint_helper
@@ -94,11 +110,70 @@ theorem insertLastAt_injOn_disjoint_helper
   : Disjoint {x.insertLast} (split.removeCell y).castSucc := by
     simp
     have last_mem_insertLast_x := Cell.last_mem_insertLast x
-    have last_not_mem_of_mem_castSucc_split' : ∀ cell, cell ∈ (split.removeCell y).castSucc → (Fin.last _) ∉ cell
+    have last_not_mem_of_mem_split' : ∀ cell, cell ∈ (split.removeCell y).castSucc → (Fin.last _) ∉ cell
       := by intro cell cell_mem_split'; exact castSucc_last_not_mem_of_mem cell_mem_split'
-    -- TODO: We know that (last _) ∈ x' and ∀ c ∈ split', (last _) ∉ c.
-    --       How do we combine this to show that x' ∉ split'?
-    sorry
+    intro insertLast_x_mem_split'
+    have last_not_mem_insertLast_x := last_not_mem_of_mem_split' x.insertLast insertLast_x_mem_split'
+    contradiction
+
+theorem insertLastAt_injOn_symmetric_case_helper
+    {n : ℕ}
+    {split : Split n}
+    {x y : Cell n}
+    (insertLastAt_x_eq_insertLastAt_y : split.insertLastAt x = split.insertLastAt y)
+    (x_eq_empty : x = ∅)
+  : x = y := by
+    -- TODO: Do we need all these have's? We can probably get rid of some of them
+    have singleton_last_mem_split'_x : {Fin.last _} ∈ split.insertLastAt x := by
+      simp [x_eq_empty, insertLastAt, Set.insert, Cell.insertLast, Cell.castSucc]
+        at insertLastAt_x_eq_insertLastAt_y ⊢
+    have singleton_last_mem_split'_y : {Fin.last _} ∈ split.insertLastAt y := by
+      rw [← insertLastAt_x_eq_insertLastAt_y]
+      exact singleton_last_mem_split'_x
+    have singleton_last_eq_y_insertLast : {Fin.last _} = y.insertLast := by
+      simp [insertLastAt, Cell.insertLast] at singleton_last_mem_split'_y
+      cases singleton_last_mem_split'_y with
+        | inl singleton_last_mem_set_insert =>
+          simp [Cell.insertLast]
+          exact singleton_last_mem_set_insert
+        | inr singleton_last_mem_removeCell =>
+          have := castSucc_last_not_mem_of_mem singleton_last_mem_removeCell
+          contradiction
+    have y_eq_empty : y = ∅ := by
+      simp [Cell.insertLast] at singleton_last_eq_y_insertLast
+      -- For some reason simp times out if we use it there
+      rw [Set.insert_eq (Fin.last n) (Cell.castSucc y)] at singleton_last_eq_y_insertLast
+      have castSucc_y_subset_singleton_last : Cell.castSucc y ⊆ {Fin.last _} := by
+        rw [singleton_last_eq_y_insertLast]
+        exact Set.subset_union_right _ _
+      have castSucc_y_Subsingleton : Set.Subsingleton (Cell.castSucc y)
+        := Set.subsingleton_of_subset_singleton castSucc_y_subset_singleton_last
+      have := Set.Subsingleton.eq_empty_or_singleton castSucc_y_Subsingleton
+      cases this with
+        | inl y_eq_empty => exact (Cell.castSucc_empty_iff y).mp y_eq_empty
+        | inr y_eq_singleton =>
+          -- TODO: Naming
+          obtain ⟨y_mem, y_mem_def⟩ := y_eq_singleton
+          have y_mem_eq_last : y_mem = Fin.last _ := by
+            rw [y_mem_def] at castSucc_y_subset_singleton_last
+            simp at castSucc_y_subset_singleton_last
+            exact castSucc_y_subset_singleton_last
+          have y_mem_ne_last : y_mem ≠ Fin.last _ := by
+            have exists_castSucc_eq_y_mem : ∃ (y' : Fin n), y'.castSucc = y_mem := by
+              rw [y_mem_eq_last]
+              simp [Cell.castSucc, Set.image] at y_mem_def
+              have : ∃ a ∈ y, Fin.castSucc a = y_mem := by
+                have : y_mem ∈ {x | ∃ a ∈ y, Fin.castSucc a = x} := by
+                  have := Set.mem_singleton y_mem
+                  rw [← y_mem_def] at this
+                  exact this
+                exact Set.mem_setOf.mp this
+              rw [y_mem_eq_last] at this
+              obtain ⟨y', _, y'_eq_y_mem⟩ := this
+              exists y'
+            exact Fin.exists_castSucc_eq.mp exists_castSucc_eq_y_mem
+          contradiction
+    rw [x_eq_empty, y_eq_empty]
 
 theorem insertLastAt_injOn {n : ℕ} (split : Split n)
   : Set.InjOn (split.insertLastAt) (split.insert ∅) := by
@@ -108,61 +183,11 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
         cases y_mem_split' with
           | inl y_eq_empty => rw [x_eq_empty, y_eq_empty]
           | inr y_mem_split =>
-            -- TODO: Do we need all these have's? We can probably get rid of some of them
-            have singleton_last_mem_split'_x : {Fin.last _} ∈ split.insertLastAt x := by
-              simp [x_eq_empty, insertLastAt, Set.insert, Cell.insertLast, Cell.castSucc]
-                at insertLastAt_x_eq_insertLastAt_y ⊢
-            have singleton_last_mem_split'_y : {Fin.last _} ∈ split.insertLastAt y := by
-              rw [← insertLastAt_x_eq_insertLastAt_y]
-              exact singleton_last_mem_split'_x
-            have singleton_last_eq_y_insertLast : {Fin.last _} = y.insertLast := by
-              simp [insertLastAt, Cell.insertLast] at singleton_last_mem_split'_y
-              cases singleton_last_mem_split'_y with
-                | inl singleton_last_mem_set_insert =>
-                  simp [Cell.insertLast]
-                  exact singleton_last_mem_set_insert
-                | inr singleton_last_mem_removeCell =>
-                  have := castSucc_last_not_mem_of_mem singleton_last_mem_removeCell
-                  contradiction
-            have y_eq_empty : y = ∅ := by
-              simp [Cell.insertLast] at singleton_last_eq_y_insertLast
-              -- For some reason simp times out if we use it there
-              rw [Set.insert_eq (Fin.last n) (Cell.castSucc y)] at singleton_last_eq_y_insertLast
-              have castSucc_y_subset_singleton_last : Cell.castSucc y ⊆ {Fin.last _} := by
-                rw [singleton_last_eq_y_insertLast]
-                exact Set.subset_union_right _ _
-              have castSucc_y_Subsingleton : Set.Subsingleton (Cell.castSucc y)
-                := Set.subsingleton_of_subset_singleton castSucc_y_subset_singleton_last
-              have := Set.Subsingleton.eq_empty_or_singleton castSucc_y_Subsingleton
-              cases this with
-                | inl y_eq_empty => exact (Cell.castSucc_empty_iff y).mp y_eq_empty
-                | inr y_eq_singleton =>
-                  -- TODO: Naming
-                  obtain ⟨y_mem, y_mem_def⟩ := y_eq_singleton
-                  have y_mem_eq_last : y_mem = Fin.last _ := by
-                    rw [y_mem_def] at castSucc_y_subset_singleton_last
-                    simp at castSucc_y_subset_singleton_last
-                    exact castSucc_y_subset_singleton_last
-                  have y_mem_ne_last : y_mem ≠ Fin.last _ := by
-                    have exists_castSucc_eq_y_mem : ∃ (y' : Fin n), y'.castSucc = y_mem := by
-                      rw [y_mem_eq_last]
-                      simp [Cell.castSucc, Set.image] at y_mem_def
-                      have : ∃ a ∈ y, Fin.castSucc a = y_mem := by
-                        have : y_mem ∈ {x | ∃ a ∈ y, Fin.castSucc a = x} := by
-                          have := Set.mem_singleton y_mem
-                          rw [← y_mem_def] at this
-                          exact this
-                        exact Set.mem_setOf.mp this
-                      rw [y_mem_eq_last] at this
-                      obtain ⟨y', y'_mem, y'_eq_y_mem⟩ := this
-                      exists y'
-                    exact Fin.exists_castSucc_eq.mp exists_castSucc_eq_y_mem
-                  contradiction
-            rw [x_eq_empty, y_eq_empty]
+            exact insertLastAt_injOn_symmetric_case_helper insertLastAt_x_eq_insertLastAt_y x_eq_empty
       | inr x_mem_split =>
         cases y_mem_split' with
-          -- TODO: This is just symmetric, wlog it
-          | inl y_eq_empty => sorry
+          | inl y_eq_empty =>
+            exact (insertLastAt_injOn_symmetric_case_helper insertLastAt_x_eq_insertLastAt_y.symm y_eq_empty).symm
           | inr y_mem_split =>
             simp [insertLastAt] at insertLastAt_x_eq_insertLastAt_y
             have castSucc_eq : (split.removeCell x).castSucc = (split.removeCell y).castSucc
@@ -182,21 +207,9 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
               exact singleton_insertLast_x_subsetsingleton_insertLast_y
             exact Cell.insertLast_injective this
 
--- TODO:
---   * insertLastAt_surjOn
---   * insertLastAt_bijOn
-
---theorem insertLastAt_castSucc_mem {n : ℕ} (split : Split n) (targetCell : Cell n)
---  : targetCell.castSucc ∈ split.insertLastAt targetCell := by
---    simp [insertLastAt, Cell.insertLast]
---    sorry
---
---theorem insertLastAt_Injective {n : ℕ} (split : Split n) : Function.Injective (split.insertLastAt) := by
---  intro x y h
---  --simp [insertLastAt] at h
---  have := (Set.ext_iff (s := split.insertLastAt x) (t := split.insertLastAt y)).mp h x.castSucc
---  --simp [insertLastAt] at *
---  sorry
+------------------------------------------------------------------------------------------------------------------------
+--                                          End Injectivity of insertLastAt                                           --
+------------------------------------------------------------------------------------------------------------------------
 
 theorem insertLastAt_nonempty {n : ℕ} (split : Split n) (targetCell : Cell n)
   : (split.insertLastAt targetCell).Nonempty
@@ -288,16 +301,6 @@ theorem insertLastAt_unique_cell_last_mem {n : ℕ} (split : Split n) (targetCel
   : ∃! (cell : Cell (n + 1)), InSplitInsertLastAtAndContainsLast split targetCell cell
     := exists_unique_of_exists_of_unique (exists_contains_last split targetCell) (unique_contains_last split targetCell)
 
---theorem insertLastAt_last_mem_insertLast_targetCell
---    {n : ℕ}
---    (split : Split n)
---    (targetCell : Cell n)
---    (_ : )
---  : Fin.last n ∈ split.insertLastAt targetCell := by
---    simp [insertLastAt, Set.insert]
---    right
---    exact targetCell
-
 theorem insertLastAt_castSucc_mem_of_mem_of_ne_targetCell
     {n : ℕ}
     {split : Split n}
@@ -314,6 +317,26 @@ theorem insertLastAt_castSucc_mem_of_mem_of_ne_targetCell
 -- TODO: Do we even need this if we have the version below?
 def insertLast {n : ℕ} (split : Split n) : Set (Split (n + 1))
   := {split.insertLastAt cell | cell ∈ split.insert ∅}
+
+theorem insertLastAt_mapsTo {n : ℕ} (split : Split n)
+  : Set.MapsTo split.insertLastAt (split.insert ∅) split.insertLast := by
+    simp [Set.MapsTo, insertLast]
+    intro cell cell_mem_split
+    exists cell
+
+-- TODO: Use insertLastAt_mapsTo here
+theorem insertLastAt_surjOn {n : ℕ} (split : Split n)
+  : Set.SurjOn split.insertLastAt (split.insert ∅) split.insertLast := by
+    simp [Set.SurjOn, insertLast, Set.image]
+    intro cell cell_mem_split'
+    exists cell
+
+theorem insertLastAt_bijOn {n : ℕ} (split : Split n)
+  : Set.BijOn split.insertLastAt (split.insert ∅) split.insertLast := by
+    split_ands
+    · exact insertLastAt_mapsTo split
+    · exact insertLastAt_injOn split
+    · exact insertLastAt_surjOn split
 
 theorem insertLast_nonempty_of_mem
   {n : ℕ}
