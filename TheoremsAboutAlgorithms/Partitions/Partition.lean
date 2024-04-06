@@ -58,13 +58,37 @@ theorem isPartition_of_mem_insertLast'_of_isPartition
     {n : ℕ}
     {partition : Split n}
     {split : Split (n + 1)}
-    {h_pos : n + 1 > 0}
-    (h_partition : partition ∈ ℙ n)
-    (h_split : split ∈ partition.insertLast' h_pos)
+    -- TODO: Can we get rid of `succ_n_pos` here? It's just trivial
+    {succ_n_pos : n + 1 > 0}
+    (partition_mem_partitions : partition ∈ ℙ n)
+    (split_mem_insertLast'_partition : split ∈ partition.insertLast' succ_n_pos)
   : split.IsPartition := by
     -- TODO: This is our rewrite of `insertLast'_produces_partitions` where we plan to use `insertLastAt_bijOn` to prove
     --       the covering of all x.
-    sorry
+    -- Terminology:
+    --   * partition₀ := partition.insert ∅
+    --   * partition' := partition.insertLastAt targetCell
+    simp [Split.insertLast', Split.insertLast] at split_mem_insertLast'_partition
+    obtain ⟨targetCell, targetCell_mem_partition₀, cast_partition'_eq_split⟩ := split_mem_insertLast'_partition
+    constructor
+    · let partition' := partition.insertLastAt targetCell
+      rw [← cast_partition'_eq_split]
+      apply (Split.cast_empty_not_mem_iff _ partition').mpr
+      exact Split.insertLastAt_empty_not_mem_of_empty_not_mem partition targetCell partition_mem_partitions.left
+    · intro x
+      simp
+      cases Decidable.eq_or_ne x (Fin.last _) with
+        | inl x_eq_last =>
+          -- TODO: Pretty much the same as in our first attempt
+          sorry
+        | inr x_ne_last =>
+          -- TODO: Plan
+          --      1. Use x.castPred to get an x covered by unique cell in partition
+          --      2. Use bijectivity of insertLastAt to get the cell in partition' that covers x
+          --      3. Show that this cell is unique via assuming otherCell exists, and going backwards from bijectivity
+          obtain ⟨cellₚ, cellₚ_def, cellₚ_unique⟩ := partition_mem_partitions.right (x.castPred x_ne_last)
+          simp at cellₚ_def cellₚ_unique
+          sorry
 
 -- Here we show that if we take a partition of Fin n and apply the operation partition.insertLast', then every resulting
 -- split' is a partition of Fin (n + 1).
