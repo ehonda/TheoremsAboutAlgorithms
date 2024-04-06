@@ -116,4 +116,21 @@ theorem mem_or_not_mem {n : ℕ} (cell : Cell n) (x : Fin n)
     --let cell' := Set.toFinset cell
     --sorry
 
+--example {n : ℕ} (cell otherCell : Cell n) : cell = otherCell := by decide
+
+-- WIP (0)
+
+-- TODO: Implement both instances
+instance Fintype (n : ℕ) (cell : Cell n) : Fintype ↑cell :=
+  -- TODO: Look at placeholders to see what we must provide
+  --       Look at this example: https://github.com/leanprover-community/mathlib4/blob/7c41b87402b0684e4e87c1beee7a73e24101603a/Mathlib/Data/Fintype/Basic.lean#L922-L923
+  --⟨⟨_, _⟩, _ ⟩
+  sorry
+
+instance (n : ℕ) : DecidableEq (Cell n) :=
+  λ x y ↦
+    --match Set.toFinset x, y.toFinset with
+    --| x', y' => sorry
+  sorry
+
 end Cell

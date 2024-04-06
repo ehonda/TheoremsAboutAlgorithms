@@ -208,7 +208,45 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
             exact Cell.insertLast_injective this
 
 ------------------------------------------------------------------------------------------------------------------------
---                                          End Injectivity of insertLastAt                                           --
+--                          Bijections between split₀ and split.insertLastAt targetCell                               --
+------------------------------------------------------------------------------------------------------------------------
+
+-- WIP (I)
+
+-- TODO: Injectivity of split.insertLastAt (as proved above) is not what we actually need in
+--       `isPartition_of_mem_insertLast'_of_isPartition`. What we do need are functions f g such that
+--
+--          `f : split₀.insertLastAt targetCell → split.insertLastAt targetCell`
+--          `g : split.insertLastAt targetCell → split₀.insertLastAt targetCell`
+--
+--       and `f ∘ g = id` and `g ∘ f = id`. We want to define them as follows:
+--
+--          `f := if cell = targetCell then cell.insertLast else cell.castSucc`
+--          `g := if cell = targetCell.insertLast then targetCell else cell.castPred`
+--
+--       To do that we need instances for `DecidableEq Cell`.
+
+-- TODO: Naming
+-- TODO:
+--    * Try to define decidableEq for Cell
+--    * Maybe try it with toFinset
+def embed_insertLastAt
+    {n : ℕ}
+    (split : Split n)
+    (targetCell : split.insert ∅)
+    (cell : split.insert ∅)
+  : ↑(split.insertLastAt targetCell) :=
+    --if cell = targetCell
+    -- TODO: Replace by if cell = targetCell
+    if 1 = 2
+    then by
+      sorry
+    else by
+      --let cell' := Cell.castSucc cell
+      sorry
+
+------------------------------------------------------------------------------------------------------------------------
+--                                          insertLastAt, insertLast, ...                                             --
 ------------------------------------------------------------------------------------------------------------------------
 
 theorem insertLastAt_nonempty {n : ℕ} (split : Split n) (targetCell : Cell n)

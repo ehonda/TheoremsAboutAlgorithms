@@ -52,6 +52,8 @@ def recursivePartitions (n : ℕ) : Set (Split n)
 
 abbrev ℙᵣ (n : ℕ) := recursivePartitions n
 
+-- WIP (II)
+
 -- TODO: This name is probably not quite right
 theorem isPartition_of_mem_insertLast'_of_isPartition
     -- We use split : Split (n + 1) here because that's the form we need it in further down below
@@ -83,9 +85,10 @@ theorem isPartition_of_mem_insertLast'_of_isPartition
           sorry
         | inr x_ne_last =>
           -- TODO: Plan
-          --      1. Use x.castPred to get an x covered by unique cell in partition
-          --      2. Use bijectivity of insertLastAt to get the cell in partition' that covers x
-          --      3. Show that this cell is unique via assuming otherCell exists, and going backwards from bijectivity
+          --      1. Use `x.castPred` to get an x covered by unique cell in partition
+          --      2. Use `f` from `WIP (I)` to get the cell in partition' that covers x
+          --      3. Show that this cell is unique via assuming `otherCell` exists, and going backwards using `g` from
+          --         `WIP (I)`
           obtain ⟨cellₚ, cellₚ_def, cellₚ_unique⟩ := partition_mem_partitions.right (x.castPred x_ne_last)
           simp at cellₚ_def cellₚ_unique
           sorry
