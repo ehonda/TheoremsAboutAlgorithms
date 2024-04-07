@@ -2,50 +2,55 @@ import Mathlib.Data.Fin.Basic
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Set.Defs
 import Mathlib.Data.Set.Image
-import TheoremsAboutAlgorithms.Partitions.Defs
 import TheoremsAboutAlgorithms.Partitions.Fin
+import TheoremsAboutAlgorithms.Partitions.WithFinset.Defs
 
 namespace Cell
 
--- TODO: Maybe there's a more elegant way to use all those mapped functions
 def cast {n m : ℕ} (h : n = m) (cell : Cell n) : Cell m
-  := Fin.cast h '' cell
+  -- TODO: Maybe we should rather use Finset.map here?
+  := Finset.image (Fin.cast h) cell
 
 theorem cast_mem_iff {n : ℕ} (cell : Cell n) (x : Fin n)
   : x ∈ cell.cast rfl ↔ x ∈ cell := by simp [cast]
 
 theorem cast_Injective {n m : ℕ} (h : n = m) : Function.Injective (cast h) := by
-  apply Set.image_injective.mpr
+  apply Finset.image_injective
   exact Fin.cast_injective h
 
-theorem cast_surjective {n m : ℕ} (h : n = m) : Function.Surjective (cast h) := by
-  apply Set.image_surjective.mpr
-  exact Fin.cast_surjective h
-
-theorem cast_bijective {n m : ℕ} (h : n = m) : Function.Bijective (cast h)
-  := ⟨cast_Injective h, cast_surjective h⟩
+-- TODO: Maybe later, we don't actually use those
+--theorem cast_surjective {n m : ℕ} (h : n = m) : Function.Surjective (cast h) := by
+--  simp [Function.Surjective]
+--  intro y
+--  have := (Fin.cast_surjective h) y
+--  obtain ⟨x, hx⟩ := this y
+--
+--theorem cast_bijective {n m : ℕ} (h : n = m) : Function.Bijective (cast h)
+--  := ⟨cast_Injective h, cast_surjective h⟩
 
 theorem cast_nonempty_iff {n m : ℕ} (h : n = m) (cell : Cell n)
   : (cell.cast h).Nonempty ↔ cell.Nonempty := by simp [cast]
 
 def castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
-  := Fin.castSucc '' cell
+  := Finset.image Fin.castSucc cell
 
 theorem disjoint_singleton_last_castSucc {n : ℕ} (cell : Cell n)
   : Disjoint {Fin.last n} cell.castSucc := by
     apply disjoint_iff.mpr
     simp [castSucc, Fin.castSucc]
-    intro k _
-    apply lt_or_lt_iff_ne.mp
-    have : k < n := by simp
-    exact Or.inl this
+    apply Set.inter_nonempty.mpr
+    sorry
+    --intro k _
+    --apply lt_or_lt_iff_ne.mp
+    --have : k < n := by simp
+    --exact Or.inl this
 
 theorem castSucc_empty_iff {n : ℕ} (cell : Cell n)
   : cell.castSucc = ∅ ↔ cell = ∅ := by simp [castSucc]
 
 -- Fin.castSucc_injective is already a theorem in Mathlib.Data.Fin.Basic
 theorem castSucc_injective (n : ℕ) : Function.Injective (castSucc (n := n)) := by
-  apply Set.image_injective.mpr
+  apply Finset.image_injective
   exact Fin.castSucc_injective n
 
 -- Useful: https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/Set/Function.html#Restrict
@@ -57,7 +62,7 @@ def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x �
 
 -- Useful: Set.range_restrict
 def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) : Cell n
-  := Set.range (cell.restrictFinCastPred h)
+  := Finset.range (cell.restrictFinCastPred h)
 
 -- TODO: Naming
 -- TODO: Maybe this should be in Fin namespace?
@@ -116,30 +121,7 @@ theorem mem_or_not_mem {n : ℕ} (cell : Cell n) (x : Fin n)
     --let cell' := Set.toFinset cell
     --sorry
 
---example {n : ℕ} (cell otherCell : Cell n) : cell = otherCell := by decide
-
--- WIP (0)
-
--- TODO: There does not seem to be a way to get these instances with our current def of Cell := Set (Fin n)
---       We probably need Finset instead.
---       There is an equivalence between Finset α and Set α, but it's noncomputable:
---          https://github.com/leanprover-community/mathlib4/blob/7c41b87402b0684e4e87c1beee7a73e24101603a/Mathlib/Data/Fintype/Basic.lean#L1065-L1069
-
--- TODO: Implement both instances
---instance Fintype (n : ℕ) (cell : Cell n) : Fintype ↑cell :=
---  -- TODO: Look at placeholders to see what we must provide
---  --       Look at this example: https://github.com/leanprover-community/mathlib4/blob/7c41b87402b0684e4e87c1beee7a73e24101603a/Mathlib/Data/Fintype/Basic.lean#L922-L923
---  --⟨⟨_, _⟩, _ ⟩
---  sorry
---
---instance (n : ℕ) : DecidableEq (Cell n) :=
---  λ x y ↦
---    --match Set.toFinset x, y.toFinset with
---    --| x', y' => sorry
---  sorry
-
--- failed to synthesize instance Decidable (cell = cell')
--- The version with Finset works (See `WithFinset.Cell`)
---example {n : ℕ} (cell cell' : Cell n) : Bool := if cell = cell' then true else false
+-- Demo that we have a decidable equality
+example {n : ℕ} (cell cell' : Cell n) : Bool := if cell = cell' then true else false
 
 end Cell
