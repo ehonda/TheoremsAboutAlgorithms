@@ -1,3 +1,4 @@
+import Mathlib.Data.SetLike.Basic
 import Mathlib.Data.Setoid.Partition
 import TheoremsAboutAlgorithms.Partitions.Defs
 import TheoremsAboutAlgorithms.Partitions.Cell
@@ -216,34 +217,43 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
 -- TODO: Injectivity of split.insertLastAt (as proved above) is not what we actually need in
 --       `isPartition_of_mem_insertLast'_of_isPartition`. What we do need are functions f g such that
 --
---          `f : split₀.insertLastAt targetCell → split.insertLastAt targetCell`
---          `g : split.insertLastAt targetCell → split₀.insertLastAt targetCell`
+--          `f : split₀ → split.insertLastAt targetCell`
+--          `g : split.insertLastAt targetCell → split₀`
 --
 --       and `f ∘ g = id` and `g ∘ f = id`. We want to define them as follows:
 --
 --          `f := if cell = targetCell then cell.insertLast else cell.castSucc`
 --          `g := if cell = targetCell.insertLast then targetCell else cell.castPred`
 --
---       To do that we need instances for `DecidableEq Cell`.
+--       To do that computably we need instances for `DecidableEq Cell`, which we will get by reimplementing `Cell` via
+--       `Finset`. To see that what we plan to use them for [WIP (II)] works, we do it non-computably for now.
 
--- TODO: Naming
--- TODO:
---    * Try to define decidableEq for Cell
---    * Maybe try it with toFinset
-def embed_insertLastAt
-    {n : ℕ}
-    (split : Split n)
-    (targetCell : split.insert ∅)
-    (cell : split.insert ∅)
-  : ↑(split.insertLastAt targetCell) :=
-    --if cell = targetCell
-    -- TODO: Replace by if cell = targetCell
-    if 1 = 2
-    then by
+--theorem type_equality {n : ℕ} (split : Split n) : ↑ split.insert ∅ =
+
+theorem exists_f_g {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : ∃ (f : ↑(split.insert ∅) → ↑(split.insertLastAt targetCell)),
+    ∃ (g : ↑(split.insertLastAt targetCell) → ↑(split.insert ∅)),
+    Function.LeftInverse f g ∧ Function.RightInverse f g := by
       sorry
-    else by
-      --let cell' := Cell.castSucc cell
-      sorry
+
+noncomputable def f {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : ↑(split.insert ∅) → ↑(split.insertLastAt targetCell) :=
+    (exists_f_g split targetCell).choose
+
+-- TODO: Fix, how do we get to choose on the second exists?
+noncomputable def g {n : ℕ} (split : Split n) (targetCell : Cell n)
+  --: ↑(split.insertLastAt targetCell) → ↑(split.insert ∅) := match (exists_f_g split targetCell) with
+  --  | ⟨f, g, _⟩ => g
+  : ↑(split.insertLastAt targetCell) → ↑(split.insert ∅) :=
+    --let ⟨f, _⟩ := exists_f_g split targetCell
+    --g
+    sorry
+
+-- TODO: Show this (as an exercise)
+example {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : Function.LeftInverse (f split targetCell) (g split targetCell) :=
+    --Exists.choose_spec (exists_f_g split targetCell).left
+    sorry
 
 ------------------------------------------------------------------------------------------------------------------------
 --                                          insertLastAt, insertLast, ...                                             --

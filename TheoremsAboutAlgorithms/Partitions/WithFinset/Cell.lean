@@ -5,6 +5,9 @@ import Mathlib.Data.Set.Image
 import TheoremsAboutAlgorithms.Partitions.Fin
 import TheoremsAboutAlgorithms.Partitions.WithFinset.Defs
 
+-- WIP (III): Build this in terms of Finset Cells so we get decidable equality on them and can define computable `f` and
+--            `g` in WIP (II).
+
 namespace Cell
 
 def cast {n m : ℕ} (h : n = m) (cell : Cell n) : Cell m
