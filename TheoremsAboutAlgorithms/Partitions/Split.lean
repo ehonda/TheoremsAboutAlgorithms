@@ -248,13 +248,17 @@ example {n : ℕ} (split : Split n) (targetCell : Cell n)
   : Function.LeftInverse (f split targetCell) (g split targetCell)
     := (exists_f_g split targetCell).choose_spec.choose_spec.left
 
--- TODO: Can we make some of these implicit?
+-- We don't need this. We can use it for `(tcast split ▸ targetCell)` if `targetCell : ↑(split.insert ∅)`, but we don't
+-- have to actually do this since there is `Set.instCoeSortSetType  {α : Type u} : CoeSort (Set α) (Type u)` which
+-- is the "Coercion from a set to the corresponding subtype." so we can just use `targetCell : split.insert ∅` in places
+-- where we `targetCell : Cell n` is expected.
 theorem tcast
     {n : ℕ}
     (split : Split n)
   : ↑(Set.insert ∅ split) = Cell n := by
     sorry
 
+-- This is just `Set.instCoSortSetType`, we don't need it.
 --instance {n : ℕ} {split : Split n} : CoeSort ↑(Set.insert ∅ split) (Cell n) where
 --  coe cell := cell
 
@@ -271,7 +275,6 @@ theorem icast
 --  coe cell := sorry
 
 -- WIP (I.I)
---    * Why can we just remove tcast and it works? (We don't need the instance above)
 --    * Can we get rid of icast? Do we need an instance for that?
 --      * What does this error mean if we uncomment the second instance:
 --        ```
