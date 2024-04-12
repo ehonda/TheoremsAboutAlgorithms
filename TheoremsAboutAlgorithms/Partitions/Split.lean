@@ -228,8 +228,6 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
 --       To do that computably we need instances for `DecidableEq Cell`, which we will get by reimplementing `Cell` via
 --       `Finset`. To see that what we plan to use them for [WIP (II)] works, we do it non-computably for now.
 
---theorem type_equality {n : ℕ} (split : Split n) : ↑ split.insert ∅ =
-
 theorem exists_f_g {n : ℕ} (split : Split n) (targetCell : Cell n)
   : ∃ (f : ↑(split.insert ∅) → ↑(split.insertLastAt targetCell)),
     ∃ (g : ↑(split.insertLastAt targetCell) → ↑(split.insert ∅)),
@@ -242,18 +240,67 @@ noncomputable def f {n : ℕ} (split : Split n) (targetCell : Cell n)
 
 -- TODO: Fix, how do we get to choose on the second exists?
 noncomputable def g {n : ℕ} (split : Split n) (targetCell : Cell n)
-  --: ↑(split.insertLastAt targetCell) → ↑(split.insert ∅) := match (exists_f_g split targetCell) with
-  --  | ⟨f, g, _⟩ => g
   : ↑(split.insertLastAt targetCell) → ↑(split.insert ∅) :=
-    --let ⟨f, _⟩ := exists_f_g split targetCell
-    --g
-    sorry
+    (exists_f_g split targetCell).choose_spec.choose
 
 -- TODO: Show this (as an exercise)
 example {n : ℕ} (split : Split n) (targetCell : Cell n)
-  : Function.LeftInverse (f split targetCell) (g split targetCell) :=
-    --Exists.choose_spec (exists_f_g split targetCell).left
+  : Function.LeftInverse (f split targetCell) (g split targetCell)
+    := (exists_f_g split targetCell).choose_spec.choose_spec.left
+
+-- TODO: Can we make some of these implicit?
+theorem tcast
+    {n : ℕ}
+    (split : Split n)
+  : ↑(Set.insert ∅ split) = Cell n := by
     sorry
+
+--instance {n : ℕ} {split : Split n} : CoeSort ↑(Set.insert ∅ split) (Cell n) where
+--  coe cell := cell
+
+-- TODO: Fix, this is wrong!
+theorem icast
+    {n : ℕ}
+    (split : Split n)
+    (targetCell : ↑(split.insert ∅))
+  : Cell (n + 1) = ↑(split.insertLastAt targetCell) := by
+  --: ↑(Cell.insertLast targetCell) = ↑(split.insertLastAt targetCell) := by
+    sorry
+
+--instance {n : ℕ} {split : Split n} {targetCell : ↑(split.insert ∅)} : CoeSort (Cell (n + 1)) ↑(split.insertLastAt targetCell) where
+--  coe cell := sorry
+
+-- WIP (I.I)
+--    * Why can we just remove tcast and it works? (We don't need the instance above)
+--    * Can we get rid of icast? Do we need an instance for that?
+--      * What does this error mean if we uncomment the second instance:
+--        ```
+--        instance does not provide concrete values for (semi-)out-params
+--          CoeSort (Cell (n + 1)) ↑(insertLastAt ?split ↑?targetCell)
+--        ```
+--    * `icast` looks questionable, we cast a Cell to "the type of elements of a split", which we can't do in general,
+--      because the cell need not be in the split. We probably need something along those lines (or the reverse?):
+--      ```
+--      ↑(Cell.insertLast targetCell) = ↑(split.insertLastAt targetCell)
+--      ```
+
+theorem f_targetCell_eq_targetCell_insertLast_with_instances
+    {n : ℕ}
+    (split : Split n)
+    (targetCell : ↑(split.insert ∅))
+    : f split targetCell targetCell
+        = ((icast split targetCell ▸ Cell.insertLast targetCell)
+            : ↑(insertLastAt split targetCell))
+      := by sorry
+
+--theorem f_targetCell_eq_targetCell_insertLast
+--    {n : ℕ}
+--    (split : Split n)
+--    (targetCell : ↑(split.insert ∅))
+--    : f split (tcast split ▸ targetCell) targetCell
+--        = ((icast split targetCell ▸ Cell.insertLast (tcast split ▸ targetCell))
+--            : ↑(insertLastAt split (tcast split ▸ targetCell)))
+--      := by sorry
 
 ------------------------------------------------------------------------------------------------------------------------
 --                                          insertLastAt, insertLast, ...                                             --
