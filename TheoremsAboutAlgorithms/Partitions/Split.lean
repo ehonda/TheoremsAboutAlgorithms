@@ -228,6 +228,42 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
 --       To do that computably we need instances for `DecidableEq Cell`, which we will get by reimplementing `Cell` via
 --       `Finset`. To see that what we plan to use them for [WIP (II)] works, we do it non-computably for now.
 
+-- Alternative definitions
+
+-- WIP (I.II)
+--    * This should be the better approach, defining directly what f and g look like at the different value pattern.
+--    * We should then (non-constructively) be able to proof left- / right-inverse by using `eq_or_ne` and accessing the
+--      definition of the values of f and g at the different value patterns.
+--    * Can we use `CoeDep` [0] to show that `Cell.castSucc cell : ↑(split.insertLastAt targetCell)`?. The instance
+--      below looks like it should help but it doesn't. The problem probably is that we use it in a type and so we need
+--      `CoeSort`?
+--    * Maybe there's something wrong with our `CoeDep`, `test2` should work (we coerce a value right?), but it doesn't
+--
+--    [0] https://lean-lang.org/functional_programming_in_lean/type-classes/coercion.html#non-empty-lists-and-dependent-coercions
+
+theorem coe_castSucc_cell {n : ℕ} (split : Split n) (targetCell : Cell n) (cell : ↑(split.insert ∅))
+  : Cell.castSucc cell ∈ split.insertLastAt targetCell := by
+    simp [insertLastAt, Set.insert, Cell.castSucc]
+    right
+    exists cell
+    sorry
+
+instance {n : ℕ} (split : Split n) (targetCell : Cell n) (cell : ↑(split.insert ∅)) : CoeDep (Cell (n + 1)) (Cell.castSucc cell) ↑(split.insertLastAt targetCell) where
+  coe := sorry
+
+def test {n : ℕ} (split : Split n) (targetCell : Cell n) (x : ↑(split.insertLastAt targetCell)) := 1
+
+def test2 {n : ℕ} (split : Split n) (targetCell : Cell n) (cell : ↑(split.insert ∅))
+  := test split targetCell ↑(Cell.castSucc cell)
+
+-- Here we state the definition of f via propostions, because for a direct definition we need decidable equality on
+-- Cell. We can then noncomputably choose a function that satisfies the propositions.
+theorem exists_f {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : ∃ (f : ↑(split.insert ∅) → ↑(split.insertLastAt targetCell)),
+    ∀ (cell : ↑(split.insert ∅)), (cell = targetCell → f cell = targetCell.insertLast)
+      ∧ (↑cell ≠ targetCell → f cell = (↑(Cell.castSucc cell) : ↑(split.insertLastAt targetCell))) := by
+      sorry
+
 theorem exists_f_g {n : ℕ} (split : Split n) (targetCell : Cell n)
   : ∃ (f : ↑(split.insert ∅) → ↑(split.insertLastAt targetCell)),
     ∃ (g : ↑(split.insertLastAt targetCell) → ↑(split.insert ∅)),
