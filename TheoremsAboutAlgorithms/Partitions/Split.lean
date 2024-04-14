@@ -228,6 +228,49 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
 --       To do that computably we need instances for `DecidableEq Cell`, which we will get by reimplementing `Cell` via
 --       `Finset`. To see that what we plan to use them for [WIP (II)] works, we do it non-computably for now.
 
+-- Alternative definitions 2
+
+-- WIP (I.III)
+--    * Here we move the restrictions on the source and target domain of f and g from the types into the propositions,
+--      because right now it's kind of hard to get the types right (and this is intended to be a mere POC anyway)
+--    * Otherwise, we do the same as in WIP (I.II)
+
+theorem exists_f' {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : ∃ (f : Cell n → Cell (n + 1)),
+    ∀ (cell : Cell n), cell ∈ split.insert ∅ →
+      (cell = targetCell → f cell ∈ split.insertLastAt targetCell ∧ f cell = targetCell.insertLast)
+      ∧ (cell ≠ targetCell → f cell ∈ split.insertLastAt targetCell ∧ f cell = cell.castSucc) := by
+        sorry
+
+noncomputable def f' {n : ℕ} (split : Split n) (targetCell : Cell n) : Cell n → Cell (n + 1)
+  := (exists_f' split targetCell).choose
+
+theorem exists_g' {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : ∃ (g : Cell (n + 1) → Cell n),
+    ∀ (cell : Cell (n + 1)), cell ∈ split.insertLastAt targetCell →
+      (cell = targetCell.insertLast → g cell ∈ split.insert ∅ ∧ g cell = targetCell)
+      ∧ (cell ≠ targetCell.insertLast → g cell ∈ split.insert ∅ ∧ g cell = cell.castPred sorry) := by
+        sorry
+
+noncomputable def g' {n : ℕ} (split : Split n) (targetCell : Cell n) : Cell (n + 1) → Cell n
+  := (exists_g' split targetCell).choose
+
+theorem leftInverse_f'_g' {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : Function.LeftInverse (f' split targetCell) (g' split targetCell) := by
+    sorry
+
+theorem rightInverse_f'_g' {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : Function.RightInverse (f' split targetCell) (g' split targetCell) := by
+    sorry
+
+theorem bijective_f' {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : Function.Bijective (f' split targetCell) := by
+    sorry
+
+theorem bijective_g' {n : ℕ} (split : Split n) (targetCell : Cell n)
+  : Function.Bijective (g' split targetCell) := by
+    sorry
+
 -- Alternative definitions
 
 -- WIP (I.II)
@@ -241,28 +284,40 @@ theorem insertLastAt_injOn {n : ℕ} (split : Split n)
 --
 --    [0] https://lean-lang.org/functional_programming_in_lean/type-classes/coercion.html#non-empty-lists-and-dependent-coercions
 
-theorem coe_castSucc_cell {n : ℕ} (split : Split n) (targetCell : Cell n) (cell : ↑(split.insert ∅))
+def nonTarget {n : ℕ} (split : Split n) (targetCell : Cell n) : Split n
+  := removeCell (split.insert ∅) targetCell
+
+theorem coe_castSucc_cell
+    {n : ℕ}
+    (split : Split n)
+    (targetCell : Cell n)
+    (cell : ↑(split.nonTarget targetCell))
   : Cell.castSucc cell ∈ split.insertLastAt targetCell := by
     simp [insertLastAt, Set.insert, Cell.castSucc]
     right
     exists cell
     sorry
 
-instance {n : ℕ} (split : Split n) (targetCell : Cell n) (cell : ↑(split.insert ∅)) : CoeDep (Cell (n + 1)) (Cell.castSucc cell) ↑(split.insertLastAt targetCell) where
-  coe := sorry
-
-def test {n : ℕ} (split : Split n) (targetCell : Cell n) (x : ↑(split.insertLastAt targetCell)) := 1
-
-def test2 {n : ℕ} (split : Split n) (targetCell : Cell n) (cell : ↑(split.insert ∅))
-  := test split targetCell ↑(Cell.castSucc cell)
+-- We would rather have `cell_ne_targetCell : ↑cell ≠ targetCell` here but we don't know how to make it so that the
+-- coercion can then be found below, so we directly put it into the cell's type.
+instance
+    {n : ℕ}
+    {split : Split n}
+    {targetCell : Cell n}
+    {cell : ↑(split.nonTarget targetCell)}
+  : CoeDep (Cell (n + 1)) (Cell.castSucc cell) ↑(split.insertLastAt targetCell) where
+    coe := by
+      use Cell.castSucc cell
+      exact coe_castSucc_cell split targetCell cell
 
 -- Here we state the definition of f via propostions, because for a direct definition we need decidable equality on
 -- Cell. We can then noncomputably choose a function that satisfies the propositions.
-theorem exists_f {n : ℕ} (split : Split n) (targetCell : Cell n)
-  : ∃ (f : ↑(split.insert ∅) → ↑(split.insertLastAt targetCell)),
-    ∀ (cell : ↑(split.insert ∅)), (cell = targetCell → f cell = targetCell.insertLast)
-      ∧ (↑cell ≠ targetCell → f cell = (↑(Cell.castSucc cell) : ↑(split.insertLastAt targetCell))) := by
-      sorry
+-- theorem exists_f {n : ℕ} (split : Split n) (targetCell : Cell n)
+--   : ∃ (f : ↑(split.insert ∅) → ↑(split.insertLastAt targetCell)),
+--     ∀ (cell : ↑(split.insert ∅)), (cell = targetCell → f cell = targetCell.insertLast)
+--       -- We have to explicitly specify `Cell (n + 1)` here such that the dependent coercion specified above can be found
+--       ∧ (↑cell ∈ split.nonTarget targetCell → f cell = ↑(Cell.castSucc (↑cell : ↑(split.nonTarget targetCell)) : Cell (n + 1))) := by
+--       sorry
 
 theorem exists_f_g {n : ℕ} (split : Split n) (targetCell : Cell n)
   : ∃ (f : ↑(split.insert ∅) → ↑(split.insertLastAt targetCell)),

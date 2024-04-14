@@ -91,7 +91,18 @@ theorem isPartition_of_mem_insertLast'_of_isPartition
           --         `WIP (I)`
           obtain ⟨cellₚ, cellₚ_def, cellₚ_unique⟩ := partition_mem_partitions.right (x.castPred x_ne_last)
           simp at cellₚ_def cellₚ_unique
-          sorry
+          let cell := Split.f' partition targetCell cellₚ
+          apply ExistsUnique.intro cell
+          · sorry
+          · intro otherCell otherCell_mem_partition'
+            let otherCellₚ := Split.g' partition targetCell otherCell
+            apply (Split.bijective_g' partition targetCell).left
+            have cellₚ_eq_g'_cell : cellₚ = Split.g' partition targetCell cell := by
+              sorry
+            have otherCellₚ_eq_cellₚ : otherCellₚ = cellₚ := by
+              sorry
+            rw [←cellₚ_eq_g'_cell]
+            exact otherCellₚ_eq_cellₚ
 
 -- Here we show that if we take a partition of Fin n and apply the operation partition.insertLast', then every resulting
 -- split' is a partition of Fin (n + 1).
