@@ -263,6 +263,7 @@ theorem rightInverse_f'_g' {n : ℕ} (split : Split n) (targetCell : Cell n)
   : Function.RightInverse (f' split targetCell) (g' split targetCell) := by
     sorry
 
+-- TODO: Use Function.bijective_iff_has_inverse for these
 theorem bijective_f' {n : ℕ} (split : Split n) (targetCell : Cell n)
   : Function.Bijective (f' split targetCell) := by
     sorry

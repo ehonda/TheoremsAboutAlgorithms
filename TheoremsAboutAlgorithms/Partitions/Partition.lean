@@ -95,10 +95,13 @@ theorem isPartition_of_mem_insertLast'_of_isPartition
           apply ExistsUnique.intro cell
           · sorry
           · intro otherCell otherCell_mem_partition'
+            -- TODO: How can we use this?
+            --let g' := Split.g' partition targetCell
             let otherCellₚ := Split.g' partition targetCell otherCell
             apply (Split.bijective_g' partition targetCell).left
             have cellₚ_eq_g'_cell : cellₚ = Split.g' partition targetCell cell := by
-              sorry
+              have := Split.rightInverse_f'_g' partition targetCell cellₚ
+              rw [←this]
             have otherCellₚ_eq_cellₚ : otherCellₚ = cellₚ := by
               sorry
             rw [←cellₚ_eq_g'_cell]
