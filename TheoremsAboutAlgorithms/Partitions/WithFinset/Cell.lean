@@ -21,6 +21,10 @@ theorem cast_Injective {n m : ℕ} (h : n = m) : Function.Injective (cast h) := 
   apply Finset.image_injective
   exact Fin.cast_injective h
 
+-- TODO: Find the embedding we need for this
+def cast' {n m : ℕ} (h : n = m) (cell : Cell n) : Cell m
+  := Finset.map (Fin.cast h) cell
+
 -- TODO: Maybe later, we don't actually use those
 --theorem cast_surjective {n m : ℕ} (h : n = m) : Function.Surjective (cast h) := by
 --  simp [Function.Surjective]
@@ -55,7 +59,7 @@ theorem castSucc_empty_iff {n : ℕ} (cell : Cell n)
   : cell.castSucc = ∅ ↔ cell = ∅ := by simp [castSucc]
 
 -- Fin.castSucc_injective is already a theorem in Mathlib.Data.Fin.Basic
-theorem castSucc_injective (n : ℕ) : Function.Injective (castSucc (n := n)) := by
+theorem castSucc_injective (n : ℕ) : Function.Injective (@castSucc n) := by
   apply Finset.image_injective
   exact Fin.castSucc_injective n
 
@@ -68,7 +72,7 @@ def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x �
 
 -- Useful: Set.range_restrict
 def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) : Cell n
-  := Finset.range (cell.restrictFinCastPred h)
+  := Finset.image (cell.restrictFinCastPred h) Finset.univ
 
 -- TODO: Naming
 -- TODO: Maybe this should be in Fin namespace?
@@ -90,8 +94,12 @@ def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
 theorem last_mem_insertLast {n : ℕ} (cell : Cell n) : Fin.last n ∈ cell.insertLast := by
   simp [insertLast]
 
--- TODO
-theorem insertLast_injective {n : ℕ} : Function.Injective (insertLast (n := n)) := by
+-- TODO: Maybe we can show this via `Finset.map_injective` by providing an embedding from `Fin n` to `Fin (n + 1)`
+--       Plan:
+--         * Show that `castSucc` is injective
+--         * Show that `insertLast` is injective
+--         * Use `Finset.map_injective`?
+theorem insertLast_injective {n : ℕ} : Function.Injective (@insertLast n) := by
   intro x y h
   simp [insertLast] at h
   repeat rw [Set.insert_eq] at h
@@ -104,7 +112,7 @@ theorem insertLast_injective {n : ℕ} : Function.Injective (insertLast (n := n)
     · have : castSucc y ⊆ {Fin.last _} ∪ castSucc x := by
         exact HasSubset.subset.trans_eq (Set.subset_union_right _ _) h.symm
       exact Disjoint.subset_right_of_subset_union this (disjoint_singleton_last_castSucc y).symm
-  exact (castSucc_injective (n := n)) castSucc_x_eq_castSucc_y
+  exact (@castSucc_injective n) castSucc_x_eq_castSucc_y
 
 theorem insertLast_nonempty {n : ℕ} (cell : Cell n) : cell.insertLast.Nonempty
   := Set.insert_nonempty _ _
