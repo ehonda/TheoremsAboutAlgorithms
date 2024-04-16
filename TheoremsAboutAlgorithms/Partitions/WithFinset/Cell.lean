@@ -37,16 +37,19 @@ theorem cast_nonempty_iff {n m : ℕ} (h : n = m) (cell : Cell n)
 def castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := Finset.image Fin.castSucc cell
 
+theorem last_not_mem_castSucc {n : ℕ} (cell : Cell n)
+  : Fin.last _ ∉ cell.castSucc := by
+    simp [castSucc]
+    intro x _
+    apply lt_or_lt_iff_ne.mp
+    left
+    exact x.isLt
+
 theorem disjoint_singleton_last_castSucc {n : ℕ} (cell : Cell n)
   : Disjoint {Fin.last n} cell.castSucc := by
     apply disjoint_iff.mpr
-    simp [castSucc, Fin.castSucc]
-    apply Set.inter_nonempty.mpr
-    sorry
-    --intro k _
-    --apply lt_or_lt_iff_ne.mp
-    --have : k < n := by simp
-    --exact Or.inl this
+    apply Finset.singleton_inter_of_not_mem
+    exact last_not_mem_castSucc cell
 
 theorem castSucc_empty_iff {n : ℕ} (cell : Cell n)
   : cell.castSucc = ∅ ↔ cell = ∅ := by simp [castSucc]
