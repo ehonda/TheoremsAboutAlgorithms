@@ -10,20 +10,15 @@ import TheoremsAboutAlgorithms.Partitions.WithFinset.Defs
 
 namespace Cell
 
+-- TODO: Define something like Fin.castEmbedding := ⟨Fin.cast, Fin.cast_injective⟩
 def cast {n m : ℕ} (h : n = m) (cell : Cell n) : Cell m
-  -- TODO: Maybe we should rather use Finset.map here?
-  := Finset.image (Fin.cast h) cell
+  := Finset.map (Fin.castEmbedding h) cell
 
 theorem cast_mem_iff {n : ℕ} (cell : Cell n) (x : Fin n)
-  : x ∈ cell.cast rfl ↔ x ∈ cell := by simp [cast]
+  : x ∈ cell.cast rfl ↔ x ∈ cell := by simp [cast, Fin.castEmbedding]
 
-theorem cast_Injective {n m : ℕ} (h : n = m) : Function.Injective (cast h) := by
-  apply Finset.image_injective
-  exact Fin.cast_injective h
-
--- TODO: Find the embedding we need for this
-def cast' {n m : ℕ} (h : n = m) (cell : Cell n) : Cell m
-  := Finset.map (Fin.cast h) cell
+theorem cast_injective {n m : ℕ} (h : n = m) : Function.Injective (cast h)
+  := Finset.map_injective (Fin.castEmbedding h)
 
 -- TODO: Maybe later, we don't actually use those
 --theorem cast_surjective {n m : ℕ} (h : n = m) : Function.Surjective (cast h) := by
@@ -39,7 +34,9 @@ theorem cast_nonempty_iff {n m : ℕ} (h : n = m) (cell : Cell n)
   : (cell.cast h).Nonempty ↔ cell.Nonempty := by simp [cast]
 
 def castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
-  := Finset.image Fin.castSucc cell
+  --:= Finset.map ⟨Fin.castSuccEmb, Fin.castSuccEmb.inj⟩ cell
+  -- TODO: Use Fin.castSuccEmb for a terse definition
+  := Finset.map ⟨Fin.castSucc, Fin.castSucc_injective n⟩ cell
 
 theorem last_not_mem_castSucc {n : ℕ} (cell : Cell n)
   : Fin.last _ ∉ cell.castSucc := by
@@ -59,9 +56,8 @@ theorem castSucc_empty_iff {n : ℕ} (cell : Cell n)
   : cell.castSucc = ∅ ↔ cell = ∅ := by simp [castSucc]
 
 -- Fin.castSucc_injective is already a theorem in Mathlib.Data.Fin.Basic
-theorem castSucc_injective (n : ℕ) : Function.Injective (@castSucc n) := by
-  apply Finset.image_injective
-  exact Fin.castSucc_injective n
+theorem castSucc_injective (n : ℕ) : Function.Injective (@castSucc n)
+  := Finset.map_injective ⟨Fin.castSucc, Fin.castSucc_injective n⟩
 
 -- Useful: https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/Set/Function.html#Restrict
 def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) (x : cell) : Fin n
@@ -89,10 +85,19 @@ theorem castPred_mem_of_mem_castSucc_of_ne_last
 
 -- This is essentially cell ↦ {n} ∪ cell
 def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
-  := insert (Fin.last n) (cell.castSucc)
+  := Finset.cons (Fin.last n) (cell.castSucc) (last_not_mem_castSucc cell)
 
 theorem last_mem_insertLast {n : ℕ} (cell : Cell n) : Fin.last n ∈ cell.insertLast := by
   simp [insertLast]
+
+-- h : insert (Fin.last n) (castSucc x) = insert (Fin.last n) (castSucc y)
+-- Helper:
+-- TODO: Move and rename
+-- theorem helper {n : ℕ} (x y : Cell n) : insert (Fin.last n) x = insert (Fin.last n) y → x = y := by
+--   intro h
+--   apply Set.eq_of_subset_of_subset
+--   · have : insert (Fin.last n) x ⊆ insert (Fin.last n) y := by
+--       exact
 
 -- TODO: Maybe we can show this via `Finset.map_injective` by providing an embedding from `Fin n` to `Fin (n + 1)`
 --       Plan:
@@ -102,16 +107,26 @@ theorem last_mem_insertLast {n : ℕ} (cell : Cell n) : Fin.last n ∈ cell.inse
 theorem insertLast_injective {n : ℕ} : Function.Injective (@insertLast n) := by
   intro x y h
   simp [insertLast] at h
-  repeat rw [Set.insert_eq] at h
+  --repeat rw [Set.insert_eq] at h
   have castSucc_x_eq_castSucc_y : x.castSucc = y.castSucc := by
-    apply Set.eq_of_subset_of_subset
-    -- TODO: Remove the duplication, wlog it
-    · have : castSucc x ⊆ {Fin.last _} ∪ castSucc y := by
-        exact HasSubset.subset.trans_eq (Set.subset_union_right _ _) h
-      exact Disjoint.subset_right_of_subset_union this (disjoint_singleton_last_castSucc x).symm
-    · have : castSucc y ⊆ {Fin.last _} ∪ castSucc x := by
-        exact HasSubset.subset.trans_eq (Set.subset_union_right _ _) h.symm
-      exact Disjoint.subset_right_of_subset_union this (disjoint_singleton_last_castSucc y).symm
+    apply Decidable.by_contradiction
+    intro h_castSucc_x_ne_castSucc_y
+    -- Plan:
+    --    * Use the fact that `castSucc x ≠ castSucc y` to show there exists a ∈ castSucc x such that a ∉ castSucc y
+    --    * Show that a ≠ Fin.last n
+    --    * Show that a ∈ insertLast x
+    --    * Show that a ∉ insertLast y
+    --    * Conclude that insertLast x ≠ insertLast y
+    --    * Contradiction
+    sorry
+    -- apply Set.eq_of_subset_of_subset
+    -- -- TODO: Remove the duplication, wlog it
+    -- · have : castSucc x ⊆ {Fin.last _} ∪ castSucc y := by
+    --     exact HasSubset.subset.trans_eq (Set.subset_union_right _ _) h
+    --   exact Disjoint.subset_right_of_subset_union this (disjoint_singleton_last_castSucc x).symm
+    -- · have : castSucc y ⊆ {Fin.last _} ∪ castSucc x := by
+    --     exact HasSubset.subset.trans_eq (Set.subset_union_right _ _) h.symm
+    --   exact Disjoint.subset_right_of_subset_union this (disjoint_singleton_last_castSucc y).symm
   exact (@castSucc_injective n) castSucc_x_eq_castSucc_y
 
 theorem insertLast_nonempty {n : ℕ} (cell : Cell n) : cell.insertLast.Nonempty

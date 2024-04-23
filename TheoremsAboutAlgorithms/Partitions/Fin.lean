@@ -1,9 +1,11 @@
 import Mathlib.Init.Data.Nat.Notation
 import Mathlib.Init.Function
 import Mathlib.Init.Logic
+import Mathlib.Logic.Embedding.Basic
 
 namespace Fin
 
+-- TODO: These are missing in mathlib, contribute them
 theorem cast_injective {n m : ℕ} (h : n = m) : Function.Injective (cast h) := by
   intro x y h
   simp [cast] at h
@@ -15,6 +17,10 @@ theorem cast_surjective {n m : ℕ} (h : n = m) : Function.Surjective (cast h) :
 
 theorem cast_bijective {n m : ℕ} (h : n = m) : Function.Bijective (cast h)
   := ⟨cast_injective h, cast_surjective h⟩
+
+-- TODO: Make this an OrderEmbedding: https://leanprover-community.github.io/mathlib4_docs/Mathlib/Order/Hom/Basic.html#OrderEmbedding
+def castEmbedding {n m : ℕ} (h : n = m) : Fin n ↪ Fin m :=
+  ⟨cast h, cast_injective h⟩
 
 -- TODO: We don't have surjective / bijective for Cell.castSucc as Fin.last has no preimage. We could however prove it
 --       for the restriction of Cell.castSucc to cells not containing n, but it's not clea how to best do that.

@@ -14,7 +14,7 @@ def cast {n m : ℕ} (h : n = m) (cell : Cell n) : Cell m
 theorem cast_mem_iff {n : ℕ} (cell : Cell n) (x : Fin n)
   : x ∈ cell.cast rfl ↔ x ∈ cell := by simp [cast]
 
-theorem cast_Injective {n m : ℕ} (h : n = m) : Function.Injective (cast h) := by
+theorem cast_injective {n m : ℕ} (h : n = m) : Function.Injective (cast h) := by
   apply Set.image_injective.mpr
   exact Fin.cast_injective h
 
@@ -23,7 +23,7 @@ theorem cast_surjective {n m : ℕ} (h : n = m) : Function.Surjective (cast h) :
   exact Fin.cast_surjective h
 
 theorem cast_bijective {n m : ℕ} (h : n = m) : Function.Bijective (cast h)
-  := ⟨cast_Injective h, cast_surjective h⟩
+  := ⟨cast_injective h, cast_surjective h⟩
 
 theorem cast_nonempty_iff {n m : ℕ} (h : n = m) (cell : Cell n)
   : (cell.cast h).Nonempty ↔ cell.Nonempty := by simp [cast]
