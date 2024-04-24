@@ -90,43 +90,57 @@ def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
 theorem last_mem_insertLast {n : ℕ} (cell : Cell n) : Fin.last n ∈ cell.insertLast := by
   simp [insertLast]
 
--- h : insert (Fin.last n) (castSucc x) = insert (Fin.last n) (castSucc y)
--- Helper:
--- TODO: Move and rename
--- theorem helper {n : ℕ} (x y : Cell n) : insert (Fin.last n) x = insert (Fin.last n) y → x = y := by
---   intro h
---   apply Set.eq_of_subset_of_subset
---   · have : insert (Fin.last n) x ⊆ insert (Fin.last n) y := by
---       exact
+-- {Fin.last n} ∪ castSucc x = {Fin.last n} ∪ castSucc y
+-- TODO: Move to a Finset file
+-- TODO: Naming
+-- TODO: This seems to be missing in mathlib, maybe contribute it?
+theorem helper
+    {α : Type*}
+    [DecidableEq α]
+    {x : α}
+    {s t : Finset α}
+    (disjoint_singleton_x_s : Disjoint {x} s)
+    (disjoint_singleton_x_t : Disjoint {x} t)
+    (eq_union : {x} ∪ s = {x} ∪ t)
+  : s = t := by
+    ext y
+    constructor
+    · intro y_mem_s
+      cases Decidable.eq_or_ne x y with
+        | inl x_eq_y =>
+          have y_not_mem_s : y ∉ s := by
+            rw [x_eq_y] at disjoint_singleton_x_s
+            exact Finset.disjoint_singleton_left.mp disjoint_singleton_x_s
+          contradiction
+        | inr x_ne_y =>
+          have y_mem_singleton_x_union_s : y ∈ {x} ∪ s := by simp [y_mem_s]
+          have y_mem_singleton_x_union_t : y ∈ {x} ∪ t := (Finset.ext_iff.mp eq_union y).mp y_mem_singleton_x_union_s
+          simp [Finset.mem_union] at y_mem_singleton_x_union_t
+          cases y_mem_singleton_x_union_t with
+            | inl y_eq_x => have x_eq_y := y_eq_x.symm; contradiction
+            | inr y_mem_t => exact y_mem_t
+    -- TODO: Can we get rid of this duplicate and totally symmetric subproof? wlog or something?
+    · intro y_mem_t
+      cases Decidable.eq_or_ne x y with
+        | inl x_eq_y =>
+          have y_not_mem_t : y ∉ t := by
+            rw [x_eq_y] at disjoint_singleton_x_t
+            exact Finset.disjoint_singleton_left.mp disjoint_singleton_x_t
+          contradiction
+        | inr x_ne_y =>
+          have y_mem_singleton_x_union_t : y ∈ {x} ∪ t := by simp [y_mem_t]
+          have y_mem_singleton_x_union_s : y ∈ {x} ∪ s := (Finset.ext_iff.mp eq_union y).mpr y_mem_singleton_x_union_t
+          simp [Finset.mem_union] at y_mem_singleton_x_union_s
+          cases y_mem_singleton_x_union_s with
+            | inl y_eq_x => have x_eq_y := y_eq_x.symm; contradiction
+            | inr y_mem_s => exact y_mem_s
 
--- TODO: Maybe we can show this via `Finset.map_injective` by providing an embedding from `Fin n` to `Fin (n + 1)`
---       Plan:
---         * Show that `castSucc` is injective
---         * Show that `insertLast` is injective
---         * Use `Finset.map_injective`?
 theorem insertLast_injective {n : ℕ} : Function.Injective (@insertLast n) := by
   intro x y h
   simp [insertLast] at h
-  --repeat rw [Set.insert_eq] at h
   have castSucc_x_eq_castSucc_y : x.castSucc = y.castSucc := by
-    apply Decidable.by_contradiction
-    intro h_castSucc_x_ne_castSucc_y
-    -- Plan:
-    --    * Use the fact that `castSucc x ≠ castSucc y` to show there exists a ∈ castSucc x such that a ∉ castSucc y
-    --    * Show that a ≠ Fin.last n
-    --    * Show that a ∈ insertLast x
-    --    * Show that a ∉ insertLast y
-    --    * Conclude that insertLast x ≠ insertLast y
-    --    * Contradiction
-    sorry
-    -- apply Set.eq_of_subset_of_subset
-    -- -- TODO: Remove the duplication, wlog it
-    -- · have : castSucc x ⊆ {Fin.last _} ∪ castSucc y := by
-    --     exact HasSubset.subset.trans_eq (Set.subset_union_right _ _) h
-    --   exact Disjoint.subset_right_of_subset_union this (disjoint_singleton_last_castSucc x).symm
-    -- · have : castSucc y ⊆ {Fin.last _} ∪ castSucc x := by
-    --     exact HasSubset.subset.trans_eq (Set.subset_union_right _ _) h.symm
-    --   exact Disjoint.subset_right_of_subset_union this (disjoint_singleton_last_castSucc y).symm
+    simp [Finset.insert_eq] at h
+    exact helper (disjoint_singleton_last_castSucc x) (disjoint_singleton_last_castSucc y) h
   exact (@castSucc_injective n) castSucc_x_eq_castSucc_y
 
 theorem insertLast_nonempty {n : ℕ} (cell : Cell n) : cell.insertLast.Nonempty
