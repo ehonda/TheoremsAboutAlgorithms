@@ -94,12 +94,11 @@ theorem last_mem_insertLast {n : ℕ} (cell : Cell n) : Fin.last n ∈ cell.inse
 theorem insertLast_injective {n : ℕ} : Function.Injective (@insertLast n) := by
   intro x y h
   simp [insertLast] at h
-  have castSucc_x_eq_castSucc_y : x.castSucc = y.castSucc := by
-    apply Finset.eq_of_disjoint_singleton_of_disjoint_singleton_of_eq_unions
-    · exact disjoint_singleton_last_castSucc x
-    · exact disjoint_singleton_last_castSucc y
-    · exact h
-  exact (@castSucc_injective n) castSucc_x_eq_castSucc_y
+  apply castSucc_injective
+  apply Finset.eq_of_disjoint_singleton_of_disjoint_singleton_of_eq_unions
+  · exact disjoint_singleton_last_castSucc x
+  · exact disjoint_singleton_last_castSucc y
+  · exact h
 
 theorem insertLast_nonempty {n : ℕ} (cell : Cell n) : cell.insertLast.Nonempty
   := Set.insert_nonempty _ _
