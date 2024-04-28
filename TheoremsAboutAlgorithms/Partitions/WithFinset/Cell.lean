@@ -4,6 +4,7 @@ import Mathlib.Data.Set.Defs
 import Mathlib.Data.Set.Image
 import TheoremsAboutAlgorithms.Partitions.Fin
 import TheoremsAboutAlgorithms.Partitions.WithFinset.Defs
+import TheoremsAboutAlgorithms.Partitions.WithFinset.Finset
 
 -- WIP (III): Build this in terms of Finset Cells so we get decidable equality on them and can define computable `f` and
 --            `g` in WIP (II).
@@ -90,57 +91,14 @@ def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
 theorem last_mem_insertLast {n : ℕ} (cell : Cell n) : Fin.last n ∈ cell.insertLast := by
   simp [insertLast]
 
--- {Fin.last n} ∪ castSucc x = {Fin.last n} ∪ castSucc y
--- TODO: Move to a Finset file
--- TODO: Naming
--- TODO: This seems to be missing in mathlib, maybe contribute it?
-theorem helper
-    {α : Type*}
-    [DecidableEq α]
-    {x : α}
-    {s t : Finset α}
-    (disjoint_singleton_x_s : Disjoint {x} s)
-    (disjoint_singleton_x_t : Disjoint {x} t)
-    (eq_union : {x} ∪ s = {x} ∪ t)
-  : s = t := by
-    ext y
-    constructor
-    · intro y_mem_s
-      cases Decidable.eq_or_ne x y with
-        | inl x_eq_y =>
-          have y_not_mem_s : y ∉ s := by
-            rw [x_eq_y] at disjoint_singleton_x_s
-            exact Finset.disjoint_singleton_left.mp disjoint_singleton_x_s
-          contradiction
-        | inr x_ne_y =>
-          have y_mem_singleton_x_union_s : y ∈ {x} ∪ s := by simp [y_mem_s]
-          have y_mem_singleton_x_union_t : y ∈ {x} ∪ t := (Finset.ext_iff.mp eq_union y).mp y_mem_singleton_x_union_s
-          simp [Finset.mem_union] at y_mem_singleton_x_union_t
-          cases y_mem_singleton_x_union_t with
-            | inl y_eq_x => have x_eq_y := y_eq_x.symm; contradiction
-            | inr y_mem_t => exact y_mem_t
-    -- TODO: Can we get rid of this duplicate and totally symmetric subproof? wlog or something?
-    · intro y_mem_t
-      cases Decidable.eq_or_ne x y with
-        | inl x_eq_y =>
-          have y_not_mem_t : y ∉ t := by
-            rw [x_eq_y] at disjoint_singleton_x_t
-            exact Finset.disjoint_singleton_left.mp disjoint_singleton_x_t
-          contradiction
-        | inr x_ne_y =>
-          have y_mem_singleton_x_union_t : y ∈ {x} ∪ t := by simp [y_mem_t]
-          have y_mem_singleton_x_union_s : y ∈ {x} ∪ s := (Finset.ext_iff.mp eq_union y).mpr y_mem_singleton_x_union_t
-          simp [Finset.mem_union] at y_mem_singleton_x_union_s
-          cases y_mem_singleton_x_union_s with
-            | inl y_eq_x => have x_eq_y := y_eq_x.symm; contradiction
-            | inr y_mem_s => exact y_mem_s
-
 theorem insertLast_injective {n : ℕ} : Function.Injective (@insertLast n) := by
   intro x y h
   simp [insertLast] at h
   have castSucc_x_eq_castSucc_y : x.castSucc = y.castSucc := by
-    simp [Finset.insert_eq] at h
-    exact helper (disjoint_singleton_last_castSucc x) (disjoint_singleton_last_castSucc y) h
+    apply Finset.eq_of_disjoint_singleton_of_disjoint_singleton_of_eq_unions
+    · exact disjoint_singleton_last_castSucc x
+    · exact disjoint_singleton_last_castSucc y
+    · exact h
   exact (@castSucc_injective n) castSucc_x_eq_castSucc_y
 
 theorem insertLast_nonempty {n : ℕ} (cell : Cell n) : cell.insertLast.Nonempty
