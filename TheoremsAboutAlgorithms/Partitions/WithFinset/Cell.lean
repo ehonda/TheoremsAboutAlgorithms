@@ -101,25 +101,7 @@ theorem insertLast_injective {n : ℕ} : Function.Injective (@insertLast n) := b
   · exact h
 
 theorem insertLast_nonempty {n : ℕ} (cell : Cell n) : cell.insertLast.Nonempty
-  := Set.insert_nonempty _ _
-
--- TODO: Look for a nicer proof of this.
-theorem insertLast_is_disjoint_insert {n : ℕ} (cell : Cell n)
-  : Disjoint {Fin.last n} cell.castSucc := by
-    apply disjoint_iff.mpr
-    simp [castSucc, Fin.castSucc]
-    intro k _
-    apply lt_or_lt_iff_ne.mp
-    have : k < n := by simp
-    exact Or.inl this
-
--- TODO: Maybe use Set.mem_toFinset
--- TODO: Do we actually use this somewhere? Can we get rid of it in favor of a constructive proof?
-theorem mem_or_not_mem {n : ℕ} (cell : Cell n) (x : Fin n)
-  : x ∈ cell ∨ x ∉ cell :=
-    sorry
-    --let cell' := Set.toFinset cell
-    --sorry
+  := by simp [insertLast]
 
 -- Demo that we have a decidable equality
 example {n : ℕ} (cell cell' : Cell n) : Bool := if cell = cell' then true else false
