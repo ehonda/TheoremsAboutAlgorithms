@@ -15,6 +15,9 @@ namespace Cell
 def cast {n m : ℕ} (h : n = m) (cell : Cell n) : Cell m
   := Finset.map (Fin.castEmbedding h) cell
 
+def castEmbedding {n m : ℕ} (h : n = m) : Cell n ↪ Cell m
+  := ⟨cast h, Finset.map_injective (Fin.castEmbedding h)⟩
+
 theorem cast_mem_iff {n : ℕ} (cell : Cell n) (x : Fin n)
   : x ∈ cell.cast rfl ↔ x ∈ cell := by simp [cast, Fin.castEmbedding]
 
