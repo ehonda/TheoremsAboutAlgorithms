@@ -18,7 +18,7 @@ def cast {n m : ℕ} (h : n = m) (cell : Cell n) : Cell m
 def castEmbedding {n m : ℕ} (h : n = m) : Cell n ↪ Cell m
   := ⟨cast h, Finset.map_injective (Fin.castEmbedding h)⟩
 
-theorem cast_mem_iff {n : ℕ} (cell : Cell n) (x : Fin n)
+theorem mem_cast_iff_mem {n : ℕ} (cell : Cell n) (x : Fin n)
   : x ∈ cell.cast rfl ↔ x ∈ cell := by simp [cast, Fin.castEmbedding]
 
 theorem cast_injective {n m : ℕ} (h : n = m) : Function.Injective (cast h)
@@ -34,7 +34,7 @@ theorem cast_injective {n m : ℕ} (h : n = m) : Function.Injective (cast h)
 --theorem cast_bijective {n m : ℕ} (h : n = m) : Function.Bijective (cast h)
 --  := ⟨cast_Injective h, cast_surjective h⟩
 
-theorem cast_nonempty_iff {n m : ℕ} (h : n = m) (cell : Cell n)
+theorem cast_nonempty_iff_nonempty {n m : ℕ} (h : n = m) (cell : Cell n)
   : (cell.cast h).Nonempty ↔ cell.Nonempty := by simp [cast]
 
 def castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
@@ -51,7 +51,7 @@ theorem last_not_mem_castSucc {n : ℕ} (cell : Cell n)
     exact x.isLt
 
 theorem disjoint_singleton_last_castSucc {n : ℕ} (cell : Cell n)
-  : Disjoint {Fin.last n} cell.castSucc := by
+  : Disjoint {Fin.last _} cell.castSucc := by
     apply disjoint_iff.mpr
     apply Finset.singleton_inter_of_not_mem
     exact last_not_mem_castSucc cell
@@ -64,14 +64,14 @@ theorem castSucc_injective (n : ℕ) : Function.Injective (@castSucc n)
   := Finset.map_injective ⟨Fin.castSucc, Fin.castSucc_injective n⟩
 
 -- Useful: https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/Set/Function.html#Restrict
-def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) (x : cell) : Fin n
+def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _) (x : cell) : Fin n
   -- s := cell, f := Fin.castPred, a := x
   -- We then get `↑x ≠ Fin.last n → Fin n` and therefore provide `(h x x.property)` to get `Fin n`
   -- We don't need to parenthesize the first expression, but we do so for clarity.
   := (Set.restrict cell Fin.castPred x) (h x x.property)
 
 -- Useful: Set.range_restrict
-def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last n) : Cell n
+def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _) : Cell n
   := Finset.image (cell.restrictFinCastPred h) Finset.univ
 
 -- TODO: Naming
@@ -81,7 +81,7 @@ theorem castPred_mem_of_mem_castSucc_of_ne_last
     {cell : Cell n}
     {x : Fin (n + 1)}
     (x_mem_castSucc_cell : x ∈ cell.castSucc)
-    (x_ne_last : x ≠ Fin.last n)
+    (x_ne_last : x ≠ Fin.last _)
   : x.castPred x_ne_last ∈ cell := by
     simp [castSucc, Fin.castSucc, Fin.castAdd, Fin.castLE] at x_mem_castSucc_cell
     obtain ⟨y, y_mem_cell, y_def⟩ := x_mem_castSucc_cell
@@ -89,9 +89,9 @@ theorem castPred_mem_of_mem_castSucc_of_ne_last
 
 -- This is essentially cell ↦ {n} ∪ cell
 def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
-  := Finset.cons (Fin.last n) (cell.castSucc) (last_not_mem_castSucc cell)
+  := Finset.cons (Fin.last _) (cell.castSucc) (last_not_mem_castSucc cell)
 
-theorem last_mem_insertLast {n : ℕ} (cell : Cell n) : Fin.last n ∈ cell.insertLast := by
+theorem last_mem_insertLast {n : ℕ} (cell : Cell n) : Fin.last _ ∈ cell.insertLast := by
   simp [insertLast]
 
 theorem insertLast_injective {n : ℕ} : Function.Injective (@insertLast n) := by

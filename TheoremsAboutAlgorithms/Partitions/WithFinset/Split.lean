@@ -8,15 +8,16 @@ namespace Split
 def cast {n m : ℕ} (h : n = m) (split : Split n) : Split m
   := Finset.map (Cell.castEmbedding h) split
 
-theorem cast_empty_not_mem_iff {n m : ℕ} (h : n = m) (split : Split n)
+theorem empty_not_mem_cast_iff_empty_not_mem {n m : ℕ} (h : n = m) (split : Split n)
   : ∅ ∉ split.cast h ↔ ∅ ∉ split := by
     constructor <;> intro _ _ <;> simp [cast, Cell.castEmbedding, Cell.cast] at * <;> contradiction
 
--- TODO: Fix the proof
-theorem cast_mem_iff {n : ℕ} (split : Split n) (cell : Cell n)
+theorem mem_cast_iff_mem {n : ℕ} (split : Split n) (cell : Cell n)
   : cell ∈ split.cast rfl ↔ cell ∈ split := by
-    sorry
-    -- constructor <;> intro <;> simp [cast, Cell.castEmbedding, Cell.cast, Fin.castEmbedding] at * <;> assumption
+    constructor
+    <;> intro
+    <;> simp [cast, Cell.castEmbedding, Cell.cast, Fin.castEmbedding, Finset.map] at *
+    <;> assumption
 
 theorem cast_nonempty_iff {n m : ℕ} (h : n = m) (split : Split n)
   : (split.cast h).Nonempty ↔ split.Nonempty := by simp [cast]
