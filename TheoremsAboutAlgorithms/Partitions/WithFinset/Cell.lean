@@ -42,6 +42,9 @@ def castSucc {n : ℕ} (cell : Cell n) : Cell (n + 1)
   -- TODO: Use Fin.castSuccEmb for a terse definition
   := Finset.map ⟨Fin.castSucc, Fin.castSucc_injective n⟩ cell
 
+def castSuccEmbedding {n : ℕ} : Cell n ↪ Cell (n + 1)
+  := ⟨castSucc, Finset.map_injective ⟨Fin.castSucc, Fin.castSucc_injective n⟩⟩
+
 theorem last_not_mem_castSucc {n : ℕ} (cell : Cell n)
   : Fin.last _ ∉ cell.castSucc := by
     simp [castSucc]
@@ -61,7 +64,7 @@ theorem castSucc_empty_iff {n : ℕ} (cell : Cell n)
 
 -- Fin.castSucc_injective is already a theorem in Mathlib.Data.Fin.Basic
 theorem castSucc_injective (n : ℕ) : Function.Injective (@castSucc n)
-  := Finset.map_injective ⟨Fin.castSucc, Fin.castSucc_injective n⟩
+  := Finset.map_injective ⟨Fin.castSucc, Fin.castSucc_injective _⟩
 
 -- Useful: https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/Set/Function.html#Restrict
 def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _) (x : cell) : Fin n
