@@ -46,12 +46,17 @@ theorem last_not_mem_of_mem_castSucc {n : ℕ} {split : Split n} {cell : Cell (n
 def insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 1)
   := insert (targetCell.insertLast) (split.erase targetCell |> castSucc)
 
+-- TODO: Define notation so we can write this as split₀ for a given split
+def insertEmpty {n : ℕ} (split : Split n) : Split n
+  := insert ∅ split
+
 ------------------------------------------------------------------------------------------------------------------------
 --                          Bijections between split₀ and split.insertLastAt targetCell                               --
 ------------------------------------------------------------------------------------------------------------------------
 
 -- WIP (I)
 
+-- TODO: ❗ Fix this description, it is very outdated ❗
 -- TODO: Injectivity of split.insertLastAt (as proved above) is not what we actually need in
 --       `isPartition_of_mem_insertLast'_of_isPartition`. What we do need are functions f g such that
 --
@@ -66,17 +71,101 @@ def insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 
 --       To do that computably we need instances for `DecidableEq Cell`, which we will get by reimplementing `Cell` via
 --       `Finset`. To see that what we plan to use them for [WIP (II)] works, we do it non-computably for now.
 
--- WIP (WithFinset.I)
---    * Find better names
+-- TODO:
 --    * Prove that f and g are inverses
 --    * Prove other useful stuff
 
-def f'' {n : ℕ} (targetCell cell : Cell n) : Cell (n + 1)
-  := if cell = targetCell then cell.insertLast else cell.castSucc
+theorem insertLast_mem_insertLastAt_of_eq
+    {n : ℕ}
+    {split : Split n}
+    {targetCell cell : Cell n}
+    (cell_eq_targetCell : cell = targetCell)
+  : cell.insertLast ∈ split.insertLastAt targetCell := by
+    simp [insertLastAt]
+    left
+    rw [cell_eq_targetCell]
 
--- TODO: Remove the sorry (we probably need more assumpations?)
-def g'' {n : ℕ} (targetCell : Cell n) (cell : Cell (n + 1)) : Cell n
-  := if cell = targetCell.insertLast then targetCell else cell.castPred sorry
+-- TODO: How can we make this anonymous so it can be found implicitly if we have the equality hypothesis?
+--       Maybe this resource can help find the answer:
+--        https://leanprover-community.github.io/mathlib4_docs/Init/Coe.html
+--
+--      Maybe `#print toInsertLastAt` can help us find the answer.
+instance CoeDepInsertLastInsertLastAtOfEq
+    {n : ℕ}
+    {split : Split n}
+    {targetCell cell : Cell n}
+    (cell_eq_targetCell : cell = targetCell)
+  : CoeDep (Cell (n + 1)) (cell.insertLast) (split.insertLastAt targetCell) where
+    coe := by
+      use cell.insertLast
+      exact insertLast_mem_insertLastAt_of_eq cell_eq_targetCell
+
+-- We can't have `cell : split.insertEmpty`, because `Cell.castSucc ∅` is not in fact in `split.insertEmpty`. We do
+-- however want to use this in the situation where `split` is a partition meaning that `∅ ∉ split`. We only use
+-- `partitions.insertEmpty` there the have a target for the to create `{Fin.last _}`. We probably do not need to have
+-- `insertEmptyToInsertLastAt` to go from `partition.insertEmpty` but can use just `partition` as the domain. We handle
+-- the case where `cell = ∅` separately.
+theorem castSucc_mem_insertLastAt_of_ne
+    {n : ℕ}
+    {split : Split n}
+    {targetCell : Cell n}
+    {cell : split}
+    (cell_ne_targetCell : ↑cell ≠ targetCell)
+  : Cell.castSucc cell ∈ split.insertLastAt targetCell := by
+    simp [insertLastAt, castSucc, Cell.castSuccEmbedding, Cell.castSucc]
+    right
+    assumption
+
+-- TODO: How can we make this anonymous (like above)?
+instance CoeDepCastSuccInsertLastAtOfNe
+    {n : ℕ}
+    {split : Split n}
+    {targetCell : Cell n}
+    {cell : split}
+    (cell_ne_targetCell : ↑cell ≠ targetCell)
+  : CoeDep (Cell (n + 1)) (Cell.castSucc cell) (split.insertLastAt targetCell) where
+    coe := by
+      use Cell.castSucc cell
+      exact castSucc_mem_insertLastAt_of_ne cell_ne_targetCell
+
+def toInsertLastAt
+    {n : ℕ}
+    {split : Split n}
+    {targetCell : Cell n}
+    (cell : split)
+  : split.insertLastAt targetCell :=
+    if h : cell = targetCell
+    then (CoeDepInsertLastInsertLastAtOfEq h).coe
+    else (CoeDepCastSuccInsertLastAtOfNe h).coe
+
+-- TODO: Finish the proof
+theorem toInsertLastAt_injective
+    {n : ℕ}
+    {split : Split n}
+    {targetCell : Cell n}
+  : Function.Injective (@toInsertLastAt _ split targetCell) := by
+    intro x y toInsertLastAt_x_eq_toInsertLastAt_y
+    simp [toInsertLastAt] at toInsertLastAt_x_eq_toInsertLastAt_y
+    cases Decidable.eq_or_ne ↑x targetCell with
+      | inl x_eq_targetCell => sorry
+      | inr x_ne_targetCell =>
+        cases Decidable.eq_or_ne ↑y targetCell with
+          | inl y_eq_targetCell => sorry
+          | inr y_ne_targetCell => sorry
+
+def toInsertLastAtEmbedding
+    {n : ℕ}
+    (split : Split n)
+    (targetCell : Cell n)
+  : Function.Embedding split (split.insertLastAt targetCell) :=
+    ⟨toInsertLastAt, toInsertLastAt_injective⟩
+
+-- TODO: We need cell ≠ targetCell.insertLast → ∀ x ∈ ↑cell, x ≠ Fin.last n
+
+-- TODO: This should probably be defined for `cell ≠ {Fin.last _}`, we just handle that case differently, so we have the
+--       codomain equal to `toInsertLastAt`'s domain
+def g'' {n : ℕ} (split : Split n) (targetCell : Cell n) (cell : split.insertLastAt targetCell) : Cell n
+  := if cell = targetCell.insertLast then targetCell else (Cell.castPred cell) sorry
 
 ------------------------------------------------------------------------------------------------------------------------
 --                                          insertLastAt, insertLast, ...                                             --
