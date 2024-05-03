@@ -28,8 +28,6 @@ theorem castSucc_injective {n : ℕ} : Function.Injective (@castSucc n)
 theorem empty_mem_castSucc_iff_empty_mem {n : ℕ} (split : Split n)
   : ∅ ∈ split.castSucc ↔ ∅ ∈ split := by simp [castSucc, Cell.castSucc, Cell.castSuccEmbedding]
 
--- TODO: This is more general than last_not_mem_of_mem_removeCell_castSucc right? We don't need the other one
--- TODO: Rename, the naming seems of no? Should be last_not_mem_of_mem_castSucc?
 theorem last_not_mem_of_mem_castSucc {n : ℕ} {split : Split n} {cell : Cell (n + 1)} (h : cell ∈ split.castSucc)
   : Fin.last n ∉ cell := by
     simp [castSucc, Cell.castSucc, Cell.castSuccEmbedding] at h
@@ -50,26 +48,41 @@ def insertLastAt {n : ℕ} (split : Split n) (targetCell : Cell n) : Split (n + 
 def insertEmpty {n : ℕ} (split : Split n) : Split n
   := insert ∅ split
 
+-- TODO:
+--    * Where does this belong?
+--    * Is the naming right?
+--    * Do we even need this?
+theorem targetCell_eq_empty_of_singleton_last_mem_insertLastAt
+    {n : ℕ}
+    {split : Split n}
+    {targetCell : Cell n}
+    (singleton_last_mem_insertLastAt : {Fin.last _} ∈ split.insertLastAt targetCell)
+  : targetCell = ∅ := by
+    simp [insertLastAt] at singleton_last_mem_insertLastAt
+    sorry
+
 ------------------------------------------------------------------------------------------------------------------------
 --                          Bijections between split₀ and split.insertLastAt targetCell                               --
 ------------------------------------------------------------------------------------------------------------------------
 
 -- WIP (I)
 
--- TODO: ❗ Fix this description, it is very outdated ❗
--- TODO: Injectivity of split.insertLastAt (as proved above) is not what we actually need in
---       `isPartition_of_mem_insertLast'_of_isPartition`. What we do need are functions f g such that
+-- What we want and define here are functions `f` and `g` (which will have more descriptive names below) such that
 --
---          `f : split₀ → split.insertLastAt targetCell`
---          `g : split.insertLastAt targetCell → split₀`
+--    `f : split → split.insertLastAt targetCell`
+--    `g : split.insertLastAt targetCell → split`
 --
---       and `f ∘ g = id` and `g ∘ f = id`. We want to define them as follows:
+-- and `f ∘ g = id` and `g ∘ f = id`. We want to define them as follows:
 --
---          `f := if cell = targetCell then cell.insertLast else cell.castSucc`
---          `g := if cell = targetCell.insertLast then targetCell else cell.castPred`
+--    `f := if cell = targetCell then cell.insertLast else cell.castSucc`
+--    `g := if cell = targetCell.insertLast then targetCell else cell.castPred`
 --
---       To do that computably we need instances for `DecidableEq Cell`, which we will get by reimplementing `Cell` via
---       `Finset`. To see that what we plan to use them for [WIP (II)] works, we do it non-computably for now.
+-- To do that we need an assumption `{Fin.last _} ∉ split.insertLastAt targetCell` to be able to define `g` as above,
+-- because that has the preimage `∅` which we can't include in the domain of `f` (and therefore also not in the codomain
+-- of `g`).
+--
+-- TODO: See in the usage later if that is what we actually need. Maybe we can `split.insertEmpty` work as domain of `f`
+--       as codomain of `g` as well.
 
 -- TODO:
 --    * Prove that f and g are inverses
@@ -100,7 +113,7 @@ instance CoeDepInsertLastInsertLastAtOfEq
       use cell.insertLast
       exact insertLast_mem_insertLastAt_of_eq cell_eq_targetCell
 
--- We can't have `cell : split.insertEmpty`, because `Cell.castSucc ∅` is not in fact in `split.insertEmpty`. We do
+-- We can't have `cell : split.insertEmpty`, because `Cell.castSucc ∅` is not in fact in `split.insertLastAt`. We do
 -- however want to use this in the situation where `split` is a partition meaning that `∅ ∉ split`. We only use
 -- `partitions.insertEmpty` there the have a target for the to create `{Fin.last _}`. We probably do not need to have
 -- `insertEmptyToInsertLastAt` to go from `partition.insertEmpty` but can use just `partition` as the domain. We handle
@@ -135,37 +148,117 @@ def toInsertLastAt
     (cell : split)
   : split.insertLastAt targetCell :=
     if h : cell = targetCell
+    -- CoeDep.coe.{u, v} {α : Sort u} (x✝ : α) {β : Sort v} [self : CoeDep α x✝ β] : β
+    -- then CoeDep.coe _ (Cell.castSucc cell) _ (CoeDepInsertLastInsertLastAtOfEq h)
     then (CoeDepInsertLastInsertLastAtOfEq h).coe
     else (CoeDepCastSuccInsertLastAtOfNe h).coe
 
--- TODO: Finish the proof
-theorem toInsertLastAt_injective
+-- TODO: Naming feels pretty imprecise here
+theorem ne_last_of_ne_insertLast_of_mem
     {n : ℕ}
     {split : Split n}
     {targetCell : Cell n}
-  : Function.Injective (@toInsertLastAt _ split targetCell) := by
-    intro x y toInsertLastAt_x_eq_toInsertLastAt_y
-    simp [toInsertLastAt] at toInsertLastAt_x_eq_toInsertLastAt_y
-    cases Decidable.eq_or_ne ↑x targetCell with
-      | inl x_eq_targetCell => sorry
-      | inr x_ne_targetCell =>
-        cases Decidable.eq_or_ne ↑y targetCell with
-          | inl y_eq_targetCell => sorry
-          | inr y_ne_targetCell => sorry
+    {cell : split.insertLastAt targetCell}
+    (cell_ne_targetCell_insertLast : ↑cell ≠ targetCell.insertLast)
+    (x : ↑cell)
+  : ↑x ≠ Fin.last n := by
+    have cell_mem_insertLastAt := cell.property
+    simp [insertLastAt] at cell_mem_insertLastAt
+    cases cell_mem_insertLastAt with
+      | inl _ => contradiction
+      | inr cell_mem_castSucc =>
+        apply Decidable.byContradiction
+        intro x_eq_last
+        simp at x_eq_last
+        have last_mem_cell : Fin.last n ∈ (cell : Cell (n + 1)) := by
+          have := x.property;
+          rw [x_eq_last] at this;
+          exact this
+        have last_not_mem_cell := last_not_mem_of_mem_castSucc cell_mem_castSucc
+        contradiction
 
-def toInsertLastAtEmbedding
+-- TODO: Naming feels pretty imprecise here
+theorem ne_last_of_ne_insertLast
     {n : ℕ}
-    (split : Split n)
-    (targetCell : Cell n)
-  : Function.Embedding split (split.insertLastAt targetCell) :=
-    ⟨toInsertLastAt, toInsertLastAt_injective⟩
+    {split : Split n}
+    {targetCell : Cell n}
+    {cell : split.insertLastAt targetCell}
+    (cell_ne_targetCell_insertLast : ↑cell ≠ targetCell.insertLast)
+  : ∀ x ∈ (cell : Cell (n + 1)), ↑x ≠ Fin.last n := by
+    intro x x_mem_cell
+    exact ne_last_of_ne_insertLast_of_mem cell_ne_targetCell_insertLast ⟨x, x_mem_cell⟩
 
--- TODO: We need cell ≠ targetCell.insertLast → ∀ x ∈ ↑cell, x ≠ Fin.last n
+-- TODO: Finish this proof!
+theorem castPred_mem_of_mem_insertLastAt_of_ne_targetCell
+    {n : ℕ}
+    {split : Split n}
+    {targetCell : Cell n}
+    {cell : split.insertLastAt targetCell}
+    (cell_ne_targetCell : ↑cell ≠ targetCell.insertLast)
+  : (Cell.castPred cell) (ne_last_of_ne_insertLast cell_ne_targetCell) ∈ split := by
+    -- simp [Cell.castPred, Finset.image, Cell.restrictFinCastPred, Set.restrict, Fin.castPred, Fin.castLT]
+    simp [Cell.castPred]
+    unfold Cell.restrictFinCastPred
+    simp [Set.restrict, Fin.castPred, Fin.castLT, Finset.mem_attach]
+    -- apply (Finset.mem_image (f := Cell.restrictFinCastPred ↑cell ) (s := Finset.attach ↑cell)).mp
+    sorry
+
+instance CoeDepCastPredOfNeInsertLast
+    {n : ℕ}
+    {split : Split n}
+    {targetCell : Cell n}
+    {cell : split.insertLastAt targetCell}
+    (cell_ne_targetCell : ↑cell ≠ targetCell.insertLast)
+  : CoeDep (Cell n) ((Cell.castPred cell) (ne_last_of_ne_insertLast cell_ne_targetCell)) split where
+    coe := by
+      use (Cell.castPred cell) (ne_last_of_ne_insertLast cell_ne_targetCell)
+      exact castPred_mem_of_mem_insertLastAt_of_ne_targetCell cell_ne_targetCell
 
 -- TODO: This should probably be defined for `cell ≠ {Fin.last _}`, we just handle that case differently, so we have the
 --       codomain equal to `toInsertLastAt`'s domain
-def g'' {n : ℕ} (split : Split n) (targetCell : Cell n) (cell : split.insertLastAt targetCell) : Cell n
-  := if cell = targetCell.insertLast then targetCell else (Cell.castPred cell) sorry
+def insertLastAtTo
+    {n : ℕ}
+    (split : Split n)
+    (targetCell : split)
+    (cell : split.insertLastAt targetCell)
+  : split :=
+    if h : cell = Cell.insertLast (targetCell : Cell n)
+    then targetCell
+    else (CoeDepCastPredOfNeInsertLast h).coe
+
+-- Inverses
+
+-- TODO: Finish this proof
+theorem left_inverse_insertLastAtTo_toInsertLastAt
+    {n : ℕ}
+    {split : Split n}
+    (targetCell : split)
+  : Function.LeftInverse (@insertLastAtTo _ split targetCell) (@toInsertLastAt _ split targetCell) := by
+    intro x
+    simp [toInsertLastAt, insertLastAtTo]
+    cases Decidable.eq_or_ne ↑x targetCell with
+      | inl x_eq_targetCell =>
+        simp [x_eq_targetCell]
+        intro insertLast_x_neq_insertLast_targetCell
+        sorry
+      | inr x_ne_targetCell => sorry
+
+-- Injectivity, embeddings
+
+-- TODO: Finish the proof, or maybe it is easier to prove `f ∘ g = id` and `g ∘ f = id` and get injectivity from that?
+theorem toInsertLastAt_injective
+    {n : ℕ}
+    {split : Split n}
+    (targetCell : split)
+  : Function.Injective (@toInsertLastAt _ split targetCell)
+    := Function.LeftInverse.injective (left_inverse_insertLastAtTo_toInsertLastAt targetCell)
+
+def toInsertLastAtEmbedding
+    {n : ℕ}
+    {split : Split n}
+    (targetCell : split)
+  : Function.Embedding split (split.insertLastAt targetCell) :=
+    ⟨toInsertLastAt, toInsertLastAt_injective targetCell⟩
 
 ------------------------------------------------------------------------------------------------------------------------
 --                                          insertLastAt, insertLast, ...                                             --
