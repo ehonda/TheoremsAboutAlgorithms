@@ -87,6 +87,7 @@ theorem targetCell_eq_empty_of_singleton_last_mem_insertLastAt
 -- TODO:
 --    * Prove that f and g are inverses
 --    * Prove other useful stuff
+--    * Theorem names and naming in general in this section are lacking, improve them!
 
 theorem insertLast_mem_insertLastAt_of_eq
     {n : ℕ}
@@ -188,31 +189,60 @@ theorem ne_last_of_ne_insertLast
     intro x x_mem_cell
     exact ne_last_of_ne_insertLast_of_mem cell_ne_targetCell_insertLast ⟨x, x_mem_cell⟩
 
+-- cell_ne_insertLast_targetCell : ↑cell ≠ Cell.insertLast targetCell
+-- cell_mem_castSucc : ↑cell ∈ castSucc (Finset.erase split targetCell)
+-- ⊢ Cell.castPred ↑cell _ ∈ split
+
+theorem mem_castSucc_of_ne_targetCell_of_mem_castSucc_erase_targetCell
+    {n : ℕ}
+    {split : Split n}
+    {targetCell : Cell n}
+    {cell : Cell (n + 1)}
+    (cell_mem_castSucc_erase_targetCell : cell ∈ (split.erase targetCell |> castSucc))
+  : cell ∈ split.castSucc := by
+      simp [castSucc, Cell.castSuccEmbedding] at *
+      obtain ⟨_, cell', _, _⟩ := cell_mem_castSucc_erase_targetCell
+      use cell'
+
+theorem castPred_mem_of_ne_insertLast_of_mem_castSucc
+    {n : ℕ}
+    {split : Split n}
+    {targetCell : Cell n}
+    {cell : split.insertLastAt targetCell}
+    (cell_ne_insertLast_targetCell : ↑cell ≠ targetCell.insertLast)
+    (cell_mem_castSucc : ↑cell ∈ split.castSucc)
+  : (Cell.castPred cell) (ne_last_of_ne_insertLast cell_ne_insertLast_targetCell) ∈ split := by
+    simp [castSucc, Cell.castSuccEmbedding] at cell_mem_castSucc
+    obtain ⟨cell', cell'_mem_split, castSucc_cell'_eq_cell⟩ := cell_mem_castSucc
+    rw [← castSucc_cell'_eq_cell]
+    sorry
+
 -- TODO: Finish this proof!
 theorem castPred_mem_of_mem_insertLastAt_of_ne_targetCell
     {n : ℕ}
     {split : Split n}
     {targetCell : Cell n}
     {cell : split.insertLastAt targetCell}
-    (cell_ne_targetCell : ↑cell ≠ targetCell.insertLast)
-  : (Cell.castPred cell) (ne_last_of_ne_insertLast cell_ne_targetCell) ∈ split := by
-    -- simp [Cell.castPred, Finset.image, Cell.restrictFinCastPred, Set.restrict, Fin.castPred, Fin.castLT]
-    simp [Cell.castPred]
-    unfold Cell.restrictFinCastPred
-    simp [Set.restrict, Fin.castPred, Fin.castLT, Finset.mem_attach]
-    -- apply (Finset.mem_image (f := Cell.restrictFinCastPred ↑cell ) (s := Finset.attach ↑cell)).mp
-    sorry
+    (cell_ne_insertLast_targetCell : ↑cell ≠ targetCell.insertLast)
+  : (Cell.castPred cell) (ne_last_of_ne_insertLast cell_ne_insertLast_targetCell) ∈ split := by
+    have cell_mem_insertLastAt := cell.property
+    simp [insertLastAt] at cell_mem_insertLastAt
+    cases cell_mem_insertLastAt with
+      | inl cell_eq_targetCell_insertLast => contradiction
+      | inr cell_mem_castSucc =>
+        apply castPred_mem_of_ne_insertLast_of_mem_castSucc cell_ne_insertLast_targetCell
+        exact mem_castSucc_of_ne_targetCell_of_mem_castSucc_erase_targetCell cell_mem_castSucc
 
 instance CoeDepCastPredOfNeInsertLast
     {n : ℕ}
     {split : Split n}
     {targetCell : Cell n}
     {cell : split.insertLastAt targetCell}
-    (cell_ne_targetCell : ↑cell ≠ targetCell.insertLast)
-  : CoeDep (Cell n) ((Cell.castPred cell) (ne_last_of_ne_insertLast cell_ne_targetCell)) split where
+    (cell_ne_insertLast_targetCell : ↑cell ≠ targetCell.insertLast)
+  : CoeDep (Cell n) ((Cell.castPred cell) (ne_last_of_ne_insertLast cell_ne_insertLast_targetCell)) split where
     coe := by
-      use (Cell.castPred cell) (ne_last_of_ne_insertLast cell_ne_targetCell)
-      exact castPred_mem_of_mem_insertLastAt_of_ne_targetCell cell_ne_targetCell
+      use (Cell.castPred cell) (ne_last_of_ne_insertLast cell_ne_insertLast_targetCell)
+      exact castPred_mem_of_mem_insertLastAt_of_ne_targetCell cell_ne_insertLast_targetCell
 
 -- TODO: This should probably be defined for `cell ≠ {Fin.last _}`, we just handle that case differently, so we have the
 --       codomain equal to `toInsertLastAt`'s domain
