@@ -271,36 +271,53 @@ def downward
 -- Inverses
 
 -- TODO: Finish this proof
-theorem left_inverse_insertLastAtTo_toInsertLastAt
+theorem left_inverse_downward_upward
     {n : ℕ}
     {split : Split n}
     (targetCell : split)
   : Function.LeftInverse (@downward _ split targetCell) (@upward _ split targetCell) := by
     intro x
     simp [upward, downward]
-    cases Decidable.eq_or_ne ↑x targetCell with
-      | inl x_eq_targetCell =>
-        simp [x_eq_targetCell]
-        intro insertLast_x_neq_insertLast_targetCell
+    split
+    · case _ x_eq_targetCell =>
+      split
+      · apply Subtype.eq
+        exact x_eq_targetCell.symm
+      · case _ insertLast_x_ne_insertLast_targetCell =>
+        simp [CoeDep.coe] at insertLast_x_ne_insertLast_targetCell
+        -- TODO: There has to be a better way to get f x = f y from x = y
+        have : Cell.insertLast ↑x = Cell.insertLast (targetCell : Cell n) := by
+          have : Cell.insertLast ↑x = Cell.insertLast (x : Cell n) := by rfl
+          rw (config := {occs := .pos [2]}) [x_eq_targetCell] at this
+          exact this
+        contradiction
+    · case _ x_ne_targetCell_insertLast =>
+      split
+      · case _ castSucc_x_eq_insertLast_targetCell =>
+        simp [CoeDep.coe] at castSucc_x_eq_insertLast_targetCell
+        have := Cell.castSucc_x_ne_insertLast_y (x : Cell n) (targetCell : Cell n)
+        contradiction
+      · case _ castSucc_x_ne_insertLast_targetCell =>
+        simp [CoeDep.coe, x_ne_targetCell_insertLast]
+        -- TODO: Finish this sub proof
         sorry
-      | inr x_ne_targetCell => sorry
 
 -- Injectivity, embeddings
 
 -- TODO: Finish the proof, or maybe it is easier to prove `f ∘ g = id` and `g ∘ f = id` and get injectivity from that?
-theorem toInsertLastAt_injective
+theorem upward_injective
     {n : ℕ}
     {split : Split n}
     (targetCell : split)
   : Function.Injective (@upward _ split targetCell)
-    := Function.LeftInverse.injective (left_inverse_insertLastAtTo_toInsertLastAt targetCell)
+    := Function.LeftInverse.injective (left_inverse_downward_upward targetCell)
 
-def toInsertLastAtEmbedding
+def upwardEmbedding
     {n : ℕ}
     {split : Split n}
     (targetCell : split)
   : Function.Embedding split (split.insertLastAt targetCell) :=
-    ⟨upward, toInsertLastAt_injective targetCell⟩
+    ⟨upward, upward_injective targetCell⟩
 
 ------------------------------------------------------------------------------------------------------------------------
 --                                          insertLastAt, insertLast, ...                                             --

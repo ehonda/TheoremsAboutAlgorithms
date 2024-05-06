@@ -73,9 +73,16 @@ def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x �
   -- We don't need to parenthesize the first expression, but we do so for clarity.
   := (Set.restrict cell Fin.castPred x) (h x x.property)
 
+-- Function.Injective (restrictFinCastPred cell h)
+theorem restrictFinCastPred_injective {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _)
+  : Function.Injective (restrictFinCastPred cell h) := by
+    intro x y castPred_x_eq_castPred_y
+    simp [restrictFinCastPred, Set.restrict] at castPred_x_eq_castPred_y
+    apply Subtype.eq
+    exact Fin.castPred_inj.mp castPred_x_eq_castPred_y
+
 def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _) : Cell n
-  -- TODO: Fix the sorry
-  := Finset.map ⟨cell.restrictFinCastPred h, sorry⟩ Finset.univ
+  := Finset.map ⟨cell.restrictFinCastPred h, restrictFinCastPred_injective cell h⟩ Finset.univ
 
 theorem castPred_y_eq_x_of_castSucc_x_eq_y_of_forall_mem_y_ne_last
     {n : ℕ}
@@ -84,7 +91,6 @@ theorem castPred_y_eq_x_of_castSucc_x_eq_y_of_forall_mem_y_ne_last
     (castSuc_x_eq_y : x.castSucc = y)
     (forall_mem_y_ne_last : ∀ f ∈ y, f ≠ Fin.last _)
   : Cell.castPred y forall_mem_y_ne_last = x := by
-    -- TODO: Fix the horrible naming of the variables
     -- See https://proofassistants.stackexchange.com/a/1063 for why we use `subst` here
     subst y
     ext f
@@ -137,7 +143,13 @@ theorem insertLast_injective {n : ℕ} : Function.Injective (@insertLast n) := b
 theorem insertLast_nonempty {n : ℕ} (cell : Cell n) : cell.insertLast.Nonempty
   := by simp [insertLast]
 
--- Demo that we have a decidable equality
-example {n : ℕ} (cell cell' : Cell n) : Bool := if cell = cell' then true else false
+theorem castSucc_x_ne_insertLast_y
+    {n : ℕ}
+    (x y : Cell n)
+  : x.castSucc ≠ y.insertLast := by
+    intro castSucc_x_eq_insertLast_y
+    apply last_not_mem_castSucc x
+    rw [castSucc_x_eq_insertLast_y]
+    exact last_mem_insertLast y
 
 end Cell
