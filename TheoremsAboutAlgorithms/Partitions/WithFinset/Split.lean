@@ -52,14 +52,14 @@ def insertEmpty {n : ℕ} (split : Split n) : Split n
 --    * Where does this belong?
 --    * Is the naming right?
 --    * Do we even need this?
-theorem targetCell_eq_empty_of_singleton_last_mem_insertLastAt
-    {n : ℕ}
-    {split : Split n}
-    {targetCell : Cell n}
-    (singleton_last_mem_insertLastAt : {Fin.last _} ∈ split.insertLastAt targetCell)
-  : targetCell = ∅ := by
-    simp [insertLastAt] at singleton_last_mem_insertLastAt
-    sorry
+-- theorem targetCell_eq_empty_of_singleton_last_mem_insertLastAt
+--     {n : ℕ}
+--     {split : Split n}
+--     {targetCell : Cell n}
+--     (singleton_last_mem_insertLastAt : {Fin.last _} ∈ split.insertLastAt targetCell)
+--   : targetCell = ∅ := by
+--     simp [insertLastAt] at singleton_last_mem_insertLastAt
+--     sorry
 
 ------------------------------------------------------------------------------------------------------------------------
 --                          Bijections between split₀ and split.insertLastAt targetCell                               --
@@ -89,6 +89,7 @@ theorem targetCell_eq_empty_of_singleton_last_mem_insertLastAt
 --    * Prove other useful stuff
 --    * Theorem names and naming in general in this section are lacking, improve them!
 
+-- TODO: Make this a section and define all the common implicit arguments (`n, split, targetCell`) at the top
 theorem insertLast_mem_insertLastAt_of_eq
     {n : ℕ}
     {split : Split n}
@@ -142,7 +143,7 @@ instance CoeDepCastSuccInsertLastAtOfNe
       use Cell.castSucc cell
       exact castSucc_mem_insertLastAt_of_ne cell_ne_targetCell
 
-def toInsertLastAt
+def upward
     {n : ℕ}
     {split : Split n}
     {targetCell : Cell n}
@@ -189,10 +190,6 @@ theorem ne_last_of_ne_insertLast
     intro x x_mem_cell
     exact ne_last_of_ne_insertLast_of_mem cell_ne_targetCell_insertLast ⟨x, x_mem_cell⟩
 
--- cell_ne_insertLast_targetCell : ↑cell ≠ Cell.insertLast targetCell
--- cell_mem_castSucc : ↑cell ∈ castSucc (Finset.erase split targetCell)
--- ⊢ Cell.castPred ↑cell _ ∈ split
-
 theorem mem_castSucc_of_ne_targetCell_of_mem_castSucc_erase_targetCell
     {n : ℕ}
     {split : Split n}
@@ -204,6 +201,22 @@ theorem mem_castSucc_of_ne_targetCell_of_mem_castSucc_erase_targetCell
       obtain ⟨_, cell', _, _⟩ := cell_mem_castSucc_erase_targetCell
       use cell'
 
+-- cell'_mem_split : cell' ∈ split
+-- castSucc_cell'_eq_cell : Cell.castSucc cell' = ↑cell
+-- ⊢ Cell.castPred ↑cell _ ∈ split
+theorem castPred_mem_split_of_mem_split_of_castSucc_eq_of_last_not_mem
+    {n : ℕ}
+    {split : Split n}
+    {x : Cell n}
+    {y : Cell (n + 1)}
+    (x_mem_split : x ∈ split)
+    (castSucc_x_eq_y : Cell.castSucc x = y)
+    (last_not_mem_y : ∀ f ∈ y, f ≠ Fin.last _)
+  : Cell.castPred y last_not_mem_y ∈ split := by
+    -- See https://proofassistants.stackexchange.com/a/1063 for why we use `subst` here
+    rw [Cell.castPred_y_eq_x_of_castSucc_x_eq_y_of_forall_mem_y_ne_last castSucc_x_eq_y last_not_mem_y]
+    exact x_mem_split
+
 theorem castPred_mem_of_ne_insertLast_of_mem_castSucc
     {n : ℕ}
     {split : Split n}
@@ -214,10 +227,9 @@ theorem castPred_mem_of_ne_insertLast_of_mem_castSucc
   : (Cell.castPred cell) (ne_last_of_ne_insertLast cell_ne_insertLast_targetCell) ∈ split := by
     simp [castSucc, Cell.castSuccEmbedding] at cell_mem_castSucc
     obtain ⟨cell', cell'_mem_split, castSucc_cell'_eq_cell⟩ := cell_mem_castSucc
-    rw [← castSucc_cell'_eq_cell]
-    sorry
+    -- We use the helper because `rw` and `subst` do not work here (probably because we're coercing `cell` via `↑cell`)
+    apply castPred_mem_split_of_mem_split_of_castSucc_eq_of_last_not_mem cell'_mem_split castSucc_cell'_eq_cell
 
--- TODO: Finish this proof!
 theorem castPred_mem_of_mem_insertLastAt_of_ne_targetCell
     {n : ℕ}
     {split : Split n}
@@ -246,7 +258,7 @@ instance CoeDepCastPredOfNeInsertLast
 
 -- TODO: This should probably be defined for `cell ≠ {Fin.last _}`, we just handle that case differently, so we have the
 --       codomain equal to `toInsertLastAt`'s domain
-def insertLastAtTo
+def downward
     {n : ℕ}
     (split : Split n)
     (targetCell : split)
@@ -263,9 +275,9 @@ theorem left_inverse_insertLastAtTo_toInsertLastAt
     {n : ℕ}
     {split : Split n}
     (targetCell : split)
-  : Function.LeftInverse (@insertLastAtTo _ split targetCell) (@toInsertLastAt _ split targetCell) := by
+  : Function.LeftInverse (@downward _ split targetCell) (@upward _ split targetCell) := by
     intro x
-    simp [toInsertLastAt, insertLastAtTo]
+    simp [upward, downward]
     cases Decidable.eq_or_ne ↑x targetCell with
       | inl x_eq_targetCell =>
         simp [x_eq_targetCell]
@@ -280,7 +292,7 @@ theorem toInsertLastAt_injective
     {n : ℕ}
     {split : Split n}
     (targetCell : split)
-  : Function.Injective (@toInsertLastAt _ split targetCell)
+  : Function.Injective (@upward _ split targetCell)
     := Function.LeftInverse.injective (left_inverse_insertLastAtTo_toInsertLastAt targetCell)
 
 def toInsertLastAtEmbedding
@@ -288,7 +300,7 @@ def toInsertLastAtEmbedding
     {split : Split n}
     (targetCell : split)
   : Function.Embedding split (split.insertLastAt targetCell) :=
-    ⟨toInsertLastAt, toInsertLastAt_injective targetCell⟩
+    ⟨upward, toInsertLastAt_injective targetCell⟩
 
 ------------------------------------------------------------------------------------------------------------------------
 --                                          insertLastAt, insertLast, ...                                             --

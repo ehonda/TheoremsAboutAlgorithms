@@ -73,9 +73,37 @@ def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x �
   -- We don't need to parenthesize the first expression, but we do so for clarity.
   := (Set.restrict cell Fin.castPred x) (h x x.property)
 
--- Useful: Set.range_restrict
 def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _) : Cell n
-  := Finset.image (cell.restrictFinCastPred h) Finset.univ
+  -- TODO: Fix the sorry
+  := Finset.map ⟨cell.restrictFinCastPred h, sorry⟩ Finset.univ
+
+theorem castPred_y_eq_x_of_castSucc_x_eq_y_of_forall_mem_y_ne_last
+    {n : ℕ}
+    {x : Cell n}
+    {y : Cell (n + 1)}
+    (castSuc_x_eq_y : x.castSucc = y)
+    (forall_mem_y_ne_last : ∀ f ∈ y, f ≠ Fin.last _)
+  : Cell.castPred y forall_mem_y_ne_last = x := by
+    -- TODO: Fix the horrible naming of the variables
+    -- See https://proofassistants.stackexchange.com/a/1063 for why we use `subst` here
+    subst y
+    ext f
+    simp [castSucc, castPred]
+    unfold restrictFinCastPred
+    simp [Set.restrict]
+    constructor
+    · intro cast_cast
+      obtain ⟨g, g_spec, castPred_g_eq_f⟩ := cast_cast
+      obtain ⟨_, h_spec, _⟩ := g_spec
+      subst g
+      simp [Fin.castPred_castSucc] at castPred_g_eq_f
+      rw [← castPred_g_eq_f]
+      exact h_spec
+    · intro cast_cast
+      exists f.castSucc
+      constructor
+      · exact Fin.castPred_castSucc
+      · exists f
 
 -- TODO: Naming
 -- TODO: Maybe this should be in Fin namespace?
