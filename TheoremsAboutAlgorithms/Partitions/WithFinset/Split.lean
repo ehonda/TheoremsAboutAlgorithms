@@ -384,6 +384,13 @@ def upwardEmbedding
   : Function.Embedding split (split.insertLastAt targetCell) :=
     ⟨upward, upward_injective targetCell⟩
 
+def downwardEmbedding
+    {n : ℕ}
+    {split : Split n}
+    (targetCell : split)
+  : Function.Embedding (split.insertLastAt targetCell) split :=
+    ⟨downward split targetCell, (downward_bijective targetCell).injective⟩
+
 ------------------------------------------------------------------------------------------------------------------------
 --                                          insertLastAt, insertLast, ...                                             --
 ------------------------------------------------------------------------------------------------------------------------
