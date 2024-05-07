@@ -268,9 +268,29 @@ def downward
     then targetCell
     else (CoeDepCastPredOfNeInsertLast h).coe
 
+-- Surjectivity
+-- TODO: Finish this proof
+theorem upward_surjective
+    {n : ℕ}
+    {split : Split n}
+    (targetCell : split)
+  : Function.Surjective (@upward _ split targetCell) := by
+    intro x
+    simp [upward]
+    cases Decidable.eq_or_ne x (CoeDepInsertLastInsertLastAtOfEq rfl).coe with
+      | inl x_eq_targetCell_insertLast =>
+        exists targetCell
+        exists targetCell.property
+        split
+        · exact x_eq_targetCell_insertLast.symm
+        · contradiction
+      | inr x_ne_targetCell_insertLast =>
+        have : (x : Cell (n + 1)) ≠ Cell.insertLast ↑targetCell := sorry
+        exists Cell.castPred x (ne_last_of_ne_insertLast this)
+        sorry
+
 -- Inverses
 
--- TODO: Finish this proof
 theorem left_inverse_downward_upward
     {n : ℕ}
     {split : Split n}
@@ -299,18 +319,63 @@ theorem left_inverse_downward_upward
         contradiction
       · case _ castSucc_x_ne_insertLast_targetCell =>
         simp [CoeDep.coe, x_ne_targetCell_insertLast]
-        -- TODO: Finish this sub proof
-        sorry
+        apply Subtype.eq
+        simp
+        apply Cell.castPred_y_eq_x_of_castSucc_x_eq_y_of_forall_mem_y_ne_last rfl
 
--- Injectivity, embeddings
+theorem right_inverse_downward_upward
+    {n : ℕ}
+    {split : Split n}
+    (targetCell : split)
+  : Function.RightInverse (@downward _ split targetCell) (@upward _ split targetCell) := by
+    apply Function.LeftInverse.rightInverse_of_surjective
+    · apply left_inverse_downward_upward
+    · apply upward_surjective
 
--- TODO: Finish the proof, or maybe it is easier to prove `f ∘ g = id` and `g ∘ f = id` and get injectivity from that?
+theorem left_inverse_upward_downward
+    {n : ℕ}
+    {split : Split n}
+    (targetCell : split)
+  : Function.LeftInverse (@upward _ split targetCell) (@downward _ split targetCell) := by
+    apply Function.RightInverse.leftInverse
+    apply right_inverse_downward_upward
+
+theorem right_inverse_upward_downward
+    {n : ℕ}
+    {split : Split n}
+    (targetCell : split)
+  : Function.RightInverse (@upward _ split targetCell) (@downward _ split targetCell) := by
+    apply Function.LeftInverse.rightInverse
+    apply left_inverse_downward_upward
+
 theorem upward_injective
     {n : ℕ}
     {split : Split n}
     (targetCell : split)
   : Function.Injective (@upward _ split targetCell)
     := Function.LeftInverse.injective (left_inverse_downward_upward targetCell)
+
+theorem upward_bijective
+    {n : ℕ}
+    {split : Split n}
+    (targetCell : split)
+  : Function.Bijective (@upward _ split targetCell) := by
+    constructor
+    · apply upward_injective
+    · apply upward_surjective
+
+theorem downward_bijective
+    {n : ℕ}
+    {split : Split n}
+    (targetCell : split)
+  : Function.Bijective (@downward _ split targetCell) := by
+    apply Function.bijective_iff_has_inverse.mpr
+    exists upward
+    constructor
+    · apply left_inverse_upward_downward
+    · apply right_inverse_upward_downward
+
+-- Injectivity, embeddings
 
 def upwardEmbedding
     {n : ℕ}
