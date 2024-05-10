@@ -268,6 +268,8 @@ def downward
     then targetCell
     else (CoeDepCastPredOfNeInsertLast h).coe
 
+-- ∃ (h : Cell.castPred ↑x _ ∈ split),
+
 -- Surjectivity
 -- TODO: Finish this proof
 theorem upward_surjective
@@ -277,17 +279,41 @@ theorem upward_surjective
   : Function.Surjective (@upward _ split targetCell) := by
     intro x
     simp [upward]
+    -- TODO: Make this work
+    -- TODO: Find a way we can use better notation than the explicit long instance name
+    -- let y := (@CoeDepInsertLastInsertLastAtOfEq n _ _ ).coe
     cases Decidable.eq_or_ne x (CoeDepInsertLastInsertLastAtOfEq rfl).coe with
-      | inl x_eq_targetCell_insertLast =>
+      | inl x_eq_coe_insertLast_targetCell =>
         exists targetCell
         exists targetCell.property
         split
-        · exact x_eq_targetCell_insertLast.symm
+        · exact x_eq_coe_insertLast_targetCell.symm
         · contradiction
-      | inr x_ne_targetCell_insertLast =>
-        have : (x : Cell (n + 1)) ≠ Cell.insertLast ↑targetCell := sorry
-        exists Cell.castPred x (ne_last_of_ne_insertLast this)
-        sorry
+      | inr x_ne_coe_insertLast_targetCell =>
+        have x_val_ne_insertLast_targetCell : (x : Cell (n + 1)) ≠ Cell.insertLast ↑targetCell := by
+          simp [CoeDep.coe] at *
+          intro x_val_eq_insertLast_targetCell
+          have : x = (CoeDepInsertLastInsertLastAtOfEq rfl).coe := by
+            apply @Subtype.eq _ _ x _
+            exact x_val_eq_insertLast_targetCell
+          contradiction
+        -- If we use this (instead of writing out the verbose expression), this makes `castPred_h_x` appear everywhere
+        -- we would otherwise have `_` in the proof state which is ugly
+        -- let castPred_h_x := (ne_last_of_ne_insertLast x_val_ne_insertLast_targetCell)
+        -- TODO: How can we make it that we put this into the context and it is found implicitly?
+        exists Cell.castPred x (ne_last_of_ne_insertLast x_val_ne_insertLast_targetCell)
+        have castPred_x_val_mem_split : Cell.castPred x (ne_last_of_ne_insertLast x_val_ne_insertLast_targetCell) ∈ split := by
+          sorry
+        exists castPred_x_val_mem_split
+        split
+        · case _ castPred_x_val_eq_targetCell_val =>
+          have : (x : Cell (n + 1)) = Cell.insertLast ↑targetCell := by
+            sorry
+          contradiction
+        · case _ castPred_x_val_ne_insertLast_targetCell =>
+          simp [CoeDep.coe]
+          apply Subtype.eq
+          simp [Cell.castSucc_castPred_eq]
 
 -- Inverses
 
