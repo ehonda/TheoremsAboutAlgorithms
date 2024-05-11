@@ -268,7 +268,24 @@ def downward
     then targetCell
     else (CoeDepCastPredOfNeInsertLast h).coe
 
--- ∃ (h : Cell.castPred ↑x _ ∈ split),
+-- x'_mem_split : x' ∈ split
+-- castSucc_x'_eq_x_val : Cell.castSucc x' = ↑x
+-- ⊢ Cell.castPred ↑x _ ∈ split
+-- TODO: Naming
+theorem helper
+    {n : ℕ}
+    {split : Split n}
+    {x' : Cell n}
+    {x : Cell (n + 1)}
+    (x'_mem_split : x' ∈ split)
+    (castSucc_x'_eq_x : Cell.castSucc x' = x)
+    -- TODO: Better api for the precondition, maybe as a predicate?
+    -- TODO: Supply the default argument
+    (castPred_x_preCond : ∀ f ∈ x, f ≠ Fin.last _ := sorry)
+  : Cell.castPred x castPred_x_preCond ∈ split := by
+    subst x
+    -- rw [Cell.castSucc_castPred_eq]
+    sorry
 
 -- Surjectivity
 -- TODO: Finish this proof
@@ -303,6 +320,11 @@ theorem upward_surjective
         -- TODO: How can we make it that we put this into the context and it is found implicitly?
         exists Cell.castPred x (ne_last_of_ne_insertLast x_val_ne_insertLast_targetCell)
         have castPred_x_val_mem_split : Cell.castPred x (ne_last_of_ne_insertLast x_val_ne_insertLast_targetCell) ∈ split := by
+          have x_val_mem_insertLastAt := x.property
+          simp [insertLastAt, x_val_ne_insertLast_targetCell, castSucc, Cell.castSuccEmbedding]
+            at x_val_mem_insertLastAt
+          obtain ⟨_, x', x'_mem_split, castSucc_x'_eq_x_val⟩ := x_val_mem_insertLastAt
+          -- rw [← castSucc_x'_eq_x_val]
           sorry
         exists castPred_x_val_mem_split
         split

@@ -142,6 +142,27 @@ theorem castSucc_castPred_eq {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell
         exists f_mem_cell
       · simp
 
+theorem castPred_castSucc_eq
+    {n : ℕ}
+    (cell : Cell n)
+    (castPred_castSucc_cell_preCond : ∀ f ∈ cell.castSucc, f ≠ Fin.last _ := sorry)
+  : cell.castSucc.castPred castPred_castSucc_cell_preCond = cell := by
+    ext f
+    simp [castSucc, castPred]
+    constructor
+    · intro h
+      obtain ⟨g, ⟨f', f'_mem_cell, restrictFinCastPred_cell_f'_eq_g⟩, castPred_g_eq_f⟩ := h
+      rw [restrictFinCastPred, Set.restrict] at restrictFinCastPred_cell_f'_eq_g
+      rw [← castPred_g_eq_f, ← restrictFinCastPred_cell_f'_eq_g]
+      simp
+      exact f'_mem_cell
+    · intro f_mem_cell
+      exists f.castSucc
+      constructor
+      · exists f
+        exists f_mem_cell
+      · simp
+
 -- This is essentially cell ↦ {n} ∪ cell
 def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
   := Finset.cons (Fin.last _) (cell.castSucc) (last_not_mem_castSucc cell)
