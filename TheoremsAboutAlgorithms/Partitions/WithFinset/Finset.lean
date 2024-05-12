@@ -47,7 +47,7 @@ theorem eq_of_disjoint_singleton_of_disjoint_singleton_of_eq_unions
     · apply Finset.mem_of_subset
       exact subset_of_disjoint_singleton_of_eq_unions disjoint_singleton_x_t eq_union.symm
 
-theorem toSet_injective {α : Type*} : Function.Injective (@Finset.toSet α) := by
+theorem toSet_injective {α : Type*} : Function.Injective (@toSet α) := by
   intro x y h
   simp [toSet] at h
   exact h
