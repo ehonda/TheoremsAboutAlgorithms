@@ -157,10 +157,8 @@ theorem insertLastAt_nonempty {n : ℕ} (split : Split n) (targetCell : Cell n)
 --     right
 --     exists cell
 
--- -- TODO: Maybe we can find a better name yet (it's alright, but not totally satisfactory).
--- -- TODO: Do we even need this if we have the version below?
--- def insertLast {n : ℕ} (split : Split n) : Set (Split (n + 1))
---   := {split.insertLastAt cell | cell ∈ split.insert ∅}
+def insertLast {n : ℕ} (split : Split n) : Set (Split (n + 1))
+  := {split.insertLastAt cell | cell ∈ split.insertEmpty}
 
 -- theorem insertLastAt_mapsTo {n : ℕ} (split : Split n)
 --   : Set.MapsTo split.insertLastAt (split.insert ∅) split.insertLast := by
@@ -211,8 +209,7 @@ theorem insertLastAt_nonempty {n : ℕ} (split : Split n) (targetCell : Cell n)
 --         have h_split''_nonempty : split''.Nonempty := insertLast_nonempty_of_mem h_split''.left
 --         simp [cast_nonempty_iff, h_split''_nonempty]
 
--- -- TODO: Probably fix this by mapping Finset.toSet
--- def IsPartition {n : ℕ} (split : Split n) : Prop
---   := Setoid.IsPartition split
+def IsPartition {n : ℕ} (split : Split n) : Prop
+  := Setoid.IsPartition (split.map Finset.toSetEmbedding).toSet
 
 end Split

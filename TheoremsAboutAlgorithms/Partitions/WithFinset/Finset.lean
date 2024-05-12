@@ -1,5 +1,7 @@
 import Mathlib.Data.Finset.Basic
 
+-- TODO: These all seem to be missing in mathlib, maybe contribute them?
+
 namespace Finset
 
 -- TODO: Naming
@@ -44,5 +46,14 @@ theorem eq_of_disjoint_singleton_of_disjoint_singleton_of_eq_unions
       exact subset_of_disjoint_singleton_of_eq_unions disjoint_singleton_x_s eq_union
     · apply Finset.mem_of_subset
       exact subset_of_disjoint_singleton_of_eq_unions disjoint_singleton_x_t eq_union.symm
+
+theorem toSet_injective {α : Type*} : Function.Injective (@Finset.toSet α) := by
+  intro x y h
+  simp [Finset.toSet] at h
+  exact h
+
+def toSetEmbedding {α : Type*} : Finset α ↪ Set α
+  := ⟨Finset.toSet, Finset.toSet_injective⟩
+
 
 end Finset
