@@ -49,11 +49,10 @@ theorem eq_of_disjoint_singleton_of_disjoint_singleton_of_eq_unions
 
 theorem toSet_injective {α : Type*} : Function.Injective (@Finset.toSet α) := by
   intro x y h
-  simp [Finset.toSet] at h
+  simp [toSet] at h
   exact h
 
 def toSetEmbedding {α : Type*} : Finset α ↪ Set α
-  := ⟨Finset.toSet, Finset.toSet_injective⟩
-
+  := ⟨toSet, toSet_injective⟩
 
 end Finset
