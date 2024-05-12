@@ -142,26 +142,56 @@ theorem castSucc_castPred_eq {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell
         exists f_mem_cell
       · simp
 
+-- TODO: Add @simp (and research for which theorems we should add it and why)
 theorem castPred_castSucc_eq
     {n : ℕ}
     (cell : Cell n)
-    (castPred_castSucc_cell_preCond : ∀ f ∈ cell.castSucc, f ≠ Fin.last _ := sorry)
+    (castPred_castSucc_cell_preCond : ∀ f ∈ cell.castSucc, f ≠ Fin.last _ := by simp)
   : cell.castSucc.castPred castPred_castSucc_cell_preCond = cell := by
     ext f
     simp [castSucc, castPred]
     constructor
     · intro h
-      obtain ⟨g, ⟨f', f'_mem_cell, restrictFinCastPred_cell_f'_eq_g⟩, castPred_g_eq_f⟩ := h
-      rw [restrictFinCastPred, Set.restrict] at restrictFinCastPred_cell_f'_eq_g
-      rw [← castPred_g_eq_f, ← restrictFinCastPred_cell_f'_eq_g]
-      simp
-      exact f'_mem_cell
+      obtain ⟨g, ⟨g', g'_mem_cell, castSucc_g'_eq_g⟩, restrictFinCastPred_g_eq_f⟩ := h
+      simp [restrictFinCastPred, Set.restrict] at restrictFinCastPred_g_eq_f
+      subst g
+      simp [Fin.castPred_castSucc] at restrictFinCastPred_g_eq_f
+      rw [← restrictFinCastPred_g_eq_f]
+      exact g'_mem_cell
     · intro f_mem_cell
       exists f.castSucc
       constructor
+      · simp [restrictFinCastPred, Set.restrict]
       · exists f
-        exists f_mem_cell
+
+theorem eq_castSucc_of_castPred_eq
+    {n : ℕ}
+    {x : Cell (n + 1)}
+    {y : Cell n}
+    (castPred_x_preCond : ∀ f ∈ x, f ≠ Fin.last _)
+    (castPred_x_eq_y : x.castPred castPred_x_preCond = y)
+  : x = y.castSucc := by
+    ext f
+    simp [castSucc] at *
+    constructor
+    · intro f_mem_x
+      exists f.castPred (castPred_x_preCond f f_mem_x)
+      constructor
+      · rw [← castPred_x_eq_y]
+        simp [castPred]
+        exists f
+        exists f_mem_x
       · simp
+    · intro exists_castSucc_eq_f
+      obtain ⟨g, g_mem_y, castSucc_g_eq_f⟩ := exists_castSucc_eq_f
+      rw [← castPred_x_eq_y] at g_mem_y
+      simp [castPred] at g_mem_y
+      obtain ⟨g', g'_mem_x, castPred_g'_eq_g⟩ := g_mem_y
+      simp [restrictFinCastPred, Set.restrict] at castPred_g'_eq_g
+      rw [← castPred_g'_eq_g] at castSucc_g_eq_f
+      simp at castSucc_g_eq_f
+      rw [← castSucc_g_eq_f]
+      exact g'_mem_x
 
 -- This is essentially cell ↦ {n} ∪ cell
 def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)

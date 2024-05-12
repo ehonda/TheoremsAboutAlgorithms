@@ -268,11 +268,7 @@ def downward
     then targetCell
     else (CoeDepCastPredOfNeInsertLast h).coe
 
--- x'_mem_split : x' ∈ split
--- castSucc_x'_eq_x_val : Cell.castSucc x' = ↑x
--- ⊢ Cell.castPred ↑x _ ∈ split
--- TODO: Naming
-theorem helper
+theorem castPred_x_mem_split_of_mem_split_of_castSucc_eq
     {n : ℕ}
     {split : Split n}
     {x' : Cell n}
@@ -280,15 +276,13 @@ theorem helper
     (x'_mem_split : x' ∈ split)
     (castSucc_x'_eq_x : Cell.castSucc x' = x)
     -- TODO: Better api for the precondition, maybe as a predicate?
-    -- TODO: Supply the default argument
-    (castPred_x_preCond : ∀ f ∈ x, f ≠ Fin.last _ := sorry)
+    (castPred_x_preCond : ∀ f ∈ x, f ≠ Fin.last _ := by simp)
   : Cell.castPred x castPred_x_preCond ∈ split := by
     subst x
-    -- rw [Cell.castSucc_castPred_eq]
-    sorry
+    simp [Cell.castPred_castSucc_eq]
+    exact x'_mem_split
 
 -- Surjectivity
--- TODO: Finish this proof
 theorem upward_surjective
     {n : ℕ}
     {split : Split n}
@@ -324,13 +318,15 @@ theorem upward_surjective
           simp [insertLastAt, x_val_ne_insertLast_targetCell, castSucc, Cell.castSuccEmbedding]
             at x_val_mem_insertLastAt
           obtain ⟨_, x', x'_mem_split, castSucc_x'_eq_x_val⟩ := x_val_mem_insertLastAt
-          -- rw [← castSucc_x'_eq_x_val]
-          sorry
+          exact castPred_x_mem_split_of_mem_split_of_castSucc_eq x'_mem_split castSucc_x'_eq_x_val _
         exists castPred_x_val_mem_split
         split
         · case _ castPred_x_val_eq_targetCell_val =>
-          have : (x : Cell (n + 1)) = Cell.insertLast ↑targetCell := by
-            sorry
+          have x_val_mem_insertLastAt := x.property
+          simp [insertLastAt, x_val_ne_insertLast_targetCell, castSucc, Cell.castSuccEmbedding]
+            at x_val_mem_insertLastAt
+          obtain ⟨x_val_ne_castSucc_targetCell, _⟩ := x_val_mem_insertLastAt
+          have := Cell.eq_castSucc_of_castPred_eq _ castPred_x_val_eq_targetCell_val
           contradiction
         · case _ castPred_x_val_ne_insertLast_targetCell =>
           simp [CoeDep.coe]
