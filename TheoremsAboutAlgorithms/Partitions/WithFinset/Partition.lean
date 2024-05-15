@@ -31,7 +31,6 @@ theorem partitions_0 : partitions 0 = {∅} := by
             apply x.elim0
   · intro split split_mem_partitions_0
     simp at split_mem_partitions_0
-    simp [partitions]
     constructor
     · rw [split_mem_partitions_0]; simp [Finset.toSetEmbedding]
     · intro x; apply x.elim0
