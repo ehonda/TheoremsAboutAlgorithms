@@ -212,4 +212,19 @@ def insertLast {n : ℕ} (split : Split n) : Set (Split (n + 1))
 def IsPartition {n : ℕ} (split : Split n) : Prop
   := Setoid.IsPartition (split.map Finset.toSetEmbedding).toSet
 
+theorem nonempty_of_mem_partition
+    {n : ℕ}
+    {split : Split n}
+    (split_isPartition : split.IsPartition)
+    {cell : Cell n}
+    (cell_mem_split : cell ∈ split)
+  : cell.Nonempty := by
+    obtain ⟨empty_not_mem_split⟩ := split_isPartition
+    simp [Finset.toSetEmbedding] at empty_not_mem_split
+    apply Decidable.byContradiction
+    intro cell_eq_empty
+    simp at cell_eq_empty
+    rw [cell_eq_empty] at cell_mem_split
+    contradiction
+
 end Split
