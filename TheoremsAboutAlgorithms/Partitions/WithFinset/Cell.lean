@@ -124,6 +124,18 @@ theorem castPred_mem_of_mem_castSucc_of_ne_last
     obtain ⟨y, y_mem_cell, y_def⟩ := x_mem_castSucc_cell
     simp [← y_def, y_mem_cell]
 
+-- TODO: Naming
+-- TODO: Maybe this should be in Fin namespace?
+theorem mem_castSucc_of_ne_last_of_castPred_mem
+    {n : ℕ}
+    {cell : Cell n}
+    {x : Fin (n + 1)}
+    (x_ne_last : x ≠ Fin.last _)
+    (castPred_x_mem_cell : x.castPred x_ne_last ∈ cell)
+  : x ∈ cell.castSucc := by
+    simp [castSucc, Fin.castSucc, Fin.castAdd, Fin.castLE]
+    exists x.castPred x_ne_last
+
 theorem castSucc_castPred_eq {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _)
   : (cell.castPred h).castSucc = cell := by
     ext f

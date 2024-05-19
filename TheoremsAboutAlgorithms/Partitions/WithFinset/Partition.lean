@@ -108,11 +108,97 @@ theorem isPartition_of_mem_insertLast_of_isPartition
             := split_mem_insertLast_partition
           exists @Split.upward _ partition targetCell ⟨cell', cell'_mem_partition⟩
           simp [Finset.toSetEmbedding, Split.upward]
+          simp [Split.insertLastAt] at insertLastAt_partition_targetCell_eq_split
           split_ands
-          -- TODO: Finish this proof
-          · sorry
-          · sorry
-          · sorry
+          · split
+            case _ cell'_eq_targetCell =>
+              simp [CoeDep.coe, insertLastAt_partition_targetCell_eq_split.symm]
+              left
+              rw [cell'_eq_targetCell]
+            case _ cell'_ne_targetCell =>
+              simp [CoeDep.coe, insertLastAt_partition_targetCell_eq_split.symm]
+              right
+              simp [Split.castSucc, Cell.castSuccEmbedding]
+              constructor
+              · simp [Cell.castSucc, cell'_ne_targetCell]
+              · exists cell'
+          · split
+            case _ cell'_eq_targetCell =>
+              simp [CoeDep.coe, Cell.insertLast]
+              right
+              subst cell' cell''
+              exact Cell.mem_castSucc_of_ne_last_of_castPred_mem x_ne_last castPred_x_mem_cell''
+            case _ cell'_ne_targetCell =>
+              simp [CoeDep.coe, Cell.castSucc]
+              subst cell''
+              exists Fin.castPred x x_ne_last
+          · intro otherCell otherCell_mem_split x_mem_otherCell
+            split
+            case _ cell'_eq_targetCell =>
+              simp [CoeDep.coe]
+              simp [Split.insertEmpty] at targetCell_mem_insertEmpty_partition
+              cases targetCell_mem_insertEmpty_partition with
+                | inl targetCell_eq_empty =>
+                  subst cell' cell''
+                  rw [targetCell_eq_empty] at cell'_mem_partition
+                  absurd cell'_mem_partition
+                  -- TODO: We would like to do `exact partition_mem_partitions.left` here but it gives us:
+                  --
+                  --       ```
+                  --       type mismatch
+                  --         partition_mem_partitions.left
+                  --       has type
+                  --         @EmptyCollection.emptyCollection (Set (Fin n)) Set.instEmptyCollectionSet ∉
+                  --           ↑(Finset.map Finset.toSetEmbedding partition) : Prop
+                  --       but is expected to have type
+                  --         @EmptyCollection.emptyCollection (Cell n) Finset.instEmptyCollectionFinset ∉ partition : Prop
+                  --       ```
+                  --
+                  --       How can we make it work?
+                  have := partition_mem_partitions.left
+                  simp [Finset.toSetEmbedding] at this
+                  exact this
+                | inr targetCell_mem_partition =>
+                  rw [← insertLastAt_partition_targetCell_eq_split] at otherCell_mem_split
+                  set otherCell' := Split.downward
+                      partition
+                      ⟨targetCell, targetCell_mem_partition⟩
+                      ⟨otherCell, otherCell_mem_split⟩
+                    with otherCell'_def
+                  subst cell' cell''
+                  unfold Split.downward at otherCell'_def
+                  split at otherCell'_def
+                  case _ => assumption
+                  case _ otherCell'_ne_targetCell =>
+                    simp at otherCell'_ne_targetCell
+                    simp [otherCell'_ne_targetCell, Split.castSucc, Cell.castSuccEmbedding] at otherCell_mem_split
+                    obtain ⟨otherCell_ne_castSucc_targetCell, otherCell'', otherCell''_mem_partition, castSucc_otherCell''_eq_otherCell⟩
+                      := otherCell_mem_split
+                    -- TODO: We have the following problems to fix:
+                    --       * If we use `(otherCell'' : Set (Fin n)) = targetCell` we can `apply` just fine but we
+                    --         can't `rw` down below.
+                    --       * We need to finish this proof
+                    --
+                    --       How can we fix this? Maybe it's not ideal that we use the `Setoid.IsPartition` definition
+                    --       because it e.g. gives us `∀ (y : Set (Fin n))` on the unique property and thus we only get
+                    --       that the `toSet` of the finsets are equal (which might not be strong enough?). So maybe
+                    --       we just have to duplicate the definition in terms of `Finset`.
+                    have otherCell''_eq_targetCell : otherCell'' = targetCell := by
+                      -- apply cell'_unique otherCell''
+                      have x'_mem_otherCell'' : x' ∈ otherCell'' := by
+                        rw [← castSucc_otherCell''_eq_otherCell] at x_mem_otherCell
+                        exact Cell.castPred_mem_of_mem_castSucc_of_ne_last x_mem_otherCell x_ne_last
+                      -- exists otherCell''_mem_partition
+                      -- exact cell'_unique otherCell'' x'_mem_otherCell'' _
+                      sorry
+                    -- TODO: There has to be a more direct way to get the contradicition here
+                    absurd castSucc_otherCell''_eq_otherCell
+                    rw [otherCell''_eq_targetCell]
+                    intro castSucc_targetCell_eq_otherCell
+                    rw [castSucc_targetCell_eq_otherCell] at otherCell_ne_castSucc_targetCell
+                    contradiction
+            case _ cell'_ne_targetCell =>
+              sorry
 
 theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := by
   sorry
