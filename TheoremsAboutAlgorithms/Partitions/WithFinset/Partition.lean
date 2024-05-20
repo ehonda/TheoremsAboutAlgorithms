@@ -170,6 +170,7 @@ theorem isPartition_of_mem_insertLast_of_isPartition
                   split at otherCell'_def
                   case _ => assumption
                   case _ otherCell'_ne_targetCell =>
+                    -- TODO: This whole prove is very messy, there should be an easier way
                     simp at otherCell'_ne_targetCell
                     simp [otherCell'_ne_targetCell, Split.castSucc, Cell.castSuccEmbedding] at otherCell_mem_split
                     obtain ⟨otherCell_ne_castSucc_targetCell, otherCell'', otherCell''_mem_partition, castSucc_otherCell''_eq_otherCell⟩
@@ -183,14 +184,18 @@ theorem isPartition_of_mem_insertLast_of_isPartition
                     --       because it e.g. gives us `∀ (y : Set (Fin n))` on the unique property and thus we only get
                     --       that the `toSet` of the finsets are equal (which might not be strong enough?). So maybe
                     --       we just have to duplicate the definition in terms of `Finset`.
-                    have otherCell''_eq_targetCell : otherCell'' = targetCell := by
-                      -- apply cell'_unique otherCell''
+                    have toSet_otherCell''_eq_toSet_targetCell : (otherCell'' : Set (Fin n)) = targetCell := by
                       have x'_mem_otherCell'' : x' ∈ otherCell'' := by
                         rw [← castSucc_otherCell''_eq_otherCell] at x_mem_otherCell
                         exact Cell.castPred_mem_of_mem_castSucc_of_ne_last x_mem_otherCell x_ne_last
-                      -- exists otherCell''_mem_partition
-                      -- exact cell'_unique otherCell'' x'_mem_otherCell'' _
-                      sorry
+                      apply cell'_unique otherCell''
+                      simp
+                      constructor
+                      · exists otherCell''
+                      · exact x'_mem_otherCell''
+                    have otherCell''_eq_targetCell : otherCell'' = targetCell := by
+                      apply Finset.toSetEmbedding.injective
+                      exact toSet_otherCell''_eq_toSet_targetCell
                     -- TODO: There has to be a more direct way to get the contradicition here
                     absurd castSucc_otherCell''_eq_otherCell
                     rw [otherCell''_eq_targetCell]
@@ -198,7 +203,40 @@ theorem isPartition_of_mem_insertLast_of_isPartition
                     rw [castSucc_targetCell_eq_otherCell] at otherCell_ne_castSucc_targetCell
                     contradiction
             case _ cell'_ne_targetCell =>
-              sorry
+              subst cell''
+              rw [← insertLastAt_partition_targetCell_eq_split] at otherCell_mem_split
+              simp at otherCell_mem_split
+              -- TODO: This and the `cases targetCell_mem_insertEmpty_partition` we have done above as well, we should
+              --       abstract this away or provide a helper theorem or something
+              cases otherCell_mem_split with
+                | inl otherCell_eq_insertLast_targetCell =>
+                  simp [Cell.insertLast] at otherCell_eq_insertLast_targetCell
+                  simp [Split.insertEmpty] at targetCell_mem_insertEmpty_partition
+                  cases targetCell_mem_insertEmpty_partition with
+                    | inl targetCell_eq_empty =>
+                      subst targetCell
+                      simp [Cell.castSucc] at otherCell_eq_insertLast_targetCell
+                      rw [otherCell_eq_insertLast_targetCell] at x_mem_otherCell
+                      absurd x_ne_last
+                      exact Finset.eq_of_mem_singleton x_mem_otherCell
+                    | inr targetCell_mem_partition =>
+                      have otherCell_mem_insertLastAt_partition_targetCell : otherCell ∈ partition.insertLastAt targetCell := by
+                        rw [otherCell_eq_insertLast_targetCell]
+                        simp [Split.insertLastAt]
+                        left
+                        simp [Cell.insertLast]
+                      set otherCell' := Split.downward
+                          partition
+                          ⟨targetCell, targetCell_mem_partition⟩
+                          ⟨otherCell, otherCell_mem_insertLastAt_partition_targetCell⟩
+                        with otherCell'_def
+                      unfold Split.downward at otherCell'_def
+                      split at otherCell'_def
+                      case _ otherCell'_eq_targetCell =>
+                        sorry
+                      case _ otherCell'_eq_castPred_otherCell =>
+                        sorry
+                | inr otherCell_mem_partition => sorry
 
 theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := by
   sorry
