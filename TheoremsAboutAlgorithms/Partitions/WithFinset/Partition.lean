@@ -79,7 +79,7 @@ theorem isPartition_of_mem_insertLast_of_isPartition
         | inl x_eq_last =>
           simp [Split.insertLast, Finset.toSetEmbedding] at *
           -- TODO: We use this in a sibling goal as well, move further up so we only have to do this once
-          obtain ⟨targetCell, targetCell_mem_insertEmpty_partition, insertLastAt_partition_targetCell_eq_split⟩
+          obtain ⟨targetCell, _, insertLastAt_partition_targetCell_eq_split⟩
             := split_mem_insertLast_partition
           exists targetCell.insertLast
           simp
@@ -175,15 +175,10 @@ theorem isPartition_of_mem_insertLast_of_isPartition
                     simp [otherCell'_ne_targetCell, Split.castSucc, Cell.castSuccEmbedding] at otherCell_mem_split
                     obtain ⟨otherCell_ne_castSucc_targetCell, otherCell'', otherCell''_mem_partition, castSucc_otherCell''_eq_otherCell⟩
                       := otherCell_mem_split
-                    -- TODO: We have the following problems to fix:
-                    --       * If we use `(otherCell'' : Set (Fin n)) = targetCell` we can `apply` just fine but we
-                    --         can't `rw` down below.
-                    --       * We need to finish this proof
-                    --
-                    --       How can we fix this? Maybe it's not ideal that we use the `Setoid.IsPartition` definition
-                    --       because it e.g. gives us `∀ (y : Set (Fin n))` on the unique property and thus we only get
-                    --       that the `toSet` of the finsets are equal (which might not be strong enough?). So maybe
-                    --       we just have to duplicate the definition in terms of `Finset`.
+                    -- TODO: Maybe it's not ideal that we use the `Setoid.IsPartition` definition because it e.g. gives
+                    --       us `∀ (y : Set (Fin n))` on the unique property and thus we only get that the `toSet` of
+                    --       the finsets are equal (which might not be strong enough?). So maybe we just have to
+                    --       duplicate the definition in terms of `Finset`.
                     have toSet_otherCell''_eq_toSet_targetCell : (otherCell'' : Set (Fin n)) = targetCell := by
                       have x'_mem_otherCell'' : x' ∈ otherCell'' := by
                         rw [← castSucc_otherCell''_eq_otherCell] at x_mem_otherCell
@@ -220,23 +215,34 @@ theorem isPartition_of_mem_insertLast_of_isPartition
                       absurd x_ne_last
                       exact Finset.eq_of_mem_singleton x_mem_otherCell
                     | inr targetCell_mem_partition =>
-                      have otherCell_mem_insertLastAt_partition_targetCell : otherCell ∈ partition.insertLastAt targetCell := by
-                        rw [otherCell_eq_insertLast_targetCell]
-                        simp [Split.insertLastAt]
-                        left
-                        simp [Cell.insertLast]
-                      set otherCell' := Split.downward
-                          partition
-                          ⟨targetCell, targetCell_mem_partition⟩
-                          ⟨otherCell, otherCell_mem_insertLastAt_partition_targetCell⟩
-                        with otherCell'_def
-                      unfold Split.downward at otherCell'_def
-                      split at otherCell'_def
-                      case _ otherCell'_eq_targetCell =>
-                        sorry
-                      case _ otherCell'_eq_castPred_otherCell =>
-                        sorry
-                | inr otherCell_mem_partition => sorry
+                      absurd cell'_ne_targetCell
+                      apply Finset.toSetEmbedding.injective
+                      have : (targetCell : Set (Fin n)) = cell' := by
+                        apply cell'_unique targetCell
+                        simp
+                        constructor
+                        · exists targetCell
+                        · rw [otherCell_eq_insertLast_targetCell] at x_mem_otherCell
+                          simp [x_ne_last] at x_mem_otherCell
+                          exact Cell.castPred_mem_of_mem_castSucc_of_ne_last x_mem_otherCell x_ne_last
+                      exact this.symm
+                | inr otherCell_mem_partition =>
+                  simp [Split.castSucc, Cell.castSuccEmbedding] at otherCell_mem_partition
+                  obtain ⟨_, otherCell', otherCell'_mem_partition, castSucc_otherCell'_eq_otherCell⟩
+                    := otherCell_mem_partition
+                  have : otherCell' = cell' := by
+                    apply Finset.toSetEmbedding.injective
+                    have : (otherCell' : Set (Fin n)) = cell' := by
+                      apply cell'_unique otherCell'
+                      simp
+                      constructor
+                      · exists otherCell'
+                      · rw [← castSucc_otherCell'_eq_otherCell] at x_mem_otherCell
+                        exact Cell.castPred_mem_of_mem_castSucc_of_ne_last x_mem_otherCell x_ne_last
+                    exact this
+                  subst otherCell'
+                  simp [CoeDep.coe]
+                  exact castSucc_otherCell'_eq_otherCell.symm
 
 theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := by
   sorry
