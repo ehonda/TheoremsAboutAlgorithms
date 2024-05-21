@@ -1,5 +1,6 @@
 import Mathlib.Data.SetLike.Basic
 import Mathlib.Data.Setoid.Partition
+import Mathlib.Init.Logic
 import TheoremsAboutAlgorithms.Partitions.WithFinset.Defs
 import TheoremsAboutAlgorithms.Partitions.WithFinset.Cell
 
@@ -209,8 +210,8 @@ def insertLast {n : ℕ} (split : Split n) : Set (Split (n + 1))
 --         have h_split''_nonempty : split''.Nonempty := insertLast_nonempty_of_mem h_split''.left
 --         simp [cast_nonempty_iff, h_split''_nonempty]
 
-def IsPartition {n : ℕ} (split : Split n) : Prop
-  := Setoid.IsPartition (split.map Finset.toSetEmbedding).toSet
+-- TODO: Why can't we copy this definition: https://github.com/leanprover-community/mathlib4/blob/3ab8e5819aedd7f82ccd1f45ee893d587e7a6f69/Mathlib/Data/Setoid/Partition.lean#L215-L215
+def IsPartition {n : ℕ} (split : Split n) := ∅ ∉ split ∧ ∀ (f : Fin n), ∃! (cell : split), f ∈ (cell : Cell n)
 
 theorem nonempty_of_mem_partition
     {n : ℕ}
@@ -220,7 +221,6 @@ theorem nonempty_of_mem_partition
     (cell_mem_split : cell ∈ split)
   : cell.Nonempty := by
     obtain ⟨empty_not_mem_split⟩ := split_isPartition
-    simp [Finset.toSetEmbedding] at empty_not_mem_split
     apply Decidable.byContradiction
     intro cell_eq_empty
     simp at cell_eq_empty

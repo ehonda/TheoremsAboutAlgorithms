@@ -52,8 +52,7 @@ theorem isPartition_of_mem_insertLast_of_isPartition
     (split_mem_insertLast_partition : split ∈ partition.insertLast)
   : split.IsPartition := by
     constructor
-    · simp [Finset.toSetEmbedding]
-      intro empty_mem_split
+    · intro empty_mem_split
       obtain ⟨targetCell, targetCell_mem_insertEmpty_partition, insertLastAt_partition_targetCell_eq_split⟩
         := split_mem_insertLast_partition
       simp [Split.insertLastAt] at insertLastAt_partition_targetCell_eq_split
@@ -72,7 +71,6 @@ theorem isPartition_of_mem_insertLast_of_isPartition
           simp [Finset.mem_erase] at empty_mem_castSucc_partition'
           obtain ⟨_, empty_mem_partition⟩ := empty_mem_castSucc_partition'
           absurd partition_mem_partitions.left
-          simp [Finset.toSetEmbedding]
           exact empty_mem_partition
     · intro x
       cases Decidable.eq_or_ne x (Fin.last _) with
@@ -81,10 +79,10 @@ theorem isPartition_of_mem_insertLast_of_isPartition
           -- TODO: We use this in a sibling goal as well, move further up so we only have to do this once
           obtain ⟨targetCell, _, insertLastAt_partition_targetCell_eq_split⟩
             := split_mem_insertLast_partition
-          exists targetCell.insertLast
+          -- TODO: We should have a proof for this in `UpwardDownward`, use it here
+          exists ⟨Cell.insertLast targetCell, by simp [insertLastAt_partition_targetCell_eq_split.symm, Split.insertLastAt]⟩
           simp
           split_ands
-          · simp [insertLastAt_partition_targetCell_eq_split.symm, Split.insertLastAt]
           · simp [x_eq_last, Cell.insertLast]
           · intro cell cell_mem_split x_mem_cell
             simp [insertLastAt_partition_targetCell_eq_split.symm, Split.insertLastAt] at cell_mem_split
@@ -100,34 +98,38 @@ theorem isPartition_of_mem_insertLast_of_isPartition
           -- TODO: Here we get `cell' : Set (Fin n)` but we need `cell' : Cell n` to be able to use `Split.upward`. We
           --      untangle this manually here but maybe we should provide a theorem that gets us there nicely. This is
           --      very technical / finicky.
-          obtain ⟨cell'', x'_mem_cell', cell'_unique⟩ := partition_mem_partitions.right x'
-          simp [Finset.toSetEmbedding] at x'_mem_cell'
-          obtain ⟨⟨cell', cell'_mem_partition, cell'_eq_cell''⟩, castPred_x_mem_cell''⟩ := x'_mem_cell'
+          obtain ⟨cell', x'_mem_cell', cell'_unique⟩ := partition_mem_partitions.right x'
+          simp at x'_mem_cell'
           -- TODO: We use this in a sibling goal as well, move further up so we only have to do this once
           obtain ⟨targetCell, targetCell_mem_insertEmpty_partition, insertLastAt_partition_targetCell_eq_split⟩
             := split_mem_insertLast_partition
-          exists @Split.upward _ partition targetCell ⟨cell', cell'_mem_partition⟩
-          simp [Finset.toSetEmbedding, Split.upward]
+          exists insertLastAt_partition_targetCell_eq_split ▸ Split.upward cell'
+          simp [Split.upward]
           simp [Split.insertLastAt] at insertLastAt_partition_targetCell_eq_split
           split_ands
-          · split
-            case _ cell'_eq_targetCell =>
-              simp [CoeDep.coe, insertLastAt_partition_targetCell_eq_split.symm]
-              left
-              rw [cell'_eq_targetCell]
-            case _ cell'_ne_targetCell =>
-              simp [CoeDep.coe, insertLastAt_partition_targetCell_eq_split.symm]
-              right
-              simp [Split.castSucc, Cell.castSuccEmbedding]
-              constructor
-              · simp [Cell.castSucc, cell'_ne_targetCell]
-              · exists cell'
+          -- · split
+          --   case _ cell'_eq_targetCell =>
+          --     simp [CoeDep.coe, Cell.insertLast]
+          --     subst targetCell
+          --     -- rw [cell'_eq_targetCell]
+          --   case _ cell'_ne_targetCell =>
+          --     simp [CoeDep.coe, insertLastAt_partition_targetCell_eq_split.symm]
+          --     right
+          --     simp [Split.castSucc, Cell.castSuccEmbedding]
+          --     constructor
+          --     · simp [Cell.castSucc, cell'_ne_targetCell]
+          --     · exists cell'
           · split
             case _ cell'_eq_targetCell =>
               simp [CoeDep.coe, Cell.insertLast]
-              right
-              subst cell' cell''
-              exact Cell.mem_castSucc_of_ne_last_of_castPred_mem x_ne_last castPred_x_mem_cell''
+              -- right
+              -- subst cell' cell''
+              -- subst targetCell
+              -- apply Finset.mem_coe.mpr
+              -- exact Cell.mem_castSucc_of_ne_last_of_castPred_mem x_ne_last x'_mem_cell'
+              have : x ∈ insert (Fin.last n) (Cell.castSucc ↑cell') := by sorry
+              sorry
+              -- exact Finset.mem_coe.mpr this
             case _ cell'_ne_targetCell =>
               simp [CoeDep.coe, Cell.castSucc]
               subst cell''
@@ -244,8 +246,37 @@ theorem isPartition_of_mem_insertLast_of_isPartition
                   simp [CoeDep.coe]
                   exact castSucc_otherCell'_eq_otherCell.symm
 
+-- m : ℕ
+-- partition : Split (Nat.succ m)
+-- partition_mem_partitions : partition ∈ ℙ (Nat.succ m)
+-- ⊢ ∃ i, partition ∈ ⋃ (_ : i ∈ ℙ m), Split.insertLast i
+
+-- TODO: Naming
+theorem helper
+    {n : ℕ}
+    {partition : Split (n + 1)}
+    {partition_mem_partitions : partition ∈ ℙ (n + 1)}
+  :  ∃ partition', partition ∈ ⋃ (_ : partition' ∈ ℙ n), Split.insertLast partition' := by
+    -- TODO: Plan
+    --      * We need the fact that there exists a unique cell containing last for any partition
+    --      * We chose this cell as the target cell (with last removed)
+    --      * We then map `Split.downwardEmbedding` over the partition
+    -- let cellContainingLast := partition_mem_partitions.right (Fin.last _)
+    -- obtain ⟨_⟩ := partition_mem_partitions.right (Fin.last _)
+    -- exists partition.map Split.downwardEmbedding
+    sorry
+
+-- Plan:
+--    * Map downward on partition (:= split)
+--    * Show that the result is in ℙ (n - 1)
+--    * Show that we get partition ∈ split.insertLast
 theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := by
-  sorry
+  intro partition partition_mem_partitions
+  cases n with
+    | zero => simp [partitions_0] at partition_mem_partitions; exact partition_mem_partitions
+    | succ m =>
+      apply Set.mem_iUnion.mpr
+      sorry
   -- intro split h
   -- cases n with
   --   | zero => simp [partitions_0] at h ; exact h
