@@ -261,24 +261,19 @@ theorem partitions_subset_recursivePartitions (n : ℕ) : ℙ n ⊆ ℙᵣ n := 
   --         --        3. Show that we get p from p' via the recursive construction.
   --         sorry
 
--- Maybe we can use Set.rangeSplitting here? It's noncomputable though.
 theorem recursivePartitions_subset_partitions (n : ℕ) : ℙᵣ n ⊆ ℙ n := by
-  sorry
-  -- intro split h
-  -- cases n with
-  --   | zero => simp [partitions_0, recursivePartitions] at * ; exact h
-  --   | succ m =>
-  --     -- TODO: Can we use something like Set.mem_range for this?
-  --     cases h with
-  --       | intro partitions h_partitions =>
-  --         simp at h_partitions
-  --         cases h_partitions.left with
-  --           | intro partition h_partition =>
-  --             -- TODO: Rewrite so it reads nicer
-  --             have := h_partitions.right
-  --             rw [← h_partition] at this
-  --             simp [Set.mem_iUnion] at this
-  --             exact insertLast'_produces_partitions this.left this.right
+  intro split split_mem_recursivePartitions
+  cases n with
+    | zero => simp [partitions_0, recursivePartitions] at *; exact split_mem_recursivePartitions
+    | succ m =>
+      -- TODO: This is a bit involved, there's probably an easier way
+      obtain ⟨splits, splits_mem_insertLast_partition, split_mem_splits⟩ := split_mem_recursivePartitions
+      simp at splits_mem_insertLast_partition
+      obtain ⟨partition, iUnion_insertLast_partition_eq_splits⟩ := splits_mem_insertLast_partition
+      rw [← iUnion_insertLast_partition_eq_splits] at split_mem_splits
+      simp [Set.mem_iUnion] at split_mem_splits
+      obtain ⟨partition_mem_partitions, split_mem_insertLast_partition⟩ := split_mem_splits
+      exact isPartition_of_mem_insertLast_of_isPartition partition_mem_partitions split_mem_insertLast_partition
 
 theorem partitions_eq_recursivePartitions (n : ℕ) : ℙ n = ℙᵣ n := by
   apply Set.eq_of_subset_of_subset
