@@ -103,9 +103,15 @@ theorem isPartition_of_mem_insertLast_of_isPartition
           -- TODO: We use this in a sibling goal as well, move further up so we only have to do this once
           obtain ⟨targetCell, targetCell_mem_insertEmpty_partition, insertLastAt_partition_targetCell_eq_split⟩
             := split_mem_insertLast_partition
-          exists insertLastAt_partition_targetCell_eq_split ▸ Split.upward cell'
+          -- We `subst split` here so we don't have to do
+          --
+          --    `insertLastAt_partition_targetCell_eq_split ▸ Split.upward cell'`
+          --
+          -- which is hard to get rid of (the `▸`).
+          subst split
+          -- exists insertLastAt_partition_targetCell_eq_split ▸ Split.upward cell'
+          exists Split.upward cell'
           simp [Split.upward]
-          simp [Split.insertLastAt] at insertLastAt_partition_targetCell_eq_split
           split_ands
           -- · split
           --   case _ cell'_eq_targetCell =>
@@ -122,17 +128,10 @@ theorem isPartition_of_mem_insertLast_of_isPartition
           · split
             case _ cell'_eq_targetCell =>
               simp [CoeDep.coe, Cell.insertLast]
-              -- right
-              -- subst cell' cell''
-              -- subst targetCell
-              -- apply Finset.mem_coe.mpr
-              -- exact Cell.mem_castSucc_of_ne_last_of_castPred_mem x_ne_last x'_mem_cell'
-              have : x ∈ insert (Fin.last n) (Cell.castSucc ↑cell') := by sorry
-              sorry
-              -- exact Finset.mem_coe.mpr this
+              right
+              exact Cell.mem_castSucc_of_ne_last_of_castPred_mem x_ne_last x'_mem_cell'
             case _ cell'_ne_targetCell =>
               simp [CoeDep.coe, Cell.castSucc]
-              subst cell''
               exists Fin.castPred x x_ne_last
           · intro otherCell otherCell_mem_split x_mem_otherCell
             split
@@ -141,51 +140,33 @@ theorem isPartition_of_mem_insertLast_of_isPartition
               simp [Split.insertEmpty] at targetCell_mem_insertEmpty_partition
               cases targetCell_mem_insertEmpty_partition with
                 | inl targetCell_eq_empty =>
-                  subst cell' cell''
-                  rw [targetCell_eq_empty] at cell'_mem_partition
-                  absurd cell'_mem_partition
-                  -- TODO: We would like to do `exact partition_mem_partitions.left` here but it gives us:
-                  --
-                  --       ```
-                  --       type mismatch
-                  --         partition_mem_partitions.left
-                  --       has type
-                  --         @EmptyCollection.emptyCollection (Set (Fin n)) Set.instEmptyCollectionSet ∉
-                  --           ↑(Finset.map Finset.toSetEmbedding partition) : Prop
-                  --       but is expected to have type
-                  --         @EmptyCollection.emptyCollection (Cell n) Finset.instEmptyCollectionFinset ∉ partition : Prop
-                  --       ```
-                  --
-                  --       How can we make it work?
-                  have := partition_mem_partitions.left
-                  simp [Finset.toSetEmbedding] at this
-                  exact this
+                  subst targetCell
+                  absurd cell'.property
+                  rw [targetCell_eq_empty]
+                  exact partition_mem_partitions.left
                 | inr targetCell_mem_partition =>
-                  rw [← insertLastAt_partition_targetCell_eq_split] at otherCell_mem_split
                   set otherCell' := Split.downward
                       partition
                       ⟨targetCell, targetCell_mem_partition⟩
                       ⟨otherCell, otherCell_mem_split⟩
                     with otherCell'_def
-                  subst cell' cell''
                   unfold Split.downward at otherCell'_def
                   split at otherCell'_def
-                  case _ => assumption
+                  case _ => subst targetCell; assumption
                   case _ otherCell'_ne_targetCell =>
                     -- TODO: This whole prove is very messy, there should be an easier way
                     simp at otherCell'_ne_targetCell
-                    simp [otherCell'_ne_targetCell, Split.castSucc, Cell.castSuccEmbedding] at otherCell_mem_split
+                    simp [Split.insertLastAt, otherCell'_ne_targetCell, Split.castSucc, Cell.castSuccEmbedding] at otherCell_mem_split
                     obtain ⟨otherCell_ne_castSucc_targetCell, otherCell'', otherCell''_mem_partition, castSucc_otherCell''_eq_otherCell⟩
                       := otherCell_mem_split
-                    -- TODO: Maybe it's not ideal that we use the `Setoid.IsPartition` definition because it e.g. gives
-                    --       us `∀ (y : Set (Fin n))` on the unique property and thus we only get that the `toSet` of
-                    --       the finsets are equal (which might not be strong enough?). So maybe we just have to
-                    --       duplicate the definition in terms of `Finset`.
-                    have toSet_otherCell''_eq_toSet_targetCell : (otherCell'' : Set (Fin n)) = targetCell := by
+                    have toSet_otherCell''_eq_toSet_targetCell : otherCell'' = cell' := by
                       have x'_mem_otherCell'' : x' ∈ otherCell'' := by
                         rw [← castSucc_otherCell''_eq_otherCell] at x_mem_otherCell
                         exact Cell.castPred_mem_of_mem_castSucc_of_ne_last x_mem_otherCell x_ne_last
-                      apply cell'_unique otherCell''
+                      subst targetCell
+                      -- TODO: Finish this proof
+                      -- apply @Subtype.eq _ (· ∈ partition) ⟨otherCell'', otherCell''_mem_partition⟩ cell'
+                      apply cell'_unique ⟨otherCell'', otherCell''_mem_partition⟩
                       simp
                       constructor
                       · exists otherCell''
