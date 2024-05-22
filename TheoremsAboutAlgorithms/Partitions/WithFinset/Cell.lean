@@ -84,6 +84,18 @@ theorem restrictFinCastPred_injective {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x
 def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _) : Cell n
   := Finset.map ⟨cell.restrictFinCastPred h, restrictFinCastPred_injective cell h⟩ Finset.univ
 
+-- TODO: Finish this
+def castPred_injective {n : ℕ}
+  : Function.Injective (@castPred n _ _) := Finset.map_injective ⟨cell.restrictFinCastPred h, restrictFinCastPred_injective cell h⟩
+
+-- TODO: Finish this
+def castPredEmbedding
+    {n : ℕ}
+    (cell : Cell (n + 1))
+    (h : ∀ x ∈ cell, x ≠ Fin.last _)
+  : Cell (n + 1) ↪ Cell n
+  := ⟨cell.castPred h, Finset.map_injective ⟨cell.restrictFinCastPred h, restrictFinCastPred_injective cell h⟩⟩
+
 theorem castPred_y_eq_x_of_castSucc_x_eq_y_of_forall_mem_y_ne_last
     {n : ℕ}
     {x : Cell n}

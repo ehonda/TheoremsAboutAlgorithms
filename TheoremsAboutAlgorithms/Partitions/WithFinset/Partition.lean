@@ -219,8 +219,15 @@ theorem helper
     --      * We chose this cell as the target cell (with last removed)
     --      * We then map `Split.downwardEmbedding` over the partition
     -- let cellContainingLast := partition_mem_partitions.right (Fin.last _)
-    -- obtain ⟨_⟩ := partition_mem_partitions.right (Fin.last _)
-    -- exists partition.map Split.downwardEmbedding
+    obtain ⟨targetCell', last_mem_targetCell', targetCell'_unique⟩ := partition_mem_partitions.right (Fin.last _)
+    set targetCell := Cell.castPred (targetCell'.val.erase (Fin.last _)) sorry with targetCell_def
+    -- TODO: Plan:
+    --        * Obtain split from partition by removing `targetCell'` and applying `Split.castPred` (yet to be defined)
+    --          and inserting `targetCell` at the end
+    --        * Show that `split.insertLastAt targetCell = partition`
+    --        * We can then map `Split.downwardEmbedding split targetCell` over the partition
+    -- set split := Split.castPred (partition.erase targetCell') sorry with split_def
+    -- exists partition.map (Split.downwardEmbedding targetCell)
     sorry
 
 -- Plan:
