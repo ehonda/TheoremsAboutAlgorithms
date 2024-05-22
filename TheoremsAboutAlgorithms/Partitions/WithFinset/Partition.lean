@@ -82,7 +82,7 @@ theorem isPartition_of_mem_insertLast_of_isPartition
           -- TODO: We should have a proof for this in `UpwardDownward`, use it here
           exists ⟨Cell.insertLast targetCell, by simp [insertLastAt_partition_targetCell_eq_split.symm, Split.insertLastAt]⟩
           simp
-          split_ands
+          constructor
           · simp [x_eq_last, Cell.insertLast]
           · intro cell cell_mem_split x_mem_cell
             simp [insertLastAt_partition_targetCell_eq_split.symm, Split.insertLastAt] at cell_mem_split
@@ -112,19 +112,7 @@ theorem isPartition_of_mem_insertLast_of_isPartition
           -- exists insertLastAt_partition_targetCell_eq_split ▸ Split.upward cell'
           exists Split.upward cell'
           simp [Split.upward]
-          split_ands
-          -- · split
-          --   case _ cell'_eq_targetCell =>
-          --     simp [CoeDep.coe, Cell.insertLast]
-          --     subst targetCell
-          --     -- rw [cell'_eq_targetCell]
-          --   case _ cell'_ne_targetCell =>
-          --     simp [CoeDep.coe, insertLastAt_partition_targetCell_eq_split.symm]
-          --     right
-          --     simp [Split.castSucc, Cell.castSuccEmbedding]
-          --     constructor
-          --     · simp [Cell.castSucc, cell'_ne_targetCell]
-          --     · exists cell'
+          constructor
           · split
             case _ cell'_eq_targetCell =>
               simp [CoeDep.coe, Cell.insertLast]
@@ -159,21 +147,16 @@ theorem isPartition_of_mem_insertLast_of_isPartition
                     simp [Split.insertLastAt, otherCell'_ne_targetCell, Split.castSucc, Cell.castSuccEmbedding] at otherCell_mem_split
                     obtain ⟨otherCell_ne_castSucc_targetCell, otherCell'', otherCell''_mem_partition, castSucc_otherCell''_eq_otherCell⟩
                       := otherCell_mem_split
-                    have toSet_otherCell''_eq_toSet_targetCell : otherCell'' = cell' := by
+                    have otherCell''_eq_cell' : ⟨otherCell'', otherCell''_mem_partition⟩ = cell' := by
                       have x'_mem_otherCell'' : x' ∈ otherCell'' := by
                         rw [← castSucc_otherCell''_eq_otherCell] at x_mem_otherCell
                         exact Cell.castPred_mem_of_mem_castSucc_of_ne_last x_mem_otherCell x_ne_last
                       subst targetCell
-                      -- TODO: Finish this proof
-                      -- apply @Subtype.eq _ (· ∈ partition) ⟨otherCell'', otherCell''_mem_partition⟩ cell'
                       apply cell'_unique ⟨otherCell'', otherCell''_mem_partition⟩
-                      simp
-                      constructor
-                      · exists otherCell''
-                      · exact x'_mem_otherCell''
+                      exact x'_mem_otherCell''
                     have otherCell''_eq_targetCell : otherCell'' = targetCell := by
-                      apply Finset.toSetEmbedding.injective
-                      exact toSet_otherCell''_eq_toSet_targetCell
+                      subst targetCell
+                      exact Subtype.val_inj.mpr otherCell''_eq_cell'
                     -- TODO: There has to be a more direct way to get the contradicition here
                     absurd castSucc_otherCell''_eq_otherCell
                     rw [otherCell''_eq_targetCell]
@@ -181,9 +164,7 @@ theorem isPartition_of_mem_insertLast_of_isPartition
                     rw [castSucc_targetCell_eq_otherCell] at otherCell_ne_castSucc_targetCell
                     contradiction
             case _ cell'_ne_targetCell =>
-              subst cell''
-              rw [← insertLastAt_partition_targetCell_eq_split] at otherCell_mem_split
-              simp at otherCell_mem_split
+              simp [Split.insertLastAt] at otherCell_mem_split
               -- TODO: This and the `cases targetCell_mem_insertEmpty_partition` we have done above as well, we should
               --       abstract this away or provide a helper theorem or something
               cases otherCell_mem_split with
@@ -199,30 +180,25 @@ theorem isPartition_of_mem_insertLast_of_isPartition
                       exact Finset.eq_of_mem_singleton x_mem_otherCell
                     | inr targetCell_mem_partition =>
                       absurd cell'_ne_targetCell
-                      apply Finset.toSetEmbedding.injective
-                      have : (targetCell : Set (Fin n)) = cell' := by
-                        apply cell'_unique targetCell
+                      have : ⟨targetCell, targetCell_mem_partition⟩ = cell' := by
+                        apply cell'_unique ⟨targetCell, targetCell_mem_partition⟩
                         simp
-                        constructor
-                        · exists targetCell
-                        · rw [otherCell_eq_insertLast_targetCell] at x_mem_otherCell
-                          simp [x_ne_last] at x_mem_otherCell
-                          exact Cell.castPred_mem_of_mem_castSucc_of_ne_last x_mem_otherCell x_ne_last
-                      exact this.symm
+                        rw [otherCell_eq_insertLast_targetCell] at x_mem_otherCell
+                        simp [x_ne_last] at x_mem_otherCell
+                        exact Cell.castPred_mem_of_mem_castSucc_of_ne_last x_mem_otherCell x_ne_last
+                      exact Subtype.val_inj.mpr this.symm
                 | inr otherCell_mem_partition =>
                   simp [Split.castSucc, Cell.castSuccEmbedding] at otherCell_mem_partition
                   obtain ⟨_, otherCell', otherCell'_mem_partition, castSucc_otherCell'_eq_otherCell⟩
                     := otherCell_mem_partition
+                  -- TODO: We use this pattern in at least three sub goals, refactor into a lemma
                   have : otherCell' = cell' := by
-                    apply Finset.toSetEmbedding.injective
-                    have : (otherCell' : Set (Fin n)) = cell' := by
-                      apply cell'_unique otherCell'
+                    have : ⟨otherCell', otherCell'_mem_partition⟩ = cell' := by
+                      apply cell'_unique ⟨otherCell', otherCell'_mem_partition⟩
                       simp
-                      constructor
-                      · exists otherCell'
-                      · rw [← castSucc_otherCell'_eq_otherCell] at x_mem_otherCell
-                        exact Cell.castPred_mem_of_mem_castSucc_of_ne_last x_mem_otherCell x_ne_last
-                    exact this
+                      rw [← castSucc_otherCell'_eq_otherCell] at x_mem_otherCell
+                      exact Cell.castPred_mem_of_mem_castSucc_of_ne_last x_mem_otherCell x_ne_last
+                    exact Subtype.val_inj.mpr this
                   subst otherCell'
                   simp [CoeDep.coe]
                   exact castSucc_otherCell'_eq_otherCell.symm
