@@ -71,6 +71,7 @@ def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x �
   -- s := cell, f := Fin.castPred, a := x
   -- We then get `↑x ≠ Fin.last n → Fin n` and therefore provide `(h x x.property)` to get `Fin n`
   -- We don't need to parenthesize the first expression, but we do so for clarity.
+  -- TODO: Can we use `Subtype.restrict` here? (And do we want to?)
   := (Set.restrict cell Fin.castPred x) (h x x.property)
 
 -- Function.Injective (restrictFinCastPred cell h)
@@ -81,20 +82,112 @@ theorem restrictFinCastPred_injective {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x
     apply Subtype.eq
     exact Fin.castPred_inj.mp castPred_x_eq_castPred_y
 
-def castPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _) : Cell n
+-- def restrictFinCastPredEmbedding {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _)
+--   : cell ↪ Fin n
+--   := ⟨restrictFinCastPred cell h, restrictFinCastPred_injective cell h⟩
+
+def CastPredPrecondition {n : ℕ} (cell : Cell (n + 1)) := ∀ x ∈ cell, x ≠ Fin.last _
+
+def castPred {n : ℕ} (cell : Cell (n + 1)) (h : CastPredPrecondition cell) : Cell n
   := Finset.map ⟨cell.restrictFinCastPred h, restrictFinCastPred_injective cell h⟩ Finset.univ
 
--- TODO: Finish this
-def castPred_injective {n : ℕ}
-  : Function.Injective (@castPred n _ _) := Finset.map_injective ⟨cell.restrictFinCastPred h, restrictFinCastPred_injective cell h⟩
+-- TODO: Messy proof, for sure we can improve it
+theorem Cell.castPred_inj {n : ℕ} (x y : Cell (n + 1)) (hx : CastPredPrecondition x) (hy : CastPredPrecondition y)
+  : x.castPred hx = y.castPred hy ↔ x = y := by
+    constructor
+    · intro castPred_x_eq_castPred_y
+      ext f
+      constructor
+      · intro f_mem_x
+        apply Decidable.byContradiction
+        intro f_not_mem_y
+        set f' := f.castPred (hx f f_mem_x) with f'_def
+        have f'_mem_castPred_x : f' ∈ x.castPred hx := by
+          simp [f'_def, castPred]
+          exact ⟨f, f_mem_x, rfl⟩
+        have f'_mem_castPred_y : f' ∈ y.castPred hy := by
+          rw [← castPred_x_eq_castPred_y]
+          exact f'_mem_castPred_x
+        have f_mem_y : f ∈ y := by
+          simp [castPred] at f'_mem_castPred_y
+          obtain ⟨f'', f''_mem_y, f''_def⟩ := f'_mem_castPred_y
+          simp [restrictFinCastPred, Set.restrict] at f''_def
+          have : f'' = f := by
+            apply Fin.castPred_inj.mp
+            exact f''_def
+          rw [← this]
+          exact f''_mem_y
+        contradiction
+      -- TODO: Remove this duplication by factoring out into a helper lemma or something
+      · intro f_mem_y
+        apply Decidable.byContradiction
+        intro f_not_mem_x
+        set f' := f.castPred (hy f f_mem_y) with f'_def
+        have f'_mem_castPred_y : f' ∈ y.castPred hy := by
+          simp [f'_def, castPred]
+          exact ⟨f, f_mem_y, rfl⟩
+        have f'_mem_castPred_x : f' ∈ x.castPred hx := by
+          rw [castPred_x_eq_castPred_y]
+          exact f'_mem_castPred_y
+        have f_mem_x : f ∈ x := by
+          simp [castPred] at f'_mem_castPred_x
+          obtain ⟨f'', f''_mem_x, f''_def⟩ := f'_mem_castPred_x
+          simp [restrictFinCastPred, Set.restrict] at f''_def
+          have : f'' = f := by
+            apply Fin.castPred_inj.mp
+            exact f''_def
+          rw [← this]
+          exact f''_mem_x
+        contradiction
+    · intro; subst x; rfl
 
--- TODO: Finish this
-def castPredEmbedding
-    {n : ℕ}
-    (cell : Cell (n + 1))
-    (h : ∀ x ∈ cell, x ≠ Fin.last _)
-  : Cell (n + 1) ↪ Cell n
-  := ⟨cell.castPred h, Finset.map_injective ⟨cell.restrictFinCastPred h, restrictFinCastPred_injective cell h⟩⟩
+-- -- TODO: Finish this
+-- def castPredEmbedding
+--     {n : ℕ}
+--     (cell : Cell (n + 1))
+--     (h : @CastPredPrecondition n)
+--   : Cell (n + 1) ↪ Cell n
+--   := ⟨cell.castPred h, Finset.map_injective ⟨cell.restrictFinCastPred h, restrictFinCastPred_injective cell h⟩⟩
+
+-- We need this very technical setup for the following reasons:
+--
+--    1. We want to define `Split.castPred` via `Finset.map` and for that we need `Cell.castPredEmbedding`
+--    2. However, `Cell.castPred` is only truly an embedding if we restrict to cells that don't contain `Fin.last _`
+--    3. We therefore need a type to represent cells that don't contain `Fin.last _` so we can restrict to it
+--
+-- We first restrict `Fin.castPred` (to get `Cell.castPRed`), and then we do the analogue for `Cell.castPred`. But we do
+-- it in `Split`.
+
+-- TODO: This is all really awkward and hard to get right (though there is something that does make sense to write down)
+--       Do we really need it?
+-- -- TODO: Naming, where should we put this, do we need this or can we do without?
+-- structure CellWithoutLast (n : ℕ) where
+--   toCell : Cell (n + 1)
+--   forall_mem_ne_last : ∀ x ∈ toCell, x ≠ Fin.last _
+
+-- instance {n : ℕ} : Coe (CellWithoutLast n) (Cell (n + 1)) := ⟨CellWithoutLast.toCell⟩
+
+-- -- instance {n : ℕ} : DecidableEq (CellWithoutLast n) := sorry
+
+-- def restrictFinCastPredEmbedding {n : ℕ} (cell : CellWithoutLast n) : cell.toCell ↪ Fin n
+--   := ⟨cell.toCell.restrictFinCastPred cell.forall_mem_ne_last, restrictFinCastPred_injective cell.toCell cell.forall_mem_ne_last⟩
+
+-- def castPred' {n : ℕ} (cell : CellWithoutLast n) : Cell n
+--   := Finset.map (restrictFinCastPredEmbedding cell) Finset.univ
+
+-- def castPred'_injective {n : ℕ} : Function.Injective (@castPred' n) := by
+--   intro x y h
+--   have : x.toCell = y.toCell := by
+--     apply Decidable.byContradiction
+--     intro toCell_ne
+--     sorry
+--   have : x = ⟨y.toCell, y.forall_mem_ne_last⟩ := by
+--     sorry
+--   simp [this]
+
+-- -- TODO: Finish this
+-- def castPred_injective {n : ℕ}
+--   : Function.Injective (@castPred n _ _) := Finset.map_injective ⟨cell.restrictFinCastPred h, restrictFinCastPred_injective cell h⟩
 
 theorem castPred_y_eq_x_of_castSucc_x_eq_y_of_forall_mem_y_ne_last
     {n : ℕ}

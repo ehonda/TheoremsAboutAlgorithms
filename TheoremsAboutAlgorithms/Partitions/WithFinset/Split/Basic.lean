@@ -39,8 +39,41 @@ theorem last_not_mem_of_mem_castSucc {n : ℕ} {split : Split n} {cell : Cell (n
         intro x _
         exact Fin.ne_of_lt (Fin.castSucc_lt_last x)
 
-def castPred {n : ℕ} (split : Split (n + 1)) : Split n
-  := Finset.map Cell.castPredEmbedding split
+def CastPredPrecondition {n : ℕ} (split : Split (n + 1)) := ∀ cell ∈ split, Cell.CastPredPrecondition cell
+
+-- TODO: Can we use `Subtype.restrict` here? (And do we want to?)
+def restrictCellCastPred {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split) (cell : split) : Cell n
+  := (Set.restrict split Cell.castPred cell) (h cell cell.property)
+
+-- TODO: Finish this proof
+theorem restrictCellCastPred_injective {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split)
+  : Function.Injective (restrictCellCastPred split h) := by
+    intro x y castPred_x_eq_castPred_y
+    simp [restrictCellCastPred, Set.restrict, Cell.castPred] at castPred_x_eq_castPred_y
+    apply Subtype.eq
+    -- TODO: Probably use `Cell.castPred_inj` to prove this.
+    --
+    -- TODO: The problem here is that we can't directly apply `Finset.map_injective` as the functions we're comparing
+    --       are not the same - One is `Cell.restrictFinCastPred ↑x _` and the other is `Cell.restrictFinCastPred ↑y _`.
+    --       This is necessary because we can only apply `Cell.restrictFinCastPred` with it's precondition that is
+    --       specific to a cell.
+    --       We do have it in `Cell.restrictFinCastPred_injective` however by using `Fin.castPred_inj.mp` so there
+    --       should be a way to get there, but it's without the `Finset.map` wrapping everything (which does make it a
+    --       bit more complicated here - maybe we need `ext` or something?).
+    --
+    --       castPred_x_eq_castPred_y : Finset.map { toFun := Cell.restrictFinCastPred ↑x _, inj' := _ } (Finset.attach ↑x) =
+    --                                  Finset.map { toFun := Cell.restrictFinCastPred ↑y _, inj' := _ } (Finset.attach ↑y)
+    --       ⊢ x = y
+    --
+    --       Maybe we need an analogue to `Fin.castPred_inj := i.castPred hi = j.castPred hj ↔ i = j` (which is not
+    --       classic injectivitiy since the functions are not the same, but it's the same idea).
+    sorry
+    -- exact Finset.map_injective
+    -- exact Fin.castPred_inj.mp castPred_x_eq_castPred_y
+
+-- TODO: Finish this
+def castPred {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split) : Split n
+  := Finset.map ⟨restrictCellCastPred split h, restrictCellCastPred_injective split h⟩ Finset.univ
 
 -- TODO: Maybe we can find a better name yet (it's alright, but not totally satisfactory).
 -- We don't require targetCell ∈ split, because we want to be able to have ∅ as a target cell as well.
