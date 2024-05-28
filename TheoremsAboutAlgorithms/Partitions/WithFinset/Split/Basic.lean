@@ -61,8 +61,58 @@ def restrictCellCastPred {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondi
 -- instance : CoeSort (Split n) (Set (Cell n)) := ⟨λ split => split⟩
 -- instance {n : ℕ} (split : Split n) (x : split) : CoeSort {f // f ∈ (x : Cell n)} (Cell n) := sorry
 
-instance {n : ℕ} (split : Split n) (x : split) : Coe (Finset {f // f ∈ (x : Cell n)}) (Finset (Cell n)) := sorry
+-- instance {n : ℕ} (split : Split n) (x : split) : CoeSort (Finset {f : Fin n // f ∈ (x : Cell n)}) (Finset (Cell n)) where
+--   coe := by
+--     intro f
+--     let g := (f : Finset {f : Fin n // f ∈ (x : Cell n)})
+--     exists Multiset.ofList [g]
+--     simp
 
+-- instance {n : ℕ} (split : Split n) (x : split) : Coe {f : Fin n // f ∈ (x : Cell n)} (Cell n)
+--   := ⟨_⟩
+
+-- instance {n : ℕ} (split : Split n) (x : split) : Coe (Finset {f // f ∈ (x : Cell n)}) (Finset (Cell n)) := sorry
+
+
+
+
+
+
+
+-- WIP: These two seem wrong, at least they trigger a really weird goal in helper:
+--
+--    n : ℕ
+--    split : Split (n + 1)
+--    x y : { x // x ∈ split }
+--    f : Cell (n + 1) ↪ Cell n
+--    ⊢ sorryAx (Sort u_1) true → x = y
+--
+-- We probably need something else?
+-- instance {n : ℕ} (split : Split n) (x : split) : CoeSort {f : Fin n // f ∈ (x : Cell n)} (Cell n) where
+--   coe := by
+--     intro f
+--     let g := (f : Fin n)
+--     exists Multiset.ofList [g]
+--     simp
+--
+-- Without them we get:
+--
+--    application type mismatch
+--      Finset.map f (Finset.attach ↑x)
+--    argument
+--      Finset.attach ↑x
+--    has type
+--      Finset { x_1 // x_1 ∈ ↑x } : Type
+--    but is expected to have type
+--      Finset (Cell (n + 1)) : Type
+--
+-- But it surely should be possible to rectify the types and prove the helper, since we get hypothesis:
+--
+--    castPred_x_eq_castPred_y : Finset.map { toFun := Cell.restrictFinCastPred ↑x _, inj' := _ } (Finset.attach ↑x) =
+--      Finset.map { toFun := Cell.restrictFinCastPred ↑y _, inj' := _ } (Finset.attach ↑y)
+--
+-- when trying to prove `Function.Injective (restrictCellCastPred split h)` which we can write down without problem and
+-- therefore should generate valid hypotheses.
 
 -- castPred_x_eq_castPred_y : Finset.map { toFun := Cell.restrictFinCastPred ↑x _, inj' := _ } (Finset.attach ↑x) =
 --   Finset.map { toFun := Cell.restrictFinCastPred ↑y _, inj' := _ } (Finset.attach ↑y)
@@ -79,14 +129,24 @@ theorem helper
     Finset.map f (Finset.attach (y : Cell (n + 1))) → x = y := by
     sorry
 
+-- Split.restrictCellCastPred {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split)
+--   (cell : { x // x ∈ split }) : Cell n
+
+-- WIP II: Maybe proving this will help us in conjunction with `Set.InjOn.injective` to prove `restrictCellCastPred_injective`
+--         and understand the problems we're having with proving everything related to it.
+theorem helper_injOn {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split)
+  : Set.InjOn (restrictCellCastPred split h) split := by sorry
+
 -- TODO: Finish this proof
 theorem restrictCellCastPred_injective {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split)
   : Function.Injective (restrictCellCastPred split h) := by
     intro x y castPred_x_eq_castPred_y
-    simp [restrictCellCastPred, Set.restrict, Cell.castPred] at castPred_x_eq_castPred_y
-    apply Subtype.eq
-    have : Cell.restrictFinCastPred (x : Cell (n + 1)) sorry = Cell.restrictFinCastPred (y : Cell (n + 1)) sorry := by
-      sorry
+    simp [restrictCellCastPred] at castPred_x_eq_castPred_y
+    apply Set.InjOn.injective at castPred_x_eq_castPred_y
+    -- simp [restrictCellCastPred, Set.restrict, Cell.castPred] at castPred_x_eq_castPred_y
+    -- apply Subtype.eq
+    -- have : Cell.restrictFinCastPred (x : Cell (n + 1)) sorry = Cell.restrictFinCastPred (y : Cell (n + 1)) sorry := by
+    --   sorry
 
     -- TODO: Probably use `Cell.castPred_inj` to prove this.
     --
