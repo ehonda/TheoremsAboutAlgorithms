@@ -45,12 +45,49 @@ def CastPredPrecondition {n : ℕ} (split : Split (n + 1)) := ∀ cell ∈ split
 def restrictCellCastPred {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split) (cell : split) : Cell n
   := (Set.restrict split Cell.castPred cell) (h cell cell.property)
 
+-- n : ℕ
+-- split : Split (n + 1)
+-- x y : { x // x ∈ split }
+-- f : Cell (n + 1) ↪ Cell n
+-- ⊢ Finset (Cell (n + 1))
+
+-- type mismatch
+--   Finset.attach ↑x
+-- has type
+--   Finset { x_1 // x_1 ∈ ↑x } : Type
+-- but is expected to have type
+--   Finset (Cell (n + 1)) : Type
+
+-- instance : CoeSort (Split n) (Set (Cell n)) := ⟨λ split => split⟩
+-- instance {n : ℕ} (split : Split n) (x : split) : CoeSort {f // f ∈ (x : Cell n)} (Cell n) := sorry
+
+instance {n : ℕ} (split : Split n) (x : split) : Coe (Finset {f // f ∈ (x : Cell n)}) (Finset (Cell n)) := sorry
+
+
+-- castPred_x_eq_castPred_y : Finset.map { toFun := Cell.restrictFinCastPred ↑x _, inj' := _ } (Finset.attach ↑x) =
+--   Finset.map { toFun := Cell.restrictFinCastPred ↑y _, inj' := _ } (Finset.attach ↑y)
+-- TODO: Where should this be?
+theorem helper
+    {n : ℕ}
+    (split : Split (n + 1))
+    (x y : split)
+    (f : Cell (n + 1) ↪ Cell n)
+  : Finset.map f (Finset.attach (x : Cell (n + 1)))
+  -- : Finset.map f ((Finset.attach (x : Cell (n + 1))) : Finset (Cell (n + 1)))
+  -- : Finset.map f ((Finset.attach (x : Cell (n + 1))) : Finset { x // x ∈ ↑y }) =
+    -- (Finset.map f (Finset.attach (y : Cell (n + 1))) : Split n) → x = y := by
+    Finset.map f (Finset.attach (y : Cell (n + 1))) → x = y := by
+    sorry
+
 -- TODO: Finish this proof
 theorem restrictCellCastPred_injective {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split)
   : Function.Injective (restrictCellCastPred split h) := by
     intro x y castPred_x_eq_castPred_y
     simp [restrictCellCastPred, Set.restrict, Cell.castPred] at castPred_x_eq_castPred_y
     apply Subtype.eq
+    have : Cell.restrictFinCastPred (x : Cell (n + 1)) sorry = Cell.restrictFinCastPred (y : Cell (n + 1)) sorry := by
+      sorry
+
     -- TODO: Probably use `Cell.castPred_inj` to prove this.
     --
     -- TODO: The problem here is that we can't directly apply `Finset.map_injective` as the functions we're comparing
