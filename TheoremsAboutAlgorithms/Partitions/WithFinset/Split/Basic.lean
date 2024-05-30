@@ -45,6 +45,28 @@ def CastPredPrecondition {n : ℕ} (split : Split (n + 1)) := ∀ cell ∈ split
 def restrictCellCastPred {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split) (cell : split) : Cell n
   := (Set.restrict split Cell.castPred cell) (h cell cell.property)
 
+def restrictCellCastPred' {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split) (cell : split) : Cell n
+  := cell.restrict (· ∈ split) Cell.castPred' (h cell cell.property)
+
+#check Cell.castPred'
+
+#check Cell.restrictFinCastPred'_injective
+
+-- TODO: Why can't we import it from Cell.lean?
+theorem Cell.castPred_inj'' {n : ℕ} (x y : Cell (n + 1)) (hx : Cell.CastPredPrecondition x) (hy : Cell.CastPredPrecondition y)
+  : x.castPred' hx = y.castPred' hy ↔ x = y := by
+    sorry
+
+-- #check Cell.castPred_inj
+
+theorem restrictCellCastPred_injective {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split)
+  : Function.Injective (restrictCellCastPred' split h) := by
+    intro x y castPred_x_eq_castPred_y
+    simp [restrictCellCastPred'] at castPred_x_eq_castPred_y
+    apply Subtype.eq
+    exact (Cell.castPred_inj'' x (y : Cell (n + 1)) sorry sorry).mp castPred_x_eq_castPred_y
+    sorry
+
 -- n : ℕ
 -- split : Split (n + 1)
 -- x y : { x // x ∈ split }
@@ -137,11 +159,81 @@ theorem helper
 theorem helper_injOn {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split)
   : Set.InjOn (restrictCellCastPred split h) split := by sorry
 
+def g (f : ℕ → ℕ) (x : ℕ) : ℕ := (f x) + 1
+#check g
+
+def g' (x y : ℕ) : ℕ := x + y
+#check g'
+
+def h' (x : ℕ) := g' x
+#check h'
+
+def h (x : ℕ) (f : ℕ → ℕ) : ℕ := (f x) + 1
+#check h
+
 -- TODO: Finish this proof
 theorem restrictCellCastPred_injective {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split)
   : Function.Injective (restrictCellCastPred split h) := by
     intro x y castPred_x_eq_castPred_y
     simp [restrictCellCastPred] at castPred_x_eq_castPred_y
+    -- @Set.restrict (Cell (n + 1)) (fun a ↦ Cell.CastPredPrecondition a → Cell n) (↑split) Cell.castPred x _ : Cell n
+    --
+    --    α : Type u
+    --    α = Cell (n + 1)
+    --
+    --    π : α → (Type v = (Prop → Cell n))
+    --      = α → Prop → Cell n
+    --    π = fun a ↦ Cell.CastPredPrecondition a → Cell n
+    --
+    --        a : α
+
+    --        Cell.CastPredPrecondition {n : ℕ} (cell : Cell (n + 1)) : Prop
+    --        Cell.CastPredPrecondition a → Cell n : Type v = Prop → Cell n
+    --        π a : Prop → Cell n
+    --
+    --    s : Set α = Set (Cell (n + 1))    which is not the same as Split (n + 1) but works via coercion
+    --      = ↑split                        @Finset.toSet (Cell (n + 1)) split : Set (Cell (n + 1))
+    --    s = ↑split
+    --
+    --    f : (a : α) → π a
+    --      = (a : Cell (n + 1)) → Prop → Cell n
+    --    f a = Cell.CastPredPrecondition a → Cell n
+    --
+    --          @Cell.castPred n : (cell : Cell (n + 1)) → Cell.CastPredPrecondition cell → Cell n
+    --
+    --    a : ↑s = ↑↑split = Cell (n + 1)   the first coercion is from Finset to Set, the second from Set to Type of its
+    --                                      elements
+    --    a = x
+    --
+    --    : π ↑a
+    --    := Cell.CastPredPrecondition ↑x → Cell n
+
+    --     theorem Set.restrict_eq_iff {α : Type u_1} {π : α → Type u_5} {f : (a : α) → π a} {s : Set α} {g : (a : ↑s) → π ↑a} :
+    --        s.restrict f = g ↔ ∀ (a : α) (ha : a ∈ s), f a = g ⟨a, ha⟩
+    --
+    --     g : (a : ↑s) → π ↑a
+    --     g = Set.restrict (↑split) Cell.castPred y _ : @Set.restrict (Cell (n + 1)) (fun a ↦ Cell.CastPredPrecondition a → Cell n) (↑split) Cell.castPred y _ : Cell n
+    --
+    --     g = (cell : (Cell (n + 1))) ↦ (preCond : Cell.CastPredPrecondition ↑cell) → Set.restrict (↑split) Cell.castPred cell preCond
+
+    -- have := (@Set.restrict_eq_iff
+    --   (Cell (n + 1))
+    --   (fun a ↦ Cell.CastPredPrecondition a → Cell n)
+    --   (@Cell.castPred n : (cell : Cell (n + 1)) → Cell.CastPredPrecondition cell → Cell n)
+    --   (↑split)
+    --   -- (fun cell ↦ (preCond : Cell.CastPredPrecondition cell) → Set.restrict (↑split) Cell.castPred cell preCond)
+    --   _
+    --   ).mp
+    --     castPred_x_eq_castPred_y
+
+    have := @Set.restrict_apply
+      -- (fun cell => (fun preCond => Cell.castPred cell preCond))
+      (Cell (n + 1))
+      _
+      (@Cell.castPred n)
+      ↑split
+      x
+    rw [this] at castPred_x_eq_castPred_y
     apply Set.InjOn.injective at castPred_x_eq_castPred_y
     -- simp [restrictCellCastPred, Set.restrict, Cell.castPred] at castPred_x_eq_castPred_y
     -- apply Subtype.eq

@@ -74,11 +74,46 @@ def restrictFinCastPred {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x �
   -- TODO: Can we use `Subtype.restrict` here? (And do we want to?)
   := (Set.restrict cell Fin.castPred x) (h x x.property)
 
+-- Subtype.restrict.{u_4, u_5} {α : Sort u_5} {β : α → Type u_4} (p : α → Prop) (f : (x : α) → β x) (x : Subtype p) : β ↑x
+--
+-- α = Fin (n + 1)
+-- β = α → Type u_4
+--   = Fin (n + 1) → · ≠ Fin.last n → Fin n
+--
+-- p : α → Prop
+--     = Fin (n + 1) → Prop
+-- p = λ x ↦ x ∈ cell
+--
+-- Fin.castPred {n : ℕ} (i : Fin (n + 1)) (h : i ≠ Fin.last n) : Fin n
+--
+-- f : (x : α) → β x
+--     = (x : Fin (n + 1)) → x ≠ Fin.last n → Fin n
+-- f = Fin.castPred
+--
+-- x : Subtype p
+--     = Subtype (λ x ↦ x ∈ cell)
+--     = ↑cell
+--
+-- : β ↑x
+--   = x ≠ Fin.last n → Fin n
+--
+-- So we only have to provide the proof that `x ≠ Fin.last n` in the end
+def restrictFinCastPred' {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _) (x : cell) : Fin n
+  -- := Subtype.restrict (· ∈ cell) Fin.castPred x (h x x.property)
+  := x.restrict (· ∈ cell) Fin.castPred (h x x.property)
+
 -- Function.Injective (restrictFinCastPred cell h)
 theorem restrictFinCastPred_injective {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _)
   : Function.Injective (restrictFinCastPred cell h) := by
     intro x y castPred_x_eq_castPred_y
     simp [restrictFinCastPred, Set.restrict] at castPred_x_eq_castPred_y
+    apply Subtype.eq
+    exact Fin.castPred_inj.mp castPred_x_eq_castPred_y
+
+theorem restrictFinCastPred'_injective {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _)
+  : Function.Injective (restrictFinCastPred' cell h) := by
+    intro x y castPred_x_eq_castPred_y
+    simp [restrictFinCastPred'] at castPred_x_eq_castPred_y
     apply Subtype.eq
     exact Fin.castPred_inj.mp castPred_x_eq_castPred_y
 
@@ -90,6 +125,13 @@ def CastPredPrecondition {n : ℕ} (cell : Cell (n + 1)) := ∀ x ∈ cell, x �
 
 def castPred {n : ℕ} (cell : Cell (n + 1)) (h : CastPredPrecondition cell) : Cell n
   := Finset.map ⟨cell.restrictFinCastPred h, restrictFinCastPred_injective cell h⟩ Finset.univ
+
+def castPred' {n : ℕ} (cell : Cell (n + 1)) (h : CastPredPrecondition cell) : Cell n
+  := Finset.map ⟨cell.restrictFinCastPred' h, restrictFinCastPred'_injective cell h⟩ Finset.univ
+
+theorem Cell.castPred'_inj {n : ℕ} (x y : Cell (n + 1)) (hx : CastPredPrecondition x) (hy : CastPredPrecondition y)
+  : x.castPred' hx = y.castPred' hy ↔ x = y := by
+    sorry
 
 -- TODO: Messy proof, for sure we can improve it
 theorem Cell.castPred_inj {n : ℕ} (x y : Cell (n + 1)) (hx : CastPredPrecondition x) (hy : CastPredPrecondition y)
