@@ -233,15 +233,56 @@ theorem helper
     set partition'' := partition.erase targetCell' with partition''_def
     have castPredPrecondition_partition'' : Split.CastPredPrecondition partition'' := by
       intro cell cell_mem_partition'' x x_mem_cell x_eq_last
-      have cell_eq_targetCell' : cell = targetCell' := by
-        have cell_mem_partition' : cell ∈ partition := by
+      simp [partition''_def] at cell_mem_partition''
+      obtain ⟨cell_ne_targetCell', cell_mem_partition⟩ := cell_mem_partition''
+      have subtype_cell_eq_targetCell' : ⟨cell, cell_mem_partition⟩ = targetCell' := by
+        apply targetCell'_unique ⟨cell, cell_mem_partition⟩
+        rw [x_eq_last] at x_mem_cell
+        assumption
+      have := Subtype.val_inj.mpr subtype_cell_eq_targetCell'
+      contradiction
+    -- We can only insert `targetCell` if it is nonempty, otherwise the result will not be a partition. If it is empty
+    -- we get it via `partition.insertLast` which uses `partition.insertEmpty`.
+    set partition' :=
+      if ∅ = targetCell
+      then (Split.castPred partition'' castPredPrecondition_partition'')
+      else insert targetCell (Split.castPred partition'' castPredPrecondition_partition'')
+      with partition'_def
+    exists partition'
+    simp
+    constructor
+    · constructor
+      · split
+        case _ empty_eq_castPred_targetCell'' =>
+          -- TODO: This should be exactly the same as the `inr` case below
           sorry
-        -- apply targetCell'_unique ⟨cell, cell_mem_partition'⟩
-        -- simp
-        -- exact x_mem_cell
-        sorry
+        case _ empty_ne_castPred_targetCell'' =>
+          simp
+          intro empty_eq_castPred_targetCell''_or_empty_mem_castPred_partition''
+          cases empty_eq_castPred_targetCell''_or_empty_mem_castPred_partition'' with
+            | inl _ => contradiction
+            | inr empty_mem_castPred_partition'' =>
+              -- TODO: We want to use some `Split.castSucc_castPred` theorem (like we have for cell) here to show that
+              --       `∅ ∈ (Split.castPred partition'' castPredPrecondition_partition'').castSucc = partition`
+              have : ∅ ∈ (Split.castPred partition'' castPredPrecondition_partition'').castSucc := by sorry
+              -- have empty_mem_partition'' : ∅ ∈ partition'' := by
+              --   simp [partition''_def]
+              --   sorry
+              have empty_mem_partition : ∅ ∈ partition := by
+                sorry
+              absurd partition_mem_partitions.left
+              exact empty_mem_partition
+      -- · simp
+      --   intro empty_eq_castPred_targetCell''_or_empty_mem_partition''
+      --   cases empty_eq_castPred_targetCell''_or_empty_mem_partition'' with
+      --     -- Here we get hypothesis `∅ = Cell.castPred (Finset.erase (↑targetCell') (Fin.last n)) castPredPrecondition_targetCell''`
+      --     -- which is possible because we can have `{Fin.last _} = targetCell'`. How do we get a contradiction?
+      --     | inl _ => sorry
+      --     -- Here we get a contraditiction from `∅ ∈` since we can show that is then mem of the partition
+      --     | inr _ => sorry
+      · sorry
+    · -- TODO: Here we can use `partition'.insertLastAt targetCell = partition`
       sorry
-    set split := insert targetCell (Split.castPred partition'' castPredPrecondition_partition'') with split_def
     -- TODO: Plan:
     --        * Obtain split from partition by removing `targetCell'` and applying `Split.castPred` (yet to be defined)
     --          and inserting `targetCell` at the end
@@ -249,7 +290,6 @@ theorem helper
     --        * We can then map `Split.downwardEmbedding split targetCell` over the partition
     -- set split := Split.castPred (partition.erase targetCell') sorry with split_def
     -- exists partition.map (Split.downwardEmbedding targetCell)
-    sorry
 
 -- Plan:
 --    * Map downward on partition (:= split)
