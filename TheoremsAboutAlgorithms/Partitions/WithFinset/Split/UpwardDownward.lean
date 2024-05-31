@@ -121,7 +121,7 @@ theorem ne_last_of_ne_insertLast
     {targetCell : Cell n}
     {cell : split.insertLastAt targetCell}
     (cell_ne_targetCell_insertLast : ↑cell ≠ targetCell.insertLast)
-  : ∀ x ∈ (cell : Cell (n + 1)), ↑x ≠ Fin.last n := by
+  : Cell.CastPredPrecondition (cell : Cell (n + 1)) := by
     intro x x_mem_cell
     exact ne_last_of_ne_insertLast_of_mem cell_ne_targetCell_insertLast ⟨x, x_mem_cell⟩
 
