@@ -220,8 +220,28 @@ theorem helper
     --      * We then map `Split.downwardEmbedding` over the partition
     -- let cellContainingLast := partition_mem_partitions.right (Fin.last _)
     obtain ⟨targetCell', last_mem_targetCell', targetCell'_unique⟩ := partition_mem_partitions.right (Fin.last _)
-    set targetCell := Cell.castPred (targetCell'.val.erase (Fin.last _)) sorry with targetCell_def
-    set split := insert targetCell (Split.castPred (partition.erase targetCell') sorry) with split_def
+    -- TODO: Horrible naming, find a better name for `targetCell''` and `partition''`
+    --       Alternatively, find a way to factor these out, do the dirty work in a helper and just return what we need
+    --       here. These are just intermediary objects that we don't need subsequently in this proof.
+    set targetCell'' := targetCell'.val.erase (Fin.last _) with targetCell''_def
+    have castPredPrecondition_targetCell'' : Cell.CastPredPrecondition targetCell'' := by
+      intro x x_mem_targetCell'' x_eq_last
+      absurd Finset.not_mem_erase (Fin.last _) targetCell'.val
+      rw [x_eq_last, targetCell''_def] at x_mem_targetCell''
+      assumption
+    set targetCell := Cell.castPred targetCell'' castPredPrecondition_targetCell'' with targetCell_def
+    set partition'' := partition.erase targetCell' with partition''_def
+    have castPredPrecondition_partition'' : Split.CastPredPrecondition partition'' := by
+      intro cell cell_mem_partition'' x x_mem_cell x_eq_last
+      have cell_eq_targetCell' : cell = targetCell' := by
+        have cell_mem_partition' : cell ∈ partition := by
+          sorry
+        -- apply targetCell'_unique ⟨cell, cell_mem_partition'⟩
+        -- simp
+        -- exact x_mem_cell
+        sorry
+      sorry
+    set split := insert targetCell (Split.castPred partition'' castPredPrecondition_partition'') with split_def
     -- TODO: Plan:
     --        * Obtain split from partition by removing `targetCell'` and applying `Split.castPred` (yet to be defined)
     --          and inserting `targetCell` at the end
