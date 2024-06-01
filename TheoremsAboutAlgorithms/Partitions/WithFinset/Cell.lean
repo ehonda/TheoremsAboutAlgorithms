@@ -222,7 +222,9 @@ theorem mem_castSucc_of_ne_last_of_castPred_mem
     simp [castSucc, Fin.castSucc, Fin.castAdd, Fin.castLE]
     exists x.castPred x_ne_last
 
-theorem castSucc_castPred_eq {n : ℕ} (cell : Cell (n + 1)) (h : ∀ x ∈ cell, x ≠ Fin.last _)
+-- TODO: Why does `[@simp]` not work?
+-- [@simp]
+theorem castSucc_castPred_eq {n : ℕ} (cell : Cell (n + 1)) (h : CastPredPrecondition cell)
   : (cell.castPred h).castSucc = cell := by
     ext f
     simp [castSucc, castPred]

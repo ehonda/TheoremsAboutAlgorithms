@@ -57,6 +57,34 @@ theorem restrictCellCastPred_injective {n : ℕ} (split : Split (n + 1)) (h : Ca
 def castPred {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split) : Split n
   := Finset.map ⟨restrictCellCastPred split h, restrictCellCastPred_injective split h⟩ Finset.univ
 
+theorem empty_mem_castPred_iff_empty_mem {n : ℕ} {split : Split (n + 1)} {h : CastPredPrecondition split}
+  : ∅ ∈ split.castPred h ↔ ∅ ∈ split := by
+    constructor
+      <;> intro
+      <;> simp [castPred, restrictCellCastPred, Subtype.restrict, Cell.castPred] at *
+      <;> assumption
+
+theorem castSucc_castPred_eq {n : ℕ} (split : Split (n + 1)) (h : CastPredPrecondition split)
+  : (split.castPred h).castSucc = split := by
+    ext cell
+    constructor
+    · intro cell_mem_castSucc_castPred
+      simp [castSucc, castPred, Cell.castSuccEmbedding, restrictCellCastPred] at cell_mem_castSucc_castPred
+      -- TODO: Horrible naming, find something better
+      obtain ⟨cell', ⟨cell'', cell''_mem_split, castPred_cell''_eq_cell'⟩, castSucc_cell'_eq_cell⟩
+        := cell_mem_castSucc_castPred
+      rw [← castSucc_cell'_eq_cell, ← castPred_cell''_eq_cell']
+      simp [Subtype.restrict]
+      rw [Cell.castSucc_castPred_eq]
+      assumption
+    · intro cell_mem_split
+      simp [castSucc, castPred, Cell.castSuccEmbedding, restrictCellCastPred]
+      exists cell.castPred (h cell cell_mem_split)
+      constructor
+      · exists cell
+        exists cell_mem_split
+      · apply Cell.castSucc_castPred_eq
+
 -- TODO: Maybe we can find a better name yet (it's alright, but not totally satisfactory).
 -- We don't require targetCell ∈ split, because we want to be able to have ∅ as a target cell as well.
 -- This is essentially split ↦ {targetCell.transform} ∪ (split \ {targetCell})
