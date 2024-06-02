@@ -39,4 +39,8 @@ theorem castSucc_exists_preimage_of_ne_last {n : ℕ} {x : Fin (n + 1)} (hx : x 
     apply (eq_mk_iff_val_eq (a := y) (hk := h_x_lt_n)).mpr
     rw [← hy]
 
+theorem castSucc_ne_last {n : ℕ} (x : Fin n) : x.castSucc ≠ last _ := by
+  simp [last, castSucc, castAdd, castLE]
+  exact Nat.ne_of_lt x.is_lt
+
 end Fin

@@ -122,6 +122,18 @@ def CastPredPrecondition {n : ℕ} (cell : Cell (n + 1)) := ∀ x ∈ cell, x �
 def castPred {n : ℕ} (cell : Cell (n + 1)) (h : CastPredPrecondition cell) : Cell n
   := Finset.map ⟨cell.restrictFinCastPred h, restrictFinCastPred_injective cell h⟩ Finset.univ
 
+theorem castPred_eq_empty_iff_eq_empty {n : ℕ} {cell : Cell (n + 1)} {h : CastPredPrecondition cell}
+  : cell.castPred h = ∅ ↔ cell = ∅ := by simp [castPred]
+
+theorem empty_eq_castPred_iff_empty_eq {n : ℕ} {cell : Cell (n + 1)} {h : CastPredPrecondition cell}
+  : ∅ = cell.castPred h ↔ ∅ = cell := by
+    -- TODO: There's got to be a shorter / more elegant way to prove this, using the above
+    constructor
+    · intro h'
+      exact (castPred_eq_empty_iff_eq_empty.mp h'.symm).symm
+    · intro h'
+      exact (castPred_eq_empty_iff_eq_empty.mpr h'.symm).symm
+
 -- TODO: Messy proof, for sure we can improve it
 theorem castPred_inj {n : ℕ} {x y : Cell (n + 1)} {hx : CastPredPrecondition x} {hy : CastPredPrecondition y}
   : x.castPred hx = y.castPred hy ↔ x = y := by
@@ -290,6 +302,24 @@ theorem eq_castSucc_of_castPred_eq
       rw [← castPred_g'_eq_g] at castSucc_g_eq_f
       rw [← castSucc_g_eq_f]
       exact g'_mem_x
+
+theorem mem_castPred_iff_castSucc_mem_of_castPredPrecondition
+    {n : ℕ}
+    {cell : Cell (n + 1)}
+    {x : Fin n}
+    (castPredPrecondition_cell : cell.CastPredPrecondition)
+  : x ∈ cell.castPred castPredPrecondition_cell ↔ x.castSucc ∈ cell := by
+    constructor
+    · intro x_mem_castPred_cell
+      simp [castPred, restrictFinCastPred, Subtype.restrict] at x_mem_castPred_cell
+      obtain ⟨x', x'_mem_cell, x'_def⟩ := x_mem_castPred_cell
+      subst x
+      simp
+      assumption
+    · intro x_castSucc_mem_cell
+      simp [castPred, restrictFinCastPred, Subtype.restrict]
+      exists x.castSucc
+      exists x_castSucc_mem_cell
 
 -- This is essentially cell ↦ {n} ∪ cell
 def insertLast {n : ℕ} (cell : Cell n) : Cell (n + 1)
