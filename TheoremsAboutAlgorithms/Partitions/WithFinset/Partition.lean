@@ -286,201 +286,197 @@ theorem helper
         obtain ⟨cell', castSucc_x_mem_cell', cell'_unique⟩ := this
         cases Decidable.eq_or_ne cell' targetCell' with
           | inl cell'_eq_targetCell' =>
-            -- This is valid but temoprarily deactivated to reduce lag while proving the rest
-            sorry
-            -- have targetCell_mem_partition : targetCell ∈ partition' := by
-            --   simp [partition'_def]
-            --   split
-            --   case _ empty_eq_targetCell =>
-            --     have targetCell'_val_eq_singleton_last : targetCell'.val = {Fin.last _} := by
-            --       rw [targetCell_def] at empty_eq_targetCell
-            --       simp [targetCell''_def] at empty_eq_targetCell
-            --       apply (Cell.empty_eq_castPred_iff_empty_eq).mp at empty_eq_targetCell
-            --       symm at empty_eq_targetCell
-            --       apply (Finset.erase_eq_empty_iff targetCell'.val (Fin.last _)).mp at empty_eq_targetCell
-            --       cases empty_eq_targetCell with
-            --         | inl targetCell'_val_eq_empty =>
-            --           rw [targetCell'_val_eq_empty] at last_mem_targetCell'
-            --           contradiction
-            --         | inr targetCell'_val_eq_singleton_last =>
-            --           exact targetCell'_val_eq_singleton_last
-            --     have x'_eq_last : x' = Fin.last _ := by
-            --       subst targetCell'
-            --       rw [targetCell'_val_eq_singleton_last] at castSucc_x_mem_cell'
-            --       apply Finset.eq_of_mem_singleton
-            --       assumption
-            --     have := x.castSucc_ne_last
-            --     contradiction
-            --   case _ targetCell_ne_empty => simp
-            -- exists ⟨targetCell, targetCell_mem_partition⟩
-            -- simp
-            -- constructor
-            -- · apply (Cell.mem_castPred_iff_castSucc_mem_of_castPredPrecondition _).mpr
-            --   subst cell'
-            --   have x'_mem_targetCell'' : x' ∈ targetCell'' := by
-            --     simp [targetCell''_def]
-            --     constructor
-            --     · exact x.castSucc_ne_last
-            --     · assumption
-            --   assumption
-            -- · intro otherCell otherCell_mem_partition' x_mem_otherCell
-            --   -- TODO: This is a lot of inlined work, we should be able to define functions that give us the key
-            --   --       components and modularize the proof that way
-            --   cases Decidable.eq_or_ne otherCell targetCell with
-            --     | inl otherCell_eq_targetCell =>
-            --       subst otherCell
-            --       simp [targetCell''_def]
-            --     | inr otherCell_ne_targetCell =>
-            --       subst cell'
-            --       set otherCell' := otherCell.castSucc with otherCell'_def
-            --       have x'_mem_otherCell' : x' ∈ otherCell' := by
-            --         simp [otherCell'_def, x'_def, Cell.castSucc]
-            --         exists x
-            --       have otherCell'_mem_partition : otherCell' ∈ partition := by
-            --         simp [otherCell'_def]
-            --         split at otherCell_mem_partition'
-            --         case _ empty_eq_targetCell =>
-            --           simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict] at otherCell_mem_partition'
-            --           obtain ⟨otherCell'', ⟨otherCell''_ne_targetCell', otherCell''_mem_partition⟩, castPred_otherCell''_eq_otherCell⟩
-            --             := otherCell_mem_partition'
-            --           subst otherCell
-            --           simp [Cell.castSucc_castPred_eq]
-            --           assumption
-            --         case _ otherCell'_ne_targetCell' =>
-            --           simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict] at otherCell_mem_partition'
-            --           cases otherCell_mem_partition' with
-            --             | inl otherCell_eq_targetCell => contradiction
-            --             | inr exists_castPred_eq_otherCell =>
-            --               obtain ⟨otherCell'', ⟨otherCell''_ne_targetCell', otherCell''_mem_partition⟩, castPred_otherCell''_eq_otherCell⟩
-            --                 := exists_castPred_eq_otherCell
-            --               subst otherCell
-            --               simp [Cell.castSucc_castPred_eq]
-            --               assumption
-            --       have subtype_otherCell'_eq_targetCell' : ⟨otherCell', otherCell'_mem_partition⟩ = targetCell' := by
-            --         apply cell'_unique ⟨otherCell', _⟩
-            --         simp
-            --         exact x'_mem_otherCell'
-            --       have otherCell'_eq_targetCell'_val : otherCell' = targetCell'
-            --         := Subtype.val_inj.mpr subtype_otherCell'_eq_targetCell'
-            --       set otherCell'' := otherCell.castSucc.erase (Fin.last _) with otherCell''_def
-            --       have : otherCell = targetCell := by
-            --         subst targetCell'
-            --         simp [targetCell_def]
-            --         have otherCell''_eq_castSucc_otherCell : otherCell'' = otherCell.castSucc := by
-            --           simp [otherCell''_def, Cell.castSucc]
-            --           intro x _
-            --           exact x.castSucc_ne_last
-            --         -- TODO: There should be a way easier way since we know that `otherCell'' = Cell.castSucc otherCell`
-            --         --       and therefore Cell.castPred (Finset.erase (Cell.castSucc otherCell) (Fin.last n)) castPredPrecondition_targetCell''
-            --         --       and therefore `otherCell''.castPred _ = otherCell.castSucc.castPred _ = otherCell`,
-            --         --       but its tough to `rw` / `simp` / `subst` because of the dependent
-            --         ---      `Cell.castPredPrecondition`
-            --         -- simp [Cell.castPred]
-            --         -- unfold Cell.restrictFinCastPred
-            --         -- simp [Subtype.restrict]
-            --         ext f
-            --         constructor
-            --         · intro f_mem_otherCell
-            --           apply (Cell.mem_castPred_iff_castSucc_mem_of_castPredPrecondition _).mpr
-            --           simp [otherCell''_def]
-            --           constructor
-            --           · exact f.castSucc_ne_last
-            --           · simp [Cell.castSucc]; exists f
-            --         · intro f_mem_otherCell''
-            --           simp [Cell.castPred, Cell.restrictFinCastPred, Subtype.restrict, Cell.castSucc]
-            --             at f_mem_otherCell''
-            --           obtain ⟨f', ⟨f'_ne_last, f'', f''_mem_otherCell, castSucc_f''_eq_f'⟩, castPred_f'_eq_f⟩
-            --             := f_mem_otherCell''
-            --           subst f f'
-            --           simp
-            --           assumption
-            --       contradiction
+            -- -- This is valid but temoprarily deactivated to reduce lag while proving the rest
+            -- sorry
+            have targetCell_mem_partition : targetCell ∈ partition' := by
+              simp [partition'_def]
+              split
+              case _ empty_eq_targetCell =>
+                have targetCell'_val_eq_singleton_last : targetCell'.val = {Fin.last _} := by
+                  rw [targetCell_def] at empty_eq_targetCell
+                  simp [targetCell''_def] at empty_eq_targetCell
+                  apply (Cell.empty_eq_castPred_iff_empty_eq).mp at empty_eq_targetCell
+                  symm at empty_eq_targetCell
+                  apply (Finset.erase_eq_empty_iff targetCell'.val (Fin.last _)).mp at empty_eq_targetCell
+                  cases empty_eq_targetCell with
+                    | inl targetCell'_val_eq_empty =>
+                      rw [targetCell'_val_eq_empty] at last_mem_targetCell'
+                      contradiction
+                    | inr targetCell'_val_eq_singleton_last =>
+                      exact targetCell'_val_eq_singleton_last
+                have x'_eq_last : x' = Fin.last _ := by
+                  subst targetCell'
+                  rw [targetCell'_val_eq_singleton_last] at castSucc_x_mem_cell'
+                  apply Finset.eq_of_mem_singleton
+                  assumption
+                have := x.castSucc_ne_last
+                contradiction
+              case _ targetCell_ne_empty => simp
+            exists ⟨targetCell, targetCell_mem_partition⟩
+            simp
+            constructor
+            · apply (Cell.mem_castPred_iff_castSucc_mem_of_castPredPrecondition _).mpr
+              subst cell'
+              have x'_mem_targetCell'' : x' ∈ targetCell'' := by
+                simp [targetCell''_def]
+                constructor
+                · exact x.castSucc_ne_last
+                · assumption
+              assumption
+            · intro otherCell otherCell_mem_partition' x_mem_otherCell
+              -- TODO: This is a lot of inlined work, we should be able to define functions that give us the key
+              --       components and modularize the proof that way
+              cases Decidable.eq_or_ne otherCell targetCell with
+                | inl otherCell_eq_targetCell =>
+                  subst otherCell
+                  simp [targetCell''_def]
+                | inr otherCell_ne_targetCell =>
+                  subst cell'
+                  set otherCell' := otherCell.castSucc with otherCell'_def
+                  have x'_mem_otherCell' : x' ∈ otherCell' := by
+                    simp [otherCell'_def, x'_def, Cell.castSucc]
+                    exists x
+                  have otherCell'_mem_partition : otherCell' ∈ partition := by
+                    simp [otherCell'_def]
+                    split at otherCell_mem_partition'
+                    case _ empty_eq_targetCell =>
+                      simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict] at otherCell_mem_partition'
+                      obtain ⟨otherCell'', ⟨otherCell''_ne_targetCell', otherCell''_mem_partition⟩, castPred_otherCell''_eq_otherCell⟩
+                        := otherCell_mem_partition'
+                      subst otherCell
+                      simp [Cell.castSucc_castPred_eq]
+                      assumption
+                    case _ otherCell'_ne_targetCell' =>
+                      simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict] at otherCell_mem_partition'
+                      cases otherCell_mem_partition' with
+                        | inl otherCell_eq_targetCell => contradiction
+                        | inr exists_castPred_eq_otherCell =>
+                          obtain ⟨otherCell'', ⟨otherCell''_ne_targetCell', otherCell''_mem_partition⟩, castPred_otherCell''_eq_otherCell⟩
+                            := exists_castPred_eq_otherCell
+                          subst otherCell
+                          simp [Cell.castSucc_castPred_eq]
+                          assumption
+                  have subtype_otherCell'_eq_targetCell' : ⟨otherCell', otherCell'_mem_partition⟩ = targetCell' := by
+                    apply cell'_unique ⟨otherCell', _⟩
+                    simp
+                    exact x'_mem_otherCell'
+                  have otherCell'_eq_targetCell'_val : otherCell' = targetCell'
+                    := Subtype.val_inj.mpr subtype_otherCell'_eq_targetCell'
+                  set otherCell'' := otherCell.castSucc.erase (Fin.last _) with otherCell''_def
+                  have : otherCell = targetCell := by
+                    subst targetCell'
+                    simp [targetCell_def]
+                    -- TODO: There should be a way easier way since we know that `otherCell'' = Cell.castSucc otherCell`
+                    --       and therefore Cell.castPred (Finset.erase (Cell.castSucc otherCell) (Fin.last n)) castPredPrecondition_targetCell''
+                    --       and therefore `otherCell''.castPred _ = otherCell.castSucc.castPred _ = otherCell`,
+                    --       but its tough to `rw` / `simp` / `subst` because of the dependent
+                    ---      `Cell.castPredPrecondition`
+                    -- simp [Cell.castPred]
+                    -- unfold Cell.restrictFinCastPred
+                    -- simp [Subtype.restrict]
+                    ext f
+                    constructor
+                    · intro f_mem_otherCell
+                      apply (Cell.mem_castPred_iff_castSucc_mem_of_castPredPrecondition _).mpr
+                      simp [otherCell''_def]
+                      constructor
+                      · exact f.castSucc_ne_last
+                      · simp [Cell.castSucc]; exists f
+                    · intro f_mem_otherCell''
+                      simp [Cell.castPred, Cell.restrictFinCastPred, Subtype.restrict, Cell.castSucc]
+                        at f_mem_otherCell''
+                      obtain ⟨f', ⟨f'_ne_last, f'', f''_mem_otherCell, castSucc_f''_eq_f'⟩, castPred_f'_eq_f⟩
+                        := f_mem_otherCell''
+                      subst f f'
+                      simp
+                      assumption
+                  contradiction
           | inr cell'_ne_targetCell' =>
-            -- This is valid but temoprarily deactivated to reduce lag while proving the rest
-            sorry
-            -- have castPredPrecondition_cell' : Cell.CastPredPrecondition (cell' : Cell (n + 1)) := by
-            --   intro x x_mem_cell' x_eq_last
-            --   have cell'_eq_targetCell' : cell' = targetCell' := by
-            --     apply targetCell'_unique cell'
-            --     rw [x_eq_last] at x_mem_cell'
-            --     assumption
-            --   contradiction
-            -- set cell := Cell.castPred cell' castPredPrecondition_cell' with cell_def
-            -- have cell_mem_partition' : cell ∈ partition' := by
-            --   simp [partition'_def]
-            --   split
-            --   case _ empty_eq_targetCell =>
-            --     simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict]
-            --     exists cell'
-            --     constructor
-            --     · rfl
-            --     · constructor
-            --       -- TODO: There's for sure an easier way for this sub goal
-            --       · intro; apply cell'_ne_targetCell'; apply Subtype.val_inj.mp; assumption
-            --       · exact cell'.property
-            --   case _ empty_ne_targetCell =>
-            --     simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict]
-            --     right
-            --     -- TODO: Exact duplication of the case above, refactor!
-            --     exists cell'
-            --     constructor
-            --     · rfl
-            --     · constructor
-            --       -- TODO: There's for sure an easier way for this sub goal
-            --       · intro; apply cell'_ne_targetCell'; apply Subtype.val_inj.mp; assumption
-            --       · exact cell'.property
-            -- exists ⟨cell, cell_mem_partition'⟩
-            -- simp
-            -- constructor
-            -- · apply (Cell.mem_castPred_iff_castSucc_mem_of_castPredPrecondition _).mpr
-            --   simp [x'_def] at castSucc_x_mem_cell'
-            --   assumption
-            -- · intro otherCell otherCell_mem_partition' x_mem_otherCell
-            --   -- TODO: Set makes stuff hard to work with, which is why we inline `otherCell.castSucc = otherCell'` here.
-            --   --       Maybe we could use it without issue though.
-            --   -- set otherCell' := otherCell.castSucc with otherCell'_def
-            --   have otherCell'_mem_partition : otherCell.castSucc ∈ partition := by
-            --     split at otherCell_mem_partition'
-            --     case _ empty_eq_targetCell =>
-            --       simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict] at otherCell_mem_partition'
-            --       obtain ⟨otherCell'', ⟨otherCell''_ne_targetCell', otherCell''_mem_partition⟩, castPred_otherCell''_eq_otherCell⟩
-            --         := otherCell_mem_partition'
-            --       subst otherCell
-            --       simp [Cell.castSucc_castPred_eq]
-            --       assumption
-            --     case _ empty_ne_targetCell =>
-            --       simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict] at otherCell_mem_partition'
-            --       cases otherCell_mem_partition' with
-            --         | inl otherCell_eq_targetCell =>
-            --           have x'_mem_targetCell'_val : x' ∈ targetCell'.val := by
-            --             subst otherCell
-            --             simp [Cell.castPred, Cell.restrictFinCastPred, Subtype.restrict] at x_mem_otherCell
-            --             obtain ⟨x'', ⟨x''_ne_last, x''_mem_targetCell'_val⟩, castPred_x''_eq_x⟩
-            --               := x_mem_otherCell
-            --             subst x
-            --             simp [x'_def]
-            --             assumption
-            --           have targetCell'_eq_cell' : targetCell' = cell' := by
-            --             apply cell'_unique targetCell'
-            --             assumption
-            --           symm at targetCell'_eq_cell'
-            --           contradiction
-            --         | inr exists_castPred_eq_otherCell =>
-            --           -- TODO: Again lots of repetition, refactor!
-            --           obtain ⟨otherCell'', ⟨otherCell''_ne_targetCell', otherCell''_mem_partition⟩, castPred_otherCell''_eq_otherCell⟩
-            --             := exists_castPred_eq_otherCell
-            --           subst otherCell
-            --           simp [Cell.castSucc_castPred_eq]
-            --           assumption
-            --   have x'_mem_otherCell' : x' ∈ otherCell.castSucc := by
-            --     simp [x'_def, Cell.castSucc]
-            --     exists x
-            --   have subtype_otherCell'_eq_cell' : ⟨otherCell.castSucc, otherCell'_mem_partition⟩ = cell' := by
-            --     apply cell'_unique ⟨otherCell.castSucc, _⟩
-            --     assumption
-            --   have otherCell'_eq_cell' : otherCell.castSucc = cell' := Subtype.val_inj.mpr subtype_otherCell'_eq_cell'
-            --   subst cell'
-            --   simp [Cell.castPred_castSucc_eq]
+            -- -- This is valid but temoprarily deactivated to reduce lag while proving the rest
+            -- sorry
+            have castPredPrecondition_cell' : Cell.CastPredPrecondition (cell' : Cell (n + 1)) := by
+              intro x x_mem_cell' x_eq_last
+              have cell'_eq_targetCell' : cell' = targetCell' := by
+                apply targetCell'_unique cell'
+                rw [x_eq_last] at x_mem_cell'
+                assumption
+              contradiction
+            set cell := Cell.castPred cell' castPredPrecondition_cell' with cell_def
+            have cell_mem_partition' : cell ∈ partition' := by
+              simp [partition'_def]
+              split
+              case _ empty_eq_targetCell =>
+                simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict]
+                exists cell'
+                constructor
+                · rfl
+                · constructor
+                  -- TODO: There's for sure an easier way for this sub goal
+                  · intro; apply cell'_ne_targetCell'; apply Subtype.val_inj.mp; assumption
+                  · exact cell'.property
+              case _ empty_ne_targetCell =>
+                simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict]
+                right
+                -- TODO: Exact duplication of the case above, refactor!
+                exists cell'
+                constructor
+                · rfl
+                · constructor
+                  -- TODO: There's for sure an easier way for this sub goal
+                  · intro; apply cell'_ne_targetCell'; apply Subtype.val_inj.mp; assumption
+                  · exact cell'.property
+            exists ⟨cell, cell_mem_partition'⟩
+            simp
+            constructor
+            · apply (Cell.mem_castPred_iff_castSucc_mem_of_castPredPrecondition _).mpr
+              simp [x'_def] at castSucc_x_mem_cell'
+              assumption
+            · intro otherCell otherCell_mem_partition' x_mem_otherCell
+              -- TODO: Set makes stuff hard to work with, which is why we inline `otherCell.castSucc = otherCell'` here.
+              --       Maybe we could use it without issue though.
+              -- set otherCell' := otherCell.castSucc with otherCell'_def
+              have otherCell'_mem_partition : otherCell.castSucc ∈ partition := by
+                split at otherCell_mem_partition'
+                case _ empty_eq_targetCell =>
+                  simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict] at otherCell_mem_partition'
+                  obtain ⟨otherCell'', ⟨otherCell''_ne_targetCell', otherCell''_mem_partition⟩, castPred_otherCell''_eq_otherCell⟩
+                    := otherCell_mem_partition'
+                  subst otherCell
+                  simp [Cell.castSucc_castPred_eq]
+                  assumption
+                case _ empty_ne_targetCell =>
+                  simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict] at otherCell_mem_partition'
+                  cases otherCell_mem_partition' with
+                    | inl otherCell_eq_targetCell =>
+                      have x'_mem_targetCell'_val : x' ∈ targetCell'.val := by
+                        subst otherCell
+                        simp [Cell.castPred, Cell.restrictFinCastPred, Subtype.restrict] at x_mem_otherCell
+                        obtain ⟨x'', ⟨x''_ne_last, x''_mem_targetCell'_val⟩, castPred_x''_eq_x⟩
+                          := x_mem_otherCell
+                        subst x
+                        simp [x'_def]
+                        assumption
+                      have targetCell'_eq_cell' : targetCell' = cell' := by
+                        apply cell'_unique targetCell'
+                        assumption
+                      symm at targetCell'_eq_cell'
+                      contradiction
+                    | inr exists_castPred_eq_otherCell =>
+                      -- TODO: Again lots of repetition, refactor!
+                      obtain ⟨otherCell'', ⟨otherCell''_ne_targetCell', otherCell''_mem_partition⟩, castPred_otherCell''_eq_otherCell⟩
+                        := exists_castPred_eq_otherCell
+                      subst otherCell
+                      simp [Cell.castSucc_castPred_eq]
+                      assumption
+              have x'_mem_otherCell' : x' ∈ otherCell.castSucc := by
+                simp [x'_def, Cell.castSucc]
+                exists x
+              have subtype_otherCell'_eq_cell' : ⟨otherCell.castSucc, otherCell'_mem_partition⟩ = cell' := by
+                apply cell'_unique ⟨otherCell.castSucc, _⟩
+                assumption
+              have otherCell'_eq_cell' : otherCell.castSucc = cell' := Subtype.val_inj.mpr subtype_otherCell'_eq_cell'
+              subst cell'
+              simp [Cell.castPred_castSucc_eq]
     · simp [Split.insertLast]
       exists targetCell
       constructor
@@ -494,143 +490,143 @@ theorem helper
           simp [targetCell_def, targetCell''_def, Split.insertEmpty]
       · split
         case _ targetCell_eq_empty =>
-          -- This is valid but temoprarily deactivated to reduce lag while proving the rest
-          sorry
-          -- ext cell
-          -- constructor
-          -- · intro cell_mem_partition'
-          --   simp [Split.insertLastAt] at cell_mem_partition'
-          --   cases cell_mem_partition' with
-          --     | inl cell_eq_targetCell =>
-          --       have cell_eq_targetCell' : cell = targetCell' := by
-          --         rw [cell_eq_targetCell]
-          --         simp [Cell.insertLast]
-          --         ext f
-          --         constructor
-          --         · intro f_mem_insert_last_castSucc_targetCell
-          --           simp at f_mem_insert_last_castSucc_targetCell
-          --           cases f_mem_insert_last_castSucc_targetCell with
-          --             | inl f_eq_last =>
-          --               subst f
-          --               assumption
-          --             | inr f_mem_castSucc_targetCell =>
-          --               simp [Cell.castSucc_castPred_eq] at f_mem_castSucc_targetCell
-          --               exact f_mem_castSucc_targetCell.right
-          --         · intro f_mem_targetCell'
-          --           simp
-          --           cases Decidable.eq_or_ne f (Fin.last _) with
-          --             | inl f_eq_last => left; assumption
-          --             | inr f_ne_last =>
-          --               simp [Cell.castSucc_castPred_eq]
-          --               right
-          --               constructor
-          --               · assumption
-          --               · assumption
-          --       rw [cell_eq_targetCell']
-          --       exact targetCell'.property
-          --     | inr cell_mem_partition''' =>
-          --       simp [Split.castSucc, Cell.castSuccEmbedding] at cell_mem_partition'''
-          --       obtain ⟨cell_ne_castSucc_targetCell'', cell', cell'_mem_castPred_partition'', castSucc_cell'_eq_cell⟩
-          --         := cell_mem_partition'''
-          --       subst cell
-          --       simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict] at cell'_mem_castPred_partition''
-          --       obtain ⟨cell'', ⟨cell''_ne_targetCell'', cell''_mem_partition''⟩, castPred_cell''_eq_cell'⟩
-          --         := cell'_mem_castPred_partition''
-          --       subst cell'
-          --       simp [Cell.castSucc_castPred_eq]
-          --       assumption
-          -- · intro cell_mem_partition
-          --   simp [Split.insertLastAt]
-          --   cases Decidable.eq_or_ne cell targetCell' with
-          --     | inl cell_eq_targetCell =>
-          --       subst cell
-          --       left
-          --       simp [Cell.insertLast, Cell.castSucc_castPred_eq]
-          --       rw [Finset.insert_erase last_mem_targetCell']
-          --     | inr cell_ne_targetCell =>
-          --       right
-          --       simp [Split.castSucc, Cell.castSuccEmbedding]
-          --       constructor
-          --       · intro cell_eq_castSucc_castPred_targetCell
-          --         have cell_eq_targetCell : cell = ↑targetCell' := by
-          --           simp [Cell.castSucc_castPred_eq] at cell_eq_castSucc_castPred_targetCell
-          --           cases Decidable.eq_or_ne targetCell'.val {Fin.last _} with
-          --             | inl targetCell'_val_eq_singleton_last =>
-          --               simp [targetCell'_val_eq_singleton_last] at cell_eq_castSucc_castPred_targetCell
-          --               absurd partition_mem_partitions.left
-          --               rw [cell_eq_castSucc_castPred_targetCell] at cell_mem_partition
-          --               assumption
-          --             | inr targetCell'_val_ne_singleton_last =>
-          --               have exists_mem_targetCell'_ne_last : ∃ x, x ∈ targetCell'.val ∧ x ≠ Fin.last _ := by
-          --                 have targetCell'_nontrivial : targetCell'.val.Nontrivial := by
-          --                   apply (Finset.nontrivial_iff_ne_singleton last_mem_targetCell').mpr
-          --                   assumption
-          --                 have nontrivial_subtype_targetCell' : Nontrivial { x // x ∈ targetCell'.val } := by
-          --                   cases subsingleton_or_nontrivial { x // x ∈ targetCell'.val } with
-          --                     | inl subsingleton_subtype_targetCell' =>
-          --                       obtain ⟨x, x_mem_targetCell', y, y_mem_targetCell', x_ne_y⟩ := targetCell'_nontrivial
-          --                       absurd x_ne_y
-          --                       have := subsingleton_subtype_targetCell'.allEq ⟨x, x_mem_targetCell'⟩ ⟨y, y_mem_targetCell'⟩
-          --                       exact Subtype.val_inj.mpr this
-          --                     | inr nontrivial_subtype_targetCell' =>
-          --                       assumption
-          --                 have exists_subtype_targetCell'_ne_last : ∃ (x : targetCell'.val), (x : Fin (n + 1)) ≠ Fin.last _ := by
-          --                   have := (nontrivial_iff_exists_ne (⟨Fin.last _, last_mem_targetCell'⟩ : Subtype (· ∈ targetCell'.val))).mp nontrivial_subtype_targetCell'
-          --                   obtain ⟨x, x_ne_last⟩ := this
-          --                   exists x
-          --                   intro x_val_eq_last
-          --                   have x_eq_last : x = ⟨Fin.last _, last_mem_targetCell'⟩ := by
-          --                     apply Subtype.eq
-          --                     assumption
-          --                   contradiction
-          --                 obtain ⟨x, x_ne_last⟩ := exists_subtype_targetCell'_ne_last
-          --                 exists x
-          --                 constructor
-          --                 · exact x.property
-          --                 · assumption
-          --               obtain ⟨x, x_mem_targetCell', x_ne_last⟩ := exists_mem_targetCell'_ne_last
-          --               -- targetCell'_unique : ∀ (y : { x // x ∈ partition }), (fun cell ↦ Fin.last n ∈ ↑cell) y → y = targetCell'
-          --               have targetCell'_unique_x : ∀ (y : { x // x ∈ partition }), (fun cell ↦ x ∈ (cell : Cell (n + 1))) y → y = targetCell' := by
-          --                 obtain ⟨cell', x_mem_cell', cell'_unique⟩ := partition_mem_partitions.right x
-          --                 have cell'_eq_targetCell' : targetCell' = cell' := by
-          --                   apply cell'_unique targetCell'
-          --                   assumption
-          --                 subst cell'
-          --                 assumption
-          --               have x_mem_cell : x ∈ cell := by
-          --                 rw [cell_eq_castSucc_castPred_targetCell]
-          --                 simp
-          --                 constructor
-          --                 · assumption
-          --                 · assumption
-          --               -- TODO: We have this pattern everywhere, it should be a lemma
-          --               have cell_eq_targetCell' : cell = targetCell' := by
-          --                 have subtype_cell_eq_targetCell' : ⟨cell, cell_mem_partition⟩ = targetCell' := by
-          --                   apply targetCell'_unique_x ⟨cell, cell_mem_partition⟩
-          --                   assumption
-          --                 exact Subtype.val_inj.mpr subtype_cell_eq_targetCell'
-          --               contradiction
-          --         contradiction
-          --       · have castPredPrecondition_cell : cell.CastPredPrecondition := by
-          --           intro x x_mem_cell x_eq_last
-          --           have cell_eq_targetCell' : cell = targetCell' := by
-          --             have subtype_cell_eq_targetCell' : ⟨cell, cell_mem_partition⟩ = targetCell' := by
-          --               apply targetCell'_unique ⟨cell, cell_mem_partition⟩
-          --               simp
-          --               rw [x_eq_last] at x_mem_cell
-          --               assumption
-          --             exact Subtype.val_inj.mpr subtype_cell_eq_targetCell'
-          --           contradiction
-          --         exists cell.castPred castPredPrecondition_cell
-          --         constructor
-          --         · simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict]
-          --           exists cell
-          --           constructor
-          --           · rfl
-          --           · constructor
-          --             · assumption
-          --             · assumption
-          --         · simp [Cell.castSucc_castPred_eq]
+          -- -- This is valid but temoprarily deactivated to reduce lag while proving the rest
+          -- sorry
+          ext cell
+          constructor
+          · intro cell_mem_partition'
+            simp [Split.insertLastAt] at cell_mem_partition'
+            cases cell_mem_partition' with
+              | inl cell_eq_targetCell =>
+                have cell_eq_targetCell' : cell = targetCell' := by
+                  rw [cell_eq_targetCell]
+                  simp [Cell.insertLast]
+                  ext f
+                  constructor
+                  · intro f_mem_insert_last_castSucc_targetCell
+                    simp at f_mem_insert_last_castSucc_targetCell
+                    cases f_mem_insert_last_castSucc_targetCell with
+                      | inl f_eq_last =>
+                        subst f
+                        assumption
+                      | inr f_mem_castSucc_targetCell =>
+                        simp [Cell.castSucc_castPred_eq] at f_mem_castSucc_targetCell
+                        exact f_mem_castSucc_targetCell.right
+                  · intro f_mem_targetCell'
+                    simp
+                    cases Decidable.eq_or_ne f (Fin.last _) with
+                      | inl f_eq_last => left; assumption
+                      | inr f_ne_last =>
+                        simp [Cell.castSucc_castPred_eq]
+                        right
+                        constructor
+                        · assumption
+                        · assumption
+                rw [cell_eq_targetCell']
+                exact targetCell'.property
+              | inr cell_mem_partition''' =>
+                simp [Split.castSucc, Cell.castSuccEmbedding] at cell_mem_partition'''
+                obtain ⟨cell_ne_castSucc_targetCell'', cell', cell'_mem_castPred_partition'', castSucc_cell'_eq_cell⟩
+                  := cell_mem_partition'''
+                subst cell
+                simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict] at cell'_mem_castPred_partition''
+                obtain ⟨cell'', ⟨cell''_ne_targetCell'', cell''_mem_partition''⟩, castPred_cell''_eq_cell'⟩
+                  := cell'_mem_castPred_partition''
+                subst cell'
+                simp [Cell.castSucc_castPred_eq]
+                assumption
+          · intro cell_mem_partition
+            simp [Split.insertLastAt]
+            cases Decidable.eq_or_ne cell targetCell' with
+              | inl cell_eq_targetCell =>
+                subst cell
+                left
+                simp [Cell.insertLast, Cell.castSucc_castPred_eq]
+                rw [Finset.insert_erase last_mem_targetCell']
+              | inr cell_ne_targetCell =>
+                right
+                simp [Split.castSucc, Cell.castSuccEmbedding]
+                constructor
+                · intro cell_eq_castSucc_castPred_targetCell
+                  have cell_eq_targetCell : cell = ↑targetCell' := by
+                    simp [Cell.castSucc_castPred_eq] at cell_eq_castSucc_castPred_targetCell
+                    cases Decidable.eq_or_ne targetCell'.val {Fin.last _} with
+                      | inl targetCell'_val_eq_singleton_last =>
+                        simp [targetCell'_val_eq_singleton_last] at cell_eq_castSucc_castPred_targetCell
+                        absurd partition_mem_partitions.left
+                        rw [cell_eq_castSucc_castPred_targetCell] at cell_mem_partition
+                        assumption
+                      | inr targetCell'_val_ne_singleton_last =>
+                        have exists_mem_targetCell'_ne_last : ∃ x, x ∈ targetCell'.val ∧ x ≠ Fin.last _ := by
+                          have targetCell'_nontrivial : targetCell'.val.Nontrivial := by
+                            apply (Finset.nontrivial_iff_ne_singleton last_mem_targetCell').mpr
+                            assumption
+                          have nontrivial_subtype_targetCell' : Nontrivial { x // x ∈ targetCell'.val } := by
+                            cases subsingleton_or_nontrivial { x // x ∈ targetCell'.val } with
+                              | inl subsingleton_subtype_targetCell' =>
+                                obtain ⟨x, x_mem_targetCell', y, y_mem_targetCell', x_ne_y⟩ := targetCell'_nontrivial
+                                absurd x_ne_y
+                                have := subsingleton_subtype_targetCell'.allEq ⟨x, x_mem_targetCell'⟩ ⟨y, y_mem_targetCell'⟩
+                                exact Subtype.val_inj.mpr this
+                              | inr nontrivial_subtype_targetCell' =>
+                                assumption
+                          have exists_subtype_targetCell'_ne_last : ∃ (x : targetCell'.val), (x : Fin (n + 1)) ≠ Fin.last _ := by
+                            have := (nontrivial_iff_exists_ne (⟨Fin.last _, last_mem_targetCell'⟩ : Subtype (· ∈ targetCell'.val))).mp nontrivial_subtype_targetCell'
+                            obtain ⟨x, x_ne_last⟩ := this
+                            exists x
+                            intro x_val_eq_last
+                            have x_eq_last : x = ⟨Fin.last _, last_mem_targetCell'⟩ := by
+                              apply Subtype.eq
+                              assumption
+                            contradiction
+                          obtain ⟨x, x_ne_last⟩ := exists_subtype_targetCell'_ne_last
+                          exists x
+                          constructor
+                          · exact x.property
+                          · assumption
+                        obtain ⟨x, x_mem_targetCell', x_ne_last⟩ := exists_mem_targetCell'_ne_last
+                        -- targetCell'_unique : ∀ (y : { x // x ∈ partition }), (fun cell ↦ Fin.last n ∈ ↑cell) y → y = targetCell'
+                        have targetCell'_unique_x : ∀ (y : { x // x ∈ partition }), (fun cell ↦ x ∈ (cell : Cell (n + 1))) y → y = targetCell' := by
+                          obtain ⟨cell', x_mem_cell', cell'_unique⟩ := partition_mem_partitions.right x
+                          have cell'_eq_targetCell' : targetCell' = cell' := by
+                            apply cell'_unique targetCell'
+                            assumption
+                          subst cell'
+                          assumption
+                        have x_mem_cell : x ∈ cell := by
+                          rw [cell_eq_castSucc_castPred_targetCell]
+                          simp
+                          constructor
+                          · assumption
+                          · assumption
+                        -- TODO: We have this pattern everywhere, it should be a lemma
+                        have cell_eq_targetCell' : cell = targetCell' := by
+                          have subtype_cell_eq_targetCell' : ⟨cell, cell_mem_partition⟩ = targetCell' := by
+                            apply targetCell'_unique_x ⟨cell, cell_mem_partition⟩
+                            assumption
+                          exact Subtype.val_inj.mpr subtype_cell_eq_targetCell'
+                        contradiction
+                  contradiction
+                · have castPredPrecondition_cell : cell.CastPredPrecondition := by
+                    intro x x_mem_cell x_eq_last
+                    have cell_eq_targetCell' : cell = targetCell' := by
+                      have subtype_cell_eq_targetCell' : ⟨cell, cell_mem_partition⟩ = targetCell' := by
+                        apply targetCell'_unique ⟨cell, cell_mem_partition⟩
+                        simp
+                        rw [x_eq_last] at x_mem_cell
+                        assumption
+                      exact Subtype.val_inj.mpr subtype_cell_eq_targetCell'
+                    contradiction
+                  exists cell.castPred castPredPrecondition_cell
+                  constructor
+                  · simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict]
+                    exists cell
+                    constructor
+                    · rfl
+                    · constructor
+                      · assumption
+                      · assumption
+                  · simp [Cell.castSucc_castPred_eq]
         -- TODO: This is exactly the case above, in fact we don't even care about `targetCell = ∅` or not here, we
         --       just split so we can work with the definition. We should refactor the duplicate logic
         case _ targetCell_ne_empty =>
