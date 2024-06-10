@@ -560,28 +560,27 @@ theorem helper
                         assumption
                       | inr targetCell'_val_ne_singleton_last =>
                         have exists_mem_targetCell'_ne_last : ∃ x, x ∈ targetCell'.val ∧ x ≠ Fin.last _ := by
-                          -- TODO: Probably don't need this with the direct proof below
-                          -- have targetCell'_nonempty : targetCell'.val.Nonempty := by
-                          --   apply Finset.nonempty_of_ne_empty
-                          --   intro targetCell'_eq_empty
-                          --   rw [targetCell'_eq_empty] at last_mem_targetCell'
-                          --   contradiction
                           have targetCell'_nontrivial : targetCell'.val.Nontrivial := by
                             apply (Finset.nontrivial_iff_ne_singleton last_mem_targetCell').mpr
                             assumption
                           have nontrivial_subtype_targetCell' : Nontrivial { x // x ∈ targetCell'.val } := by
-                            -- apply Finset.Nonempty.nontrivial_subtype
-                            -- exact targetCell'_nontrivial
-                            sorry
-                          -- ∃ x ∈ ↑targetCell', x ≠ Fin.last n
+                            cases subsingleton_or_nontrivial { x // x ∈ targetCell'.val } with
+                              | inl subsingleton_subtype_targetCell' =>
+                                obtain ⟨x, x_mem_targetCell', y, y_mem_targetCell', x_ne_y⟩ := targetCell'_nontrivial
+                                absurd x_ne_y
+                                have := subsingleton_subtype_targetCell'.allEq ⟨x, x_mem_targetCell'⟩ ⟨y, y_mem_targetCell'⟩
+                                exact Subtype.val_inj.mpr this
+                              | inr nontrivial_subtype_targetCell' =>
+                                assumption
                           have exists_subtype_targetCell'_ne_last : ∃ (x : targetCell'.val), (x : Fin (n + 1)) ≠ Fin.last _ := by
                             have := (nontrivial_iff_exists_ne (⟨Fin.last _, last_mem_targetCell'⟩ : Subtype (· ∈ targetCell'.val))).mp nontrivial_subtype_targetCell'
                             obtain ⟨x, x_ne_last⟩ := this
                             exists x
-                            intro x_eq_last
-                            -- TODO: Finish this
-                            -- contradiction
-                            sorry
+                            intro x_val_eq_last
+                            have x_eq_last : x = ⟨Fin.last _, last_mem_targetCell'⟩ := by
+                              apply Subtype.eq
+                              assumption
+                            contradiction
                           obtain ⟨x, x_ne_last⟩ := exists_subtype_targetCell'_ne_last
                           exists x
                           constructor
@@ -590,20 +589,46 @@ theorem helper
                         obtain ⟨x, x_mem_targetCell', x_ne_last⟩ := exists_mem_targetCell'_ne_last
                         -- targetCell'_unique : ∀ (y : { x // x ∈ partition }), (fun cell ↦ Fin.last n ∈ ↑cell) y → y = targetCell'
                         have targetCell'_unique_x : ∀ (y : { x // x ∈ partition }), (fun cell ↦ x ∈ (cell : Cell (n + 1))) y → y = targetCell' := by
-                          sorry
+                          obtain ⟨cell', x_mem_cell', cell'_unique⟩ := partition_mem_partitions.right x
+                          have cell'_eq_targetCell' : targetCell' = cell' := by
+                            apply cell'_unique targetCell'
+                            assumption
+                          subst cell'
+                          assumption
                         have x_mem_cell : x ∈ cell := by
-                          -- apply targetCell'_unique_x ⟨x, x_mem_targetCell'⟩
-                          -- simp
-                          -- exact x_ne_last
-                          sorry
+                          rw [cell_eq_castSucc_castPred_targetCell]
+                          simp
+                          constructor
+                          · assumption
+                          · assumption
+                        -- TODO: We have this pattern everywhere, it should be a lemma
                         have cell_eq_targetCell' : cell = targetCell' := by
-                          -- apply targetCell'_unique_x ⟨cell, cell_mem_partition⟩
-                          -- simp
-                          -- exact x_mem_cell
-                          sorry
+                          have subtype_cell_eq_targetCell' : ⟨cell, cell_mem_partition⟩ = targetCell' := by
+                            apply targetCell'_unique_x ⟨cell, cell_mem_partition⟩
+                            assumption
+                          exact Subtype.val_inj.mpr subtype_cell_eq_targetCell'
                         contradiction
                   contradiction
-                · sorry
+                · have castPredPrecondition_cell : cell.CastPredPrecondition := by
+                    intro x x_mem_cell x_eq_last
+                    have cell_eq_targetCell' : cell = targetCell' := by
+                      have subtype_cell_eq_targetCell' : ⟨cell, cell_mem_partition⟩ = targetCell' := by
+                        apply targetCell'_unique ⟨cell, cell_mem_partition⟩
+                        simp
+                        rw [x_eq_last] at x_mem_cell
+                        assumption
+                      exact Subtype.val_inj.mpr subtype_cell_eq_targetCell'
+                    contradiction
+                  exists cell.castPred castPredPrecondition_cell
+                  constructor
+                  · simp [Split.castPred, Split.restrictCellCastPred, Subtype.restrict]
+                    exists cell
+                    constructor
+                    · rfl
+                    · constructor
+                      · assumption
+                      · assumption
+                  · simp [Cell.castSucc_castPred_eq]
         case _ targetCell_ne_empty =>
           sorry
 
